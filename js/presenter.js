@@ -1,7 +1,8 @@
 (function () {
     'use strict';
 
-    var Dom = window.HNS.Dom,
+    var HNS = window.HNS,
+        Dom = HNS.Dom,
         cssActiveClass = 'hns_active_sorting';
 
     var resetButton = function (button) {
@@ -57,9 +58,9 @@
             resetButton(Dom.getSortByCommentsButton());
 
             switch (sortingType) {
-                case 'byPoints':   highlightButton(Dom.getSortByPointsButton()); break;
-                case 'byTime':     highlightButton(Dom.getSortByTimeButton()); break;
-                case 'byComments': highlightButton(Dom.getSortByCommentsButton()); break;
+                case HNS.byPointsCode:   highlightButton(Dom.getSortByPointsButton()); break;
+                case HNS.byTimeCode:     highlightButton(Dom.getSortByTimeButton()); break;
+                case HNS.byCommentsCode: highlightButton(Dom.getSortByCommentsButton()); break;
             }
         }
     };

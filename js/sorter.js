@@ -1,7 +1,8 @@
 (function () {
     'use strict';
 
-    var Presenter = window.HNS.Presenter;
+    var HNS = window.HNS,
+        Presenter = HNS.Presenter;
 
     window.HNS.Sorter = {
         byPoints: function (parsedRows, footerRows) {
@@ -10,7 +11,7 @@
             });
 
             Presenter.showNewSorting(parsedRows, footerRows);
-            Presenter.showWhatSortingIsActive('byPoints');
+            Presenter.showWhatSortingIsActive(HNS.byPointsCode);
         },
 
         byTime: function (parsedRows, footerRows) {
@@ -19,7 +20,7 @@
             });
 
             Presenter.showNewSorting(parsedRows, footerRows);
-            Presenter.showWhatSortingIsActive('byTime');
+            Presenter.showWhatSortingIsActive(HNS.byTimeCode);
         },
 
         byComments: function (parsedRows, footerRows) {
@@ -28,7 +29,7 @@
             });
 
             Presenter.showNewSorting(parsedRows, footerRows);
-            Presenter.showWhatSortingIsActive('byComments');
+            Presenter.showWhatSortingIsActive(HNS.byCommentsCode);
         }
     };
 

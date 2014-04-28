@@ -2,6 +2,10 @@
     'use strict';
 
     window.HNS.Dom = {
+        getButtonsPlacement: function () {
+            return document.querySelector('body > center > table > tbody > tr:nth-child(1) > td > table > tbody > tr > td:nth-child(3) > span');
+        },
+
         getSortByPointsButton: function() {
             return document.getElementById('hns_sort_by_points');
         },
@@ -44,10 +48,6 @@
 
         getCommentsElement: function(infoRow) {
             return infoRow.querySelector('td.subtext > a:nth-child(3)');
-        },
-
-        getButtonsPlacement: function () {
-            return document.querySelector('body > center > table > tbody > tr:nth-child(1) > td > table > tbody > tr > td:nth-child(3) > span');
         }
     };
 

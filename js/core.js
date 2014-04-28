@@ -1,4 +1,8 @@
 (function () {
     'use strict';
-    window.HNS = {};
+    window.HNS = {
+        byPointsCode:   1,
+        byTimeCode:     2,
+        byCommentsCode: 3
+    };
 })();

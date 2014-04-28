@@ -38,29 +38,26 @@
 
     Sorter.byPoints(parsedRows, footerRows);
 
-    var byPointsCode   = 'byPoints',
-        byTimeCode     = 'byTime',
-        byCommentsCode = 'byComments',
-        activeLinkCode = byPointsCode;
+    var activeLinkCode = HNS.byPointsCode;
 
     Dom.getSortByPointsButton().addEventListener('click', function () {
-        if (activeLinkCode !== byPointsCode) {
+        if (activeLinkCode !== HNS.byPointsCode) {
             Sorter.byPoints(parsedRows, footerRows);
-            activeLinkCode = byPointsCode;
+            activeLinkCode = HNS.byPointsCode;
         }
     }, false);
 
     Dom.getSortByTimeButton().addEventListener('click', function () {
-        if (activeLinkCode !== byTimeCode) {
+        if (activeLinkCode !== HNS.byTimeCode) {
             Sorter.byTime(parsedRows, footerRows);
-            activeLinkCode = byTimeCode;
+            activeLinkCode = HNS.byTimeCode;
         }
     }, false);
 
     Dom.getSortByCommentsButton().addEventListener('click', function () {
-        if (activeLinkCode !== byCommentsCode) {
+        if (activeLinkCode !== HNS.byCommentsCode) {
             Sorter.byComments(parsedRows, footerRows);
-            activeLinkCode = byCommentsCode;
+            activeLinkCode = HNS.byCommentsCode;
         }
     }, false);
 
