@@ -1,6 +1,6 @@
 {
     "name": "Hacker News Sorted",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "manifest_version": 2,
     "description": "Adds ability to sort news on Hacker News (news.ycombinator.com)",
     "content_scripts": [
@@ -15,9 +15,17 @@
                 "*://*/noobstories",
                 "*://*/x?fnid=*"
             ],
+            "css": [
+                "css/main.css"
+            ],
             "js": [
-                "js/helpers.js",
-                "js/sort.js"
+                "js/core.js",
+                "js/dom.js",
+                "js/converter.js",
+                "js/parser.js",
+                "js/presenter.js",
+                "js/sorter.js",
+                "js/main.js"
             ]
         }
     ]

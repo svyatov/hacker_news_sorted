@@ -1,0 +1,9 @@
+.hns_active_sorting {
+    color: #fff;
+}
+
+#hns_sort_by_points,
+#hns_sort_by_time,
+#hns_sort_by_comments {
+    cursor: pointer;
+}

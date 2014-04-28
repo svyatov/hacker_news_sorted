@@ -21,6 +21,10 @@ If you change files in repo (by yourself or by pulling updates), you should use 
 
 ## Changelog
 
+### v0.0.2
+
+* `add` menu to the top right corner for sorting by points, time and comments (points is default)
+
 ### v0.0.1
 
 * `add` autosorting news by points in descending order
