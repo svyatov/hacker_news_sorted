@@ -1,0 +1,24 @@
+{
+    "name": "Hacker News Sorted",
+    "version": "0.0.1",
+    "manifest_version": 2,
+    "description": "Adds ability to sort news on Hacker News (news.ycombinator.com)",
+    "content_scripts": [
+        {
+            "matches": ["*://news.ycombinator.com/*"],
+            "include_globs": [
+                "*://*/",
+                "*://*/ask",
+                "*://*/news",
+                "*://*/news2",
+                "*://*/newest",
+                "*://*/noobstories",
+                "*://*/x?fnid=*"
+            ],
+            "js": [
+                "js/helpers.js",
+                "js/sort.js"
+            ]
+        }
+    ]
+}
