@@ -4,6 +4,10 @@ Extension for [Google Chrome](https://www.google.com/chrome/) which adds ability
 
 ## Install
 
+[![Install](https://developer.chrome.com/webstore/images/ChromeWebStore_Badge_v2_206x58.png)](https://chrome.google.com/webstore/detail/hacker-news-sorted/djkcnbncofmjekhlhemlkinfpkamlkaj)
+
+## Manual install
+
 ### Step 1
 
 `git clone git://github.com/svyatov/hacker_news_sorted.git`
@@ -20,6 +24,11 @@ Inside Chrome: **Settings -> Extensions**
 If you change files in repo (by yourself or by pulling updates), you should use "Reload" link under extension description in Chrome.
 
 ## Changelog
+
+### v1.0.0
+
+* `new` uploaded [Google Web Store](https://chrome.google.com/webstore/detail/hacker-news-sorted/djkcnbncofmjekhlhemlkinfpkamlkaj)
+* `add` icons and screenshots
 
 ### v0.0.2
 
