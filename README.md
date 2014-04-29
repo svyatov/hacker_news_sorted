@@ -19,16 +19,16 @@ Inside Chrome: **Settings -> Extensions**
 1. Turn on "Developer mode" (top right)
 2. Click "Load unpacked extension..." and select folder where you cloned the repo on Step 1.
 
-## Update
+## Manual update
 
-If you change files in repo (by yourself or by pulling updates), you should use "Reload" link under extension description in Chrome.
+If you change files in cloned repo (by yourself or by pulling updates), you should click "Reload" link under extension description in Chrome.
 
 ## Changelog
 
 ### v1.0.0
 
-* `new` uploaded [Google Web Store](https://chrome.google.com/webstore/detail/hacker-news-sorted/djkcnbncofmjekhlhemlkinfpkamlkaj)
-* `add` icons and screenshots
+* `new` extension uploaded to [Google Web Store](https://chrome.google.com/webstore/detail/hacker-news-sorted/djkcnbncofmjekhlhemlkinfpkamlkaj)
+* `add` icons and screenshots added
 
 ### v0.0.2
 
