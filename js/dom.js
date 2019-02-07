@@ -1,6 +1,6 @@
 /**
  * Hacker News Sorted extension for Google Chrome
- * Copyright (C) 2014 Leonid Svyatov <leonid@svyatov.ru>
+ * Copyright (C) 2014,2019 Leonid Svyatov <leonid@svyatov.ru>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,57 +17,58 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  **/
 
-(function () {
-    'use strict';
+(function() {
+  "use strict";
 
-    window.HNS.Dom = {
-        getButtonsPlacement: function () {
-            return document.querySelector('body > center > table > tbody > tr:nth-child(1) > td > table > tbody > tr > td:nth-child(3) > span');
-        },
+  window.HNS.Dom = {
+    getButtonsPlacement: function() {
+      return document.querySelector(
+        "body > center > table > tbody > tr:nth-child(1) > td > table > tbody > tr > td:nth-child(3) > span"
+      );
+    },
 
-        getSortByPointsButton: function() {
-            return document.getElementById('hns_sort_by_points');
-        },
+    getSortByPointsButton: function() {
+      return document.getElementById("hns_sort_by_points");
+    },
 
-        getSortByTimeButton: function() {
-            return document.getElementById('hns_sort_by_time');
-        },
+    getSortByTimeButton: function() {
+      return document.getElementById("hns_sort_by_time");
+    },
 
-        getSortByCommentsButton: function() {
-            return document.getElementById('hns_sort_by_comments');
-        },
+    getSortByCommentsButton: function() {
+      return document.getElementById("hns_sort_by_comments");
+    },
 
-        getLinksTable: function () {
-            return document.querySelector('body > center > table > tbody > tr:nth-child(3) > td > table');
-        },
+    getLinksTable: function() {
+      return document.querySelector("body > center > table > tbody > tr:nth-child(3) > td > table");
+    },
 
-        getLinksTableBody: function (linksTable) {
-            return linksTable.querySelector('tbody');
-        },
+    getLinksTableBody: function(linksTable) {
+      return linksTable.querySelector("tbody");
+    },
 
-        getTitleRows: function (linksTableBody) {
-            return linksTableBody.querySelectorAll('tr:nth-child(3n+1)');
-        },
+    getTitleRows: function(linksTableBody) {
+      return linksTableBody.querySelectorAll("tr:nth-child(3n+1)");
+    },
 
-        getInfoRows: function (linksTableBody) {
-            return linksTableBody.querySelectorAll('tr:nth-child(3n+2)');
-        },
+    getInfoRows: function(linksTableBody) {
+      return linksTableBody.querySelectorAll("tr:nth-child(3n+2)");
+    },
 
-        getDelimiterRows: function (linksTableBody) {
-            return linksTableBody.querySelectorAll('tr:nth-child(3n+3)');
-        },
+    getDelimiterRows: function(linksTableBody) {
+      return linksTableBody.querySelectorAll("tr:nth-child(3n+3)");
+    },
 
-        getPointsElement: function (infoRow) {
-            return infoRow.querySelector('td.subtext > span');
-        },
+    getPointsElement: function(infoRow) {
+      return infoRow.querySelector("td.subtext > span");
+    },
 
-        getTimeText: function (infoRow) {
-            return document.evaluate('.//td[2]/text()[2]', infoRow, null, XPathResult.STRING_TYPE, null).stringValue;
-        },
+    getTimeText: function(infoRow) {
+      return document.evaluate(".//td[2]/span[2]/a/text()", infoRow, null, XPathResult.STRING_TYPE, null).stringValue;
+    },
 
-        getCommentsElement: function(infoRow) {
-            return infoRow.querySelector('td.subtext > a:nth-child(3)');
-        }
-    };
-
+    getCommentsElement: function(infoRow) {
+      return infoRow.querySelector("td.subtext > a:nth-child(6)");
+    }
+  };
 })();

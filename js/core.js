@@ -1,6 +1,6 @@
 /**
  * Hacker News Sorted extension for Google Chrome
- * Copyright (C) 2014 Leonid Svyatov <leonid@svyatov.ru>
+ * Copyright (C) 2014,2019 Leonid Svyatov <leonid@svyatov.ru>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,11 +17,12 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  **/
 
-(function () {
-    'use strict';
-    window.HNS = {
-        byPointsCode:   1,
-        byTimeCode:     2,
-        byCommentsCode: 3
-    };
+(function() {
+  "use strict";
+
+  window.HNS = {
+    byPointsCode: 1,
+    byTimeCode: 2,
+    byCommentsCode: 3
+  };
 })();

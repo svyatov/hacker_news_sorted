@@ -1,6 +1,6 @@
 /**
  * Hacker News Sorted extension for Google Chrome
- * Copyright (C) 2014 Leonid Svyatov <leonid@svyatov.ru>
+ * Copyright (C) 2014,2019 Leonid Svyatov <leonid@svyatov.ru>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,67 +17,76 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  **/
 
-(function () {
-    'use strict';
+(function() {
+  "use strict";
 
-    var HNS = window.HNS,
-        Dom = HNS.Dom,
-        Parser = HNS.Parser,
-        Sorter = HNS.Sorter,
-        Converter = HNS.Converter,
-        Presenter = HNS.Presenter;
+  const HNS = window.HNS;
+  const Dom = HNS.Dom;
+  const Parser = HNS.Parser;
+  const Sorter = HNS.Sorter;
+  const Presenter = HNS.Presenter;
 
-    var linksTable = Dom.getLinksTable();
+  const linksTable = Dom.getLinksTable();
 
-    if (null === linksTable) {
-        return;
-    }
+  if (null === linksTable) {
+    return;
+  }
 
-    if (false === Presenter.addSortButtons()) {
-        return;
-    }
+  if (false === Presenter.addSortButtons()) {
+    return;
+  }
 
-    var linksTableBody   = Dom.getLinksTableBody(linksTable),
-        titleRows        = Converter.nodeList2Array(Dom.getTitleRows(linksTableBody)),
-        infoRows         = Converter.nodeList2Array(Dom.getInfoRows(linksTableBody)),
-        delimiterRows    = Converter.nodeList2Array(Dom.getDelimiterRows(linksTableBody)),
-        footerRows       = [titleRows.pop(), infoRows.pop()],
-        parsedRows       = [];
+  const linksTableBody = Dom.getLinksTableBody(linksTable);
+  const titleRows = Array.from(Dom.getTitleRows(linksTableBody));
+  const infoRows = Array.from(Dom.getInfoRows(linksTableBody));
+  const delimiterRows = Array.from(Dom.getDelimiterRows(linksTableBody));
+  const footerRows = [titleRows.pop(), infoRows.pop()];
 
-    for (var i = 0, n = titleRows.length; i < n; i++) {
-        parsedRows.push({
-            title:     titleRows[i],
-            info:      infoRows[i],
-            delimiter: delimiterRows[i],
-            points:    Parser.getPoints(infoRows[i]),
-            time:      Parser.getTime(infoRows[i]),
-            comments:  Parser.getComments(infoRows[i])
-        });
-    }
+  const parsedRows = titleRows.map(function(_row, idx) {
+    return {
+      title: titleRows[idx],
+      info: infoRows[idx],
+      delimiter: delimiterRows[idx],
+      points: Parser.getPoints(infoRows[idx]),
+      time: Parser.getTime(infoRows[idx]),
+      comments: Parser.getComments(infoRows[idx])
+    };
+  });
 
-    Sorter.byPoints(parsedRows, footerRows);
+  Sorter.byPoints(parsedRows, footerRows);
 
-    var activeLinkCode = HNS.byPointsCode;
+  let activeLinkCode = HNS.byPointsCode;
 
-    Dom.getSortByPointsButton().addEventListener('click', function () {
-        if (activeLinkCode !== HNS.byPointsCode) {
-            Sorter.byPoints(parsedRows, footerRows);
-            activeLinkCode = HNS.byPointsCode;
-        }
-    }, false);
+  Dom.getSortByPointsButton().addEventListener(
+    "click",
+    function() {
+      if (activeLinkCode === HNS.byPointsCode) return;
 
-    Dom.getSortByTimeButton().addEventListener('click', function () {
-        if (activeLinkCode !== HNS.byTimeCode) {
-            Sorter.byTime(parsedRows, footerRows);
-            activeLinkCode = HNS.byTimeCode;
-        }
-    }, false);
+      Sorter.byPoints(parsedRows, footerRows);
+      activeLinkCode = HNS.byPointsCode;
+    },
+    false
+  );
 
-    Dom.getSortByCommentsButton().addEventListener('click', function () {
-        if (activeLinkCode !== HNS.byCommentsCode) {
-            Sorter.byComments(parsedRows, footerRows);
-            activeLinkCode = HNS.byCommentsCode;
-        }
-    }, false);
+  Dom.getSortByTimeButton().addEventListener(
+    "click",
+    function() {
+      if (activeLinkCode === HNS.byTimeCode) return;
 
+      Sorter.byTime(parsedRows, footerRows);
+      activeLinkCode = HNS.byTimeCode;
+    },
+    false
+  );
+
+  Dom.getSortByCommentsButton().addEventListener(
+    "click",
+    function() {
+      if (activeLinkCode === HNS.byCommentsCode) return;
+
+      Sorter.byComments(parsedRows, footerRows);
+      activeLinkCode = HNS.byCommentsCode;
+    },
+    false
+  );
 })();

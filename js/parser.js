@@ -1,6 +1,6 @@
 /**
  * Hacker News Sorted extension for Google Chrome
- * Copyright (C) 2014 Leonid Svyatov <leonid@svyatov.ru>
+ * Copyright (C) 2014,2019 Leonid Svyatov <leonid@svyatov.ru>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,36 +17,37 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  **/
 
-(function () {
-    'use strict';
+(function() {
+  "use strict";
 
-    var Dom = window.HNS.Dom,
-        Converter = window.HNS.Converter;
+  const Dom = window.HNS.Dom;
+  const Converter = window.HNS.Converter;
 
-    window.HNS.Parser = {
-        getPoints: function (infoRow) {
-            var pointsElement = Dom.getPointsElement(infoRow);
+  window.HNS.Parser = {
+    getPoints: function(infoRow) {
+      const pointsElement = Dom.getPointsElement(infoRow);
 
-            if (null !== pointsElement) {
-                return Converter.string2Number(pointsElement.innerText);
-            }
+      if (null !== pointsElement) {
+        return Converter.string2Number(pointsElement.innerText);
+      }
 
-            return 0;
-        },
+      return 0;
+    },
 
-        getTime: function (infoRow) {
-            var timeText = Dom.getTimeText(infoRow);
-            return Converter.relativeTime2Minutes(timeText);
-        },
+    getTime: function(infoRow) {
+      const timeText = Dom.getTimeText(infoRow);
 
-        getComments: function (infoRow) {
-            var commentsElement = Dom.getCommentsElement(infoRow);
+      return Converter.relativeTime2Minutes(timeText);
+    },
 
-            if (null !== commentsElement) {
-                return Converter.string2Number(commentsElement.innerText);
-            }
+    getComments: function(infoRow) {
+      const commentsElement = Dom.getCommentsElement(infoRow);
 
-            return 0;
-        }
-    };
+      if (null !== commentsElement) {
+        return Converter.string2Number(commentsElement.innerText);
+      }
+
+      return 0;
+    }
+  };
 })();

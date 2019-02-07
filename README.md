@@ -25,6 +25,11 @@ If you change files in cloned repo (by yourself or by pulling updates), you shou
 
 ## Changelog
 
+### v1.0.1
+
+* `fix` query selectors fixed
+* `chg` code slightly simplified and reformatted with prettier
+
 ### v1.0.0
 
 * `new` extension uploaded to [Google Web Store](https://chrome.google.com/webstore/detail/hacker-news-sorted/djkcnbncofmjekhlhemlkinfpkamlkaj)
@@ -36,7 +41,7 @@ If you change files in cloned repo (by yourself or by pulling updates), you shou
 
 ### v0.0.1
 
-* `add` autosorting news by points in descending order
+* `add` auto-sorting news by points in descending order
 
 ## Questions, suggestions and bugs
 

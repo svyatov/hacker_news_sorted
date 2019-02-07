@@ -1,6 +1,6 @@
 /**
  * Hacker News Sorted extension for Google Chrome
- * Copyright (C) 2014 Leonid Svyatov <leonid@svyatov.ru>
+ * Copyright (C) 2014,2019 Leonid Svyatov <leonid@svyatov.ru>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,39 +17,38 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  **/
 
-(function () {
-    'use strict';
+(function() {
+  "use strict";
 
-    var HNS = window.HNS,
-        Presenter = HNS.Presenter;
+  const HNS = window.HNS;
+  const Presenter = HNS.Presenter;
 
-    window.HNS.Sorter = {
-        byPoints: function (parsedRows, footerRows) {
-            parsedRows.sort(function (rowA, rowB) {
-                return rowB.points - rowA.points; // descending sorting
-            });
+  window.HNS.Sorter = {
+    byPoints: function(parsedRows, footerRows) {
+      parsedRows.sort(function(rowA, rowB) {
+        return rowB.points - rowA.points; // descending sorting
+      });
 
-            Presenter.showNewSorting(parsedRows, footerRows);
-            Presenter.showWhatSortingIsActive(HNS.byPointsCode);
-        },
+      Presenter.showNewSorting(parsedRows, footerRows);
+      Presenter.showWhatSortingIsActive(HNS.byPointsCode);
+    },
 
-        byTime: function (parsedRows, footerRows) {
-            parsedRows.sort(function (rowA, rowB) {
-                return rowA.time - rowB.time; // ascending sorting, 'cause we interested in more fresh news, right?
-            });
+    byTime: function(parsedRows, footerRows) {
+      parsedRows.sort(function(rowA, rowB) {
+        return rowA.time - rowB.time; // ascending sorting, 'cause we interested in more fresh news, right?
+      });
 
-            Presenter.showNewSorting(parsedRows, footerRows);
-            Presenter.showWhatSortingIsActive(HNS.byTimeCode);
-        },
+      Presenter.showNewSorting(parsedRows, footerRows);
+      Presenter.showWhatSortingIsActive(HNS.byTimeCode);
+    },
 
-        byComments: function (parsedRows, footerRows) {
-            parsedRows.sort(function (rowA, rowB) {
-                return rowB.comments - rowA.comments; // descending sorting
-            });
+    byComments: function(parsedRows, footerRows) {
+      parsedRows.sort(function(rowA, rowB) {
+        return rowB.comments - rowA.comments; // descending sorting
+      });
 
-            Presenter.showNewSorting(parsedRows, footerRows);
-            Presenter.showWhatSortingIsActive(HNS.byCommentsCode);
-        }
-    };
-
+      Presenter.showNewSorting(parsedRows, footerRows);
+      Presenter.showWhatSortingIsActive(HNS.byCommentsCode);
+    }
+  };
 })();

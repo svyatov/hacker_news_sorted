@@ -1,6 +1,6 @@
 /**
  * Hacker News Sorted extension for Google Chrome
- * Copyright (C) 2014 Leonid Svyatov <leonid@svyatov.ru>
+ * Copyright (C) 2014,2019 Leonid Svyatov <leonid@svyatov.ru>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,55 +17,42 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  **/
 
-(function () {
-    'use strict';
+(function() {
+  "use strict";
 
-    var minutesRegex = /minute/,
-        hoursRegex = /hour/,
-        daysRegex = /day/;
+  const minutesRegex = /minute/;
+  const hoursRegex = /hour/;
+  const daysRegex = /day/;
 
-    window.HNS.Converter = {
-        nodeList2Array: function (nodeList) {
-            var arr = [],
-                i = 0,
-                n = nodeList.length;
+  window.HNS.Converter = {
+    string2Number: function(string) {
+      let number = parseInt(string, 10);
 
-            for (; i < n; i++) {
-                arr.push(nodeList[i]);
-            }
+      if (isNaN(number)) {
+        number = 0;
+      }
 
-            return arr;
-        },
+      return number;
+    },
 
-        string2Number: function (string) {
-            var number = parseInt(string, 10);
+    relativeTime2Minutes: function(timeText) {
+      if (timeText.length < 1) {
+        return 0;
+      }
 
-            if (isNaN(number)) {
-                number = 0;
-            }
+      if (minutesRegex.test(timeText)) {
+        return this.string2Number(timeText);
+      }
 
-            return number;
-        },
+      if (hoursRegex.test(timeText)) {
+        return this.string2Number(timeText) * 60;
+      }
 
-        relativeTime2Minutes: function (timeText) {
-            if (timeText.length < 1) {
-                return 0;
-            }
+      if (daysRegex.test(timeText)) {
+        return this.string2Number(timeText) * 1440;
+      }
 
-            if (minutesRegex.test(timeText)) {
-                return this.string2Number(timeText);
-            }
-
-            if (hoursRegex.test(timeText)) {
-                return this.string2Number(timeText) * 60;
-            }
-
-            if (daysRegex.test(timeText)) {
-                return this.string2Number(timeText) * 1440;
-            }
-
-            return 0;
-        }
-    };
-
+      return 0;
+    }
+  };
 })();
