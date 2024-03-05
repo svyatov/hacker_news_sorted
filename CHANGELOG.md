@@ -1,11 +1,13 @@
 # Changelog
 
-## Unreleased
+## v2.0.0
 
 * `new` the project is rewritten with TypeScript and [Plasmo framework](https://docs.plasmo.com)
 * `new` the chosen sorting method is now persists across the sessions
-* `new` return to the original sort order is now available (click "Sort by")
+* `new` return to the original sort order is now available
 * `chg` the license is changed to MIT
+* `chg` switched to Manifest v3
+* `chg` changelog moved to the separate file
 
 ## v1.0.1
 
