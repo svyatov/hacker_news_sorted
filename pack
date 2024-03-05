@@ -1,7 +1,0 @@
-#!/bin/sh
-
-echo "Removing previous package..."
-rm -f hacker_news_sorted.zip
-
-echo "Packaging..."
-zip hacker_news_sorted.zip js/* css/* images/128x128.png manifest.json

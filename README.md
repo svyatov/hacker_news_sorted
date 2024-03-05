@@ -1,47 +1,36 @@
 # Hacker News Sorted
 
-Extension for [Google Chrome](https://www.google.com/chrome/) which adds ability to sort news on [Hacker News](https://news.ycombinator.com)
+Extension for [Google Chrome](https://www.google.com/chrome/) which gives the ability to sort the news on the [Hacker News](https://news.ycombinator.com) site!
 
 ## Install
 
-[![Install](https://developer.chrome.com/webstore/images/ChromeWebStore_Badge_v2_206x58.png)](https://chrome.google.com/webstore/detail/hacker-news-sorted/djkcnbncofmjekhlhemlkinfpkamlkaj)
+[![Install](images/webstore-badge.png)](https://chrome.google.com/webstore/detail/hacker-news-sorted/djkcnbncofmjekhlhemlkinfpkamlkaj)
 
 ## Manual install
 
 ### Step 1
 
-`git clone git://github.com/svyatov/hacker_news_sorted.git`
+```bash
+git clone git://github.com/svyatov/hacker_news_sorted.git
+```
 
 ### Step 2
 
-Inside Chrome: **Settings -> Extensions**
+```bash
+pnpm install
+```
 
-1. Turn on "Developer mode" (top right)
-2. Click "Load unpacked extension..." and select folder where you cloned the repo on Step 1.
+### Step 3
 
-## Manual update
+```bash
+pnpm dev
+```
 
-If you change files in cloned repo (by yourself or by pulling updates), you should click "Reload" link under extension description in Chrome.
+### Step 4
 
-## Changelog
-
-### v1.0.1
-
-* `fix` query selectors fixed
-* `chg` code slightly simplified and reformatted with prettier
-
-### v1.0.0
-
-* `new` extension uploaded to [Google Web Store](https://chrome.google.com/webstore/detail/hacker-news-sorted/djkcnbncofmjekhlhemlkinfpkamlkaj)
-* `add` icons and screenshots added
-
-### v0.0.2
-
-* `add` menu to the top right corner for sorting by points, time and comments (points is default)
-
-### v0.0.1
-
-* `add` auto-sorting news by points in descending order
+Open your browser and load the appropriate development build. For example, if
+you are developing for the Chrome browser, using manifest v3, use:
+`build/chrome-mv3-dev`.
 
 ## Questions, suggestions and bugs
 

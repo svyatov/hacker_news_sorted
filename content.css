@@ -1,0 +1,29 @@
+#hns-control-panel {
+  color: #222;
+  line-height: 12px;
+}
+
+.hns-sort-by-label {
+  display: inline-block;
+  margin-right: 5px;
+  color: #000;
+}
+
+.hns-btn {
+  cursor: pointer;
+  display: inline-block;
+  margin: 0 5px;
+}
+
+.hns-active {
+  color: #fff;
+}
+
+.hns-active.hns-btn {
+  cursor: default;
+}
+
+.hns-divider {
+  display: inline-block;
+  margin: 0 10px;
+}
