@@ -1,3 +1,3 @@
 export const ControlPanelRootId = 'hns-control-panel';
 
-export const LastActiveSortKey = 'HNS-LAST-ACTIVE-SORT';
+export const LastActiveSortKey = 'hns-last-active-sort';
