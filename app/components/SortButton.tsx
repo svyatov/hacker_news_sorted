@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { useCallback, type ReactElement, type ReactNode } from 'react';
+import { useCallback, type ReactElement } from 'react';
 
 import type { SortVariant } from '~app/types';
 import { setLastActiveSort } from '~app/utils/storage';
@@ -8,10 +8,11 @@ type ControlPanelButtonProps = {
   sortBy: SortVariant;
   activeSort: SortVariant;
   setActiveSort: (sortBy: SortVariant) => void;
-  children: ReactNode;
+  text: string;
+  shortcut: string;
 };
 
-const SortButton = ({ sortBy, activeSort, setActiveSort, children }: ControlPanelButtonProps): ReactElement => {
+const SortButton = ({ sortBy, activeSort, setActiveSort, text, shortcut }: ControlPanelButtonProps): ReactElement => {
   const isActive = activeSort === sortBy;
   const defaultSort = sortBy === 'default';
 
@@ -26,7 +27,8 @@ const SortButton = ({ sortBy, activeSort, setActiveSort, children }: ControlPane
       onClick={updateActiveSort}
       className={clsx('hns-btn', isActive && 'hns-active')}
       title={defaultSort ? 'Original sort order' : `Sort by ${sortBy}`}>
-      {children}
+      <span className="hns-btn-text">{text}</span>
+      <span className="hns-btn-shortcut">{shortcut}</span>
     </span>
   );
 };

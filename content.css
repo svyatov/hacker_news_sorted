@@ -15,6 +15,14 @@
   margin: 0 5px;
 }
 
+.hns-btn-text {
+  display: none;
+}
+
+.hns-btn-shortcut {
+  display: inline;
+}
+
 .hns-active {
   color: #fff;
 }
@@ -26,4 +34,14 @@
 .hns-divider {
   display: inline-block;
   margin: 0 10px;
+}
+
+@media screen and (min-width: 1280px) {
+  .hns-btn-text {
+    display: inline;
+  }
+
+  .hns-btn-shortcut {
+    display: none;
+  }
 }

@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.0.1
+
+* `new` support lower resolutions by switching to single letters
+* `chg` control panel lower-cased to better fit the design
+
 ## v2.0.0
 
 * `new` the project is rewritten with TypeScript and [Plasmo framework](https://docs.plasmo.com)

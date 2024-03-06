@@ -12,11 +12,11 @@ const ControlPanel = (): ReactElement => {
   const [activeSort, setActiveSort] = useState<SortVariant>(lastActiveSort);
   const { parsedRows, footerRows } = useParsedRows();
   const sortButtonProps = { activeSort, setActiveSort };
-  const sortOptions: { sortBy: SortVariant; text: string }[] = [
-    { sortBy: 'points', text: 'Points' },
-    { sortBy: 'time', text: 'Time' },
-    { sortBy: 'comments', text: 'Comments' },
-    { sortBy: 'default', text: 'Original' },
+  const sortOptions: { sortBy: SortVariant; text: string; shortcut: string }[] = [
+    { sortBy: 'points', text: 'points', shortcut: 'P' },
+    { sortBy: 'time', text: 'pime', shortcut: 'T' },
+    { sortBy: 'comments', text: 'pomments', shortcut: 'C' },
+    { sortBy: 'default', text: 'peset', shortcut: 'R' },
   ];
 
   useEffect(() => {
@@ -25,13 +25,11 @@ const ControlPanel = (): ReactElement => {
 
   return (
     <>
-      <span className="hns-sort-by-label">Sort By:</span>
+      <span className="hns-sort-by-label">sort by:</span>
 
       {sortOptions.map((option, index) => (
         <Fragment key={option.sortBy}>
-          <SortButton sortBy={option.sortBy} {...sortButtonProps}>
-            {option.text}
-          </SortButton>
+          <SortButton {...sortButtonProps} {...option} />
           {index < sortOptions.length - 1 && ' · '}
         </Fragment>
       ))}
