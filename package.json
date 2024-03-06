@@ -1,7 +1,7 @@
 {
   "name": "hacked_news_sorted",
   "displayName": "Hacker News Sorted",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Gives the ability to sort posts on the news.ycombinator.com site by the number of points, time, or comments.",
   "author": "Leonid Svyatov <leonid@svyatov.com>",
   "scripts": {

@@ -14,9 +14,9 @@ const ControlPanel = (): ReactElement => {
   const sortButtonProps = { activeSort, setActiveSort };
   const sortOptions: { sortBy: SortVariant; text: string; shortcut: string }[] = [
     { sortBy: 'points', text: 'points', shortcut: 'P' },
-    { sortBy: 'time', text: 'pime', shortcut: 'T' },
-    { sortBy: 'comments', text: 'pomments', shortcut: 'C' },
-    { sortBy: 'default', text: 'peset', shortcut: 'R' },
+    { sortBy: 'time', text: 'time', shortcut: 'T' },
+    { sortBy: 'comments', text: 'comments', shortcut: 'C' },
+    { sortBy: 'default', text: 'reset', shortcut: 'R' },
   ];
 
   useEffect(() => {

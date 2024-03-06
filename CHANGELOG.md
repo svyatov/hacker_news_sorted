@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.0.2
+
+* `fix` fixes typo
+
 ## v2.0.1
 
 * `new` support lower resolutions by switching to single letters
