@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+* `new` active sort column is now highlighted with bold text
+* `chg` added SortOption type and refactored SortButton to use it
+* `chg` changed reset button text from 'reset' to 'default' and shortcut from 'R' to 'D'
+* `chg` moved sortOptions array outside ControlPanel component
+* `chg` removed clsx dependency, replaced with manual className construction
+* `chg` refactored constants naming convention to UPPER_SNAKE_CASE
+* `chg` moved regex constants from converters to constants module
+* `chg` added editor settings configuration (.cursor/settings.json)
+* `chg` migrated prettier config from .mjs to .ts format and cleaned up (removed JSDoc, formatting adjustments)
+
 ## v2.0.3
 
 * `fix` fixed time parsing by extracting date from timestamp title attribute

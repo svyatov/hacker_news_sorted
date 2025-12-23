@@ -9,3 +9,9 @@ export type ParsedRow = {
   time: number;
   comments: number;
 };
+
+export type SortOption = {
+  sortBy: SortVariant;
+  text: string;
+  shortcut: string;
+};

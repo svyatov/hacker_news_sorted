@@ -1,6 +1,4 @@
-const MINUTES_REGEX = /minute/;
-const HOURS_REGEX = /hour/;
-const DAYS_REGEX = /day/;
+import { DAYS_REGEX, HOURS_REGEX, MINUTES_REGEX } from '~app/constants';
 
 export const stringToNumber = (string: string): number => {
   const number = parseInt(string, 10);

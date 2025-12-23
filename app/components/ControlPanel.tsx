@@ -2,25 +2,27 @@ import { Fragment, useEffect, useState, type ReactElement } from 'react';
 
 import SortButton from '~app/components/SortButton';
 import { useParsedRows } from '~app/hooks/useParsedRows';
-import type { SortVariant } from '~app/types';
+import type { SortOption, SortVariant } from '~app/types';
 import { updateTable } from '~app/utils/presenters';
 import { sortRows } from '~app/utils/sorters';
 import { getLastActiveSort } from '~app/utils/storage';
+
+const sortOptions: SortOption[] = [
+  { sortBy: 'points', text: 'points', shortcut: 'P' },
+  { sortBy: 'time', text: 'time', shortcut: 'T' },
+  { sortBy: 'comments', text: 'comments', shortcut: 'C' },
+  { sortBy: 'default', text: 'default', shortcut: 'D' },
+];
+
+const sortOptionsCount = sortOptions.length - 1;
 
 const ControlPanel = (): ReactElement => {
   const lastActiveSort = getLastActiveSort();
   const [activeSort, setActiveSort] = useState<SortVariant>(lastActiveSort);
   const { parsedRows, footerRows } = useParsedRows();
-  const sortButtonProps = { activeSort, setActiveSort };
-  const sortOptions: { sortBy: SortVariant; text: string; shortcut: string }[] = [
-    { sortBy: 'points', text: 'points', shortcut: 'P' },
-    { sortBy: 'time', text: 'time', shortcut: 'T' },
-    { sortBy: 'comments', text: 'comments', shortcut: 'C' },
-    { sortBy: 'default', text: 'reset', shortcut: 'R' },
-  ];
 
   useEffect(() => {
-    updateTable(sortRows(parsedRows, activeSort), footerRows);
+    updateTable(sortRows(parsedRows, activeSort), footerRows, activeSort);
   }, [activeSort, parsedRows]);
 
   return (
@@ -29,8 +31,8 @@ const ControlPanel = (): ReactElement => {
 
       {sortOptions.map((option, index) => (
         <Fragment key={option.sortBy}>
-          <SortButton {...sortButtonProps} {...option} />
-          {index < sortOptions.length - 1 && ' · '}
+          <SortButton sortOption={option} activeSort={activeSort} setActiveSort={setActiveSort} />
+          {index < sortOptionsCount && ' · '}
         </Fragment>
       ))}
 
