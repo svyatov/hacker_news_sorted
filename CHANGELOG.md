@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.0.3
+
+* `fix` fixed time parsing by extracting date from timestamp title attribute
+* `chg` updated dependencies (React 19, Plasmo 0.90.5, and others)
+
 ## v2.0.2
 
 * `fix` fixes typo

@@ -18,7 +18,7 @@ export const getTime = (infoRow: HTMLElement): number => {
     return Infinity;
   }
 
-  const timeStamp = timeElement.getAttribute('title');
+  const timeStamp = timeElement.getAttribute('title').split(' ')[0];
 
   return Date.now() - new Date(timeStamp).getTime();
 };
