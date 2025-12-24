@@ -23,7 +23,7 @@ export const getRootContainer = () =>
     const existingElement = getControlPanelParentElement();
 
     if (existingElement) {
-      resolve(injectRootElement(existingElement));
+      return resolve(injectRootElement(existingElement));
     }
 
     const observer = new MutationObserver(() => {
