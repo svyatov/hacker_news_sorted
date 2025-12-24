@@ -10,23 +10,34 @@ export const config: PlasmoCSConfig = {
   css: ['content.css'],
 };
 
-const POLL_INTERVAL_MS = 155;
+const injectRootElement = (parentElement: HTMLElement): HTMLElement => {
+  const controlPanelRoot = document.createElement('span');
+  controlPanelRoot.id = CONTROL_PANEL_ROOT_ID;
+  parentElement.prepend(controlPanelRoot);
+  return controlPanelRoot;
+};
 
 // https://docs.plasmo.com/framework/content-scripts-ui/life-cycle#custom-root-container
 export const getRootContainer = () =>
   new Promise<HTMLElement>((resolve) => {
-    const checkInterval = setInterval(() => {
+    const existingElement = getControlPanelParentElement();
+
+    if (existingElement) {
+      resolve(injectRootElement(existingElement));
+    }
+
+    const observer = new MutationObserver(() => {
       const controlPanelParentElement = getControlPanelParentElement();
       if (!controlPanelParentElement) return;
 
-      clearInterval(checkInterval);
+      observer.disconnect();
+      resolve(injectRootElement(controlPanelParentElement));
+    });
 
-      const controlPanelRoot = document.createElement('span');
-      controlPanelRoot.id = CONTROL_PANEL_ROOT_ID;
-
-      controlPanelParentElement.prepend(controlPanelRoot);
-      resolve(controlPanelRoot);
-    }, POLL_INTERVAL_MS);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
   });
 
 export const render: PlasmoRender<PlasmoCSUIJSXContainer> = async ({ createRootContainer }) => {
