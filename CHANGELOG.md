@@ -1,20 +1,25 @@
 # Changelog
 
-## Unreleased
+## v2.1.0
 
 * `new` active sort column is now highlighted with bold text
 * `fix` fixed array mutation bug in sortRows (now creates a copy before sorting)
 * `fix` fixed null reference issues in parsers and selectors (added proper null checks)
 * `fix` fixed typo: hightlightText → highlightText
+* `fix` fixed date validation in getTime parser (now correctly checks isNaN instead of === 0)
 * `fix` added missing footerRows dependency to useEffect in ControlPanel
 * `fix` added missing setActiveSort dependency to useCallback in SortButton
 * `perf` replaced polling mechanism with MutationObserver in content.tsx for better performance
 * `perf` optimized getLastActiveSort to use useState initializer instead of calling on every render
 * `perf` added useMemo for parsedRows to memoize expensive DOM parsing operations
 * `perf` replaced DOM cloning with CSS classes in highlightActiveSort to avoid expensive cloneNode operations
+* `perf` memoized sorted rows calculation in ControlPanel to avoid re-sorting on every render
 * `chg` improved localStorage error handling with try/catch blocks
 * `chg` simplified CSS class construction in SortButton (template literal instead of array join)
 * `chg` extracted root element injection logic into injectRootElement function in content.tsx
+* `chg` refactored highlightActiveSort to use lookup map instead of if/else chain
+* `chg` added NonDefaultSortVariant type for better type safety
+* `chg` removed unused relativeTimeToMinutes function from converters
 * `chg` added SortOption type and refactored SortButton to use it
 * `chg` changed reset button text from 'reset' to 'default' and shortcut from 'R' to 'D'
 * `chg` moved sortOptions array outside ControlPanel component

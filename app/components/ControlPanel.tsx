@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState, type ReactElement } from 'react';
+import { Fragment, useEffect, useMemo, useState, type ReactElement } from 'react';
 
 import SortButton from '~app/components/SortButton';
 import { useParsedRows } from '~app/hooks/useParsedRows';
@@ -20,9 +20,11 @@ const ControlPanel = (): ReactElement => {
   const [activeSort, setActiveSort] = useState<SortVariant>(() => getLastActiveSort());
   const { parsedRows, footerRows } = useParsedRows();
 
+  const sortedRows = useMemo(() => sortRows(parsedRows, activeSort), [parsedRows, activeSort]);
+
   useEffect(() => {
-    updateTable(sortRows(parsedRows, activeSort), footerRows, activeSort);
-  }, [activeSort, parsedRows, footerRows]);
+    updateTable(sortedRows, footerRows, activeSort);
+  }, [sortedRows, footerRows, activeSort]);
 
   return (
     <>

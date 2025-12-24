@@ -26,7 +26,7 @@ export const getTime = (infoRow: HTMLElement): number => {
 
   const time = new Date(title.split(' ')[0]).getTime();
 
-  if (time === 0) {
+  if (isNaN(time)) {
     return Infinity;
   }
 

@@ -1,5 +1,5 @@
 import { HIGHLIGHT_CLASS, HIGHLIGHT_SELECTOR } from '~app/constants';
-import type { ParsedRow, SortVariant } from '~app/types';
+import type { NonDefaultSortVariant, ParsedRow, SortVariant } from '~app/types';
 import { getCommentsElement, getPointsElement, getTableBody, getTimeElement } from '~app/utils/selectors';
 
 export const updateTable = (parsedRows: ParsedRow[], footerRows: HTMLElement[], activeSort: SortVariant): void => {
@@ -24,27 +24,28 @@ export const updateTable = (parsedRows: ParsedRow[], footerRows: HTMLElement[], 
   tableBody.replaceWith(sortedRowsFragment);
 };
 
-export const highlightActiveSort = (infoRow: HTMLElement, activeSort: SortVariant): HTMLElement => {
-  const previousHighlights = infoRow.querySelector(HIGHLIGHT_SELECTOR);
+const SORT_TO_ELEMENT_GETTER: Record<NonDefaultSortVariant, (row: HTMLElement) => HTMLElement | null> = {
+  points: getPointsElement,
+  time: getTimeElement,
+  comments: getCommentsElement,
+};
 
-  if (previousHighlights) {
-    previousHighlights.classList.remove(HIGHLIGHT_CLASS);
+export const highlightActiveSort = (infoRow: HTMLElement, activeSort: SortVariant): HTMLElement => {
+  const previousHighlight = infoRow.querySelector(HIGHLIGHT_SELECTOR);
+
+  if (previousHighlight) {
+    previousHighlight.classList.remove(HIGHLIGHT_CLASS);
   }
 
   if (activeSort === 'default') {
     return infoRow;
   }
 
-  const pointsElement = getPointsElement(infoRow);
-  const timeElement = getTimeElement(infoRow);
-  const commentsElement = getCommentsElement(infoRow);
+  const elementGetter = SORT_TO_ELEMENT_GETTER[activeSort];
+  const elementToHighlight = elementGetter(infoRow);
 
-  if (activeSort === 'points' && pointsElement) {
-    pointsElement.classList.add(HIGHLIGHT_CLASS);
-  } else if (activeSort === 'time' && timeElement) {
-    timeElement.classList.add(HIGHLIGHT_CLASS);
-  } else if (activeSort === 'comments' && commentsElement) {
-    commentsElement.classList.add(HIGHLIGHT_CLASS);
+  if (elementToHighlight) {
+    elementToHighlight.classList.add(HIGHLIGHT_CLASS);
   }
 
   return infoRow;

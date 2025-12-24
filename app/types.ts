@@ -1,4 +1,5 @@
 export type SortVariant = 'default' | 'points' | 'time' | 'comments';
+export type NonDefaultSortVariant = Exclude<SortVariant, 'default'>;
 
 export type ParsedRow = {
   originalIndex: number;
