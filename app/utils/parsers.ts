@@ -18,9 +18,19 @@ export const getTime = (infoRow: HTMLElement): number => {
     return Infinity;
   }
 
-  const timeStamp = timeElement.getAttribute('title').split(' ')[0];
+  const title = timeElement.getAttribute('title');
 
-  return Date.now() - new Date(timeStamp).getTime();
+  if (!title) {
+    return Infinity;
+  }
+
+  const time = new Date(title.split(' ')[0]).getTime();
+
+  if (time === 0) {
+    return Infinity;
+  }
+
+  return time;
 };
 
 export const getComments = (infoRow: HTMLElement): number => {

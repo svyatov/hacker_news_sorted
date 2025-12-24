@@ -5,6 +5,8 @@ export const updateTable = (parsedRows: ParsedRow[], footerRows: HTMLElement[], 
   if (parsedRows.length === 0) return;
 
   const tableBody = getTableBody();
+  if (!tableBody) return;
+
   const sortedRowsFragment = document.createDocumentFragment();
   const sortedTableBody = sortedRowsFragment.appendChild(document.createElement('tbody'));
 
@@ -28,20 +30,20 @@ export const highlightActiveSort = (infoRow: HTMLElement, activeSort: SortVarian
   const commentsElement = getCommentsElement(clonedInfoRow);
 
   if (activeSort === 'points' && pointsElement) {
-    hightlightText(pointsElement);
+    highlightText(pointsElement);
   }
 
   if (activeSort === 'time' && timeElement) {
-    hightlightText(timeElement);
+    highlightText(timeElement);
   }
 
   if (activeSort === 'comments' && commentsElement) {
-    hightlightText(commentsElement);
+    highlightText(commentsElement);
   }
 
   return clonedInfoRow;
 };
 
-const hightlightText = (element: HTMLElement) => {
+const highlightText = (element: HTMLElement) => {
   element.style.fontWeight = 'bold';
 };

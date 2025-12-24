@@ -10,6 +10,8 @@ export const useParsedRows = (): { parsedRows: ParsedRow[]; footerRows: HTMLElem
 
   useEffect(() => {
     const tableBody = getTableBody();
+    if (!tableBody) return;
+
     const titleRows = [...getTitleRows(tableBody)];
     const infoRows = [...getInfoRows(tableBody)];
     const spacerRows = [...getSpacerRows(tableBody)];

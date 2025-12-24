@@ -3,6 +3,15 @@
 ## Unreleased
 
 * `new` active sort column is now highlighted with bold text
+* `fix` fixed array mutation bug in sortRows (now creates a copy before sorting)
+* `fix` fixed null reference issues in parsers and selectors (added proper null checks)
+* `fix` fixed typo: hightlightText → highlightText
+* `fix` added missing footerRows dependency to useEffect in ControlPanel
+* `fix` added missing setActiveSort dependency to useCallback in SortButton
+* `perf` optimized getLastActiveSort to use useState initializer instead of calling on every render
+* `chg` improved localStorage error handling with try/catch blocks
+* `chg` simplified CSS class construction in SortButton (template literal instead of array join)
+* `chg` extracted POLL_INTERVAL_MS constant in content.tsx
 * `chg` added SortOption type and refactored SortButton to use it
 * `chg` changed reset button text from 'reset' to 'default' and shortcut from 'R' to 'D'
 * `chg` moved sortOptions array outside ControlPanel component

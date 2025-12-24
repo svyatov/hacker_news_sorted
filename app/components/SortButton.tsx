@@ -12,20 +12,19 @@ type ControlPanelButtonProps = {
 const SortButton = ({ sortOption, activeSort, setActiveSort }: ControlPanelButtonProps): ReactElement => {
   const { sortBy, text, shortcut } = sortOption;
   const isActive = activeSort === sortBy;
-  const defaultSort = sortBy === 'default';
-  const cssClasses = ['hns-btn', isActive ? 'hns-active' : ''].join(' ');
+  const cssClasses = `hns-btn${isActive ? ' hns-active' : ''}`;
 
   const updateActiveSort = useCallback(() => {
     if (isActive) return;
     setActiveSort(sortBy);
     setLastActiveSort(sortBy);
-  }, [sortBy, isActive]);
+  }, [sortBy, isActive, setActiveSort]);
 
   return (
     <span
       onClick={updateActiveSort}
       className={cssClasses}
-      title={defaultSort ? 'Original sort order' : `Sort by ${sortBy}`}>
+      title={sortBy === 'default' ? 'Original sort order' : `Sort by ${sortBy}`}>
       <span className="hns-btn-text">{text}</span>
       <span className="hns-btn-shortcut">{shortcut}</span>
     </span>

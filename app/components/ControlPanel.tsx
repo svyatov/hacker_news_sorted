@@ -17,13 +17,12 @@ const sortOptions: SortOption[] = [
 const sortOptionsCount = sortOptions.length - 1;
 
 const ControlPanel = (): ReactElement => {
-  const lastActiveSort = getLastActiveSort();
-  const [activeSort, setActiveSort] = useState<SortVariant>(lastActiveSort);
+  const [activeSort, setActiveSort] = useState<SortVariant>(() => getLastActiveSort());
   const { parsedRows, footerRows } = useParsedRows();
 
   useEffect(() => {
     updateTable(sortRows(parsedRows, activeSort), footerRows, activeSort);
-  }, [activeSort, parsedRows]);
+  }, [activeSort, parsedRows, footerRows]);
 
   return (
     <>

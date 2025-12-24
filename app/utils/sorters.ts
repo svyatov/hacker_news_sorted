@@ -8,7 +8,7 @@ export const sortRows = (parsedRows: ParsedRow[], sortBy: SortVariant): ParsedRo
     case 'points':
       return sortByKey(parsedRows, 'points');
     case 'time':
-      return sortByKey(parsedRows, 'time', 'asc');
+      return sortByKey(parsedRows, 'time');
     case 'comments':
       return sortByKey(parsedRows, 'comments');
     default:
@@ -17,7 +17,7 @@ export const sortRows = (parsedRows: ParsedRow[], sortBy: SortVariant): ParsedRo
 };
 
 const sortByKey = (parsedRows: ParsedRow[], key: SortableKey, order: SortOrder = 'desc'): ParsedRow[] => {
-  return parsedRows.sort((rowA, rowB) => {
+  return [...parsedRows].sort((rowA, rowB) => {
     return order === 'asc' ? rowA[key] - rowB[key] : rowB[key] - rowA[key];
   });
 };
