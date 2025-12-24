@@ -11,6 +11,7 @@
 * `perf` replaced polling mechanism with MutationObserver in content.tsx for better performance
 * `perf` optimized getLastActiveSort to use useState initializer instead of calling on every render
 * `perf` added useMemo for parsedRows to memoize expensive DOM parsing operations
+* `perf` replaced DOM cloning with CSS classes in highlightActiveSort to avoid expensive cloneNode operations
 * `chg` improved localStorage error handling with try/catch blocks
 * `chg` simplified CSS class construction in SortButton (template literal instead of array join)
 * `chg` extracted root element injection logic into injectRootElement function in content.tsx

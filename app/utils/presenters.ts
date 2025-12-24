@@ -1,3 +1,4 @@
+import { HIGHLIGHT_CLASS, HIGHLIGHT_SELECTOR } from '~app/constants';
 import type { ParsedRow, SortVariant } from '~app/types';
 import { getCommentsElement, getPointsElement, getTableBody, getTimeElement } from '~app/utils/selectors';
 
@@ -24,26 +25,27 @@ export const updateTable = (parsedRows: ParsedRow[], footerRows: HTMLElement[], 
 };
 
 export const highlightActiveSort = (infoRow: HTMLElement, activeSort: SortVariant): HTMLElement => {
-  const clonedInfoRow = infoRow.cloneNode(true) as HTMLElement;
-  const pointsElement = getPointsElement(clonedInfoRow);
-  const timeElement = getTimeElement(clonedInfoRow);
-  const commentsElement = getCommentsElement(clonedInfoRow);
+  const previousHighlights = infoRow.querySelector(HIGHLIGHT_SELECTOR);
+
+  if (previousHighlights) {
+    previousHighlights.classList.remove(HIGHLIGHT_CLASS);
+  }
+
+  if (activeSort === 'default') {
+    return infoRow;
+  }
+
+  const pointsElement = getPointsElement(infoRow);
+  const timeElement = getTimeElement(infoRow);
+  const commentsElement = getCommentsElement(infoRow);
 
   if (activeSort === 'points' && pointsElement) {
-    highlightText(pointsElement);
+    pointsElement.classList.add(HIGHLIGHT_CLASS);
+  } else if (activeSort === 'time' && timeElement) {
+    timeElement.classList.add(HIGHLIGHT_CLASS);
+  } else if (activeSort === 'comments' && commentsElement) {
+    commentsElement.classList.add(HIGHLIGHT_CLASS);
   }
 
-  if (activeSort === 'time' && timeElement) {
-    highlightText(timeElement);
-  }
-
-  if (activeSort === 'comments' && commentsElement) {
-    highlightText(commentsElement);
-  }
-
-  return clonedInfoRow;
-};
-
-const highlightText = (element: HTMLElement) => {
-  element.style.fontWeight = 'bold';
+  return infoRow;
 };

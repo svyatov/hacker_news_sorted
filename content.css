@@ -36,6 +36,10 @@
   margin: 0 10px;
 }
 
+.hns-highlight {
+  font-weight: bold;
+}
+
 @media screen and (min-width: 1280px) {
   .hns-btn-text {
     display: inline;

@@ -1,5 +1,7 @@
 export const CONTROL_PANEL_ROOT_ID = 'hns-control-panel';
 export const LAST_ACTIVE_SORT_KEY = 'hns-last-active-sort';
+export const HIGHLIGHT_CLASS = 'hns-highlight';
+export const HIGHLIGHT_SELECTOR = `.${HIGHLIGHT_CLASS}`;
 
 export const MINUTES_REGEX = /minute/;
 export const HOURS_REGEX = /hour/;
