@@ -26,7 +26,7 @@ export const loadAndSetupFixture = (filename: string): void => {
 
 /**
  * Load the HN homepage fixture.
- * Update with: pnpm fixture:update
+ * Update with: bun run fixture:update
  */
 export const loadHNHomepage = (): string => {
   return loadFixture('hn-homepage.html');
@@ -34,7 +34,7 @@ export const loadHNHomepage = (): string => {
 
 /**
  * Setup document with HN homepage fixture.
- * Update with: pnpm fixture:update
+ * Update with: bun run fixture:update
  */
 export const setupHNHomepage = (): void => {
   loadAndSetupFixture('hn-homepage.html');

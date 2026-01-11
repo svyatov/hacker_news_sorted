@@ -9,11 +9,11 @@
     "dev": "plasmo dev",
     "build": "plasmo build",
     "package": "plasmo package",
-    "release": "pnpm run build && pnpm run package",
+    "release": "bun run build && bun run package",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "fixture:update": "npx tsx app/__fixtures__/updateFixture.ts"
+    "fixture:update": "bun app/__fixtures__/updateFixture.ts"
   },
   "dependencies": {
     "plasmo": "0.90.5",
@@ -41,6 +41,5 @@
     "host_permissions": [
       "https://news.ycombinator.com/*"
     ]
-  },
-  "packageManager": "pnpm@10.26.2+sha512.0e308ff2005fc7410366f154f625f6631ab2b16b1d2e70238444dd6ae9d630a8482d92a451144debc492416896ed16f7b114a86ec68b8404b2443869e68ffda6"
+  }
 }

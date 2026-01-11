@@ -9,14 +9,14 @@ Hacker News Sorted is a Chrome extension that adds sorting capabilities to Hacke
 ## Commands
 
 ```bash
-pnpm dev            # Start development server (loads extension from build/chrome-mv3-dev)
-pnpm build          # Production build
-pnpm package        # Package extension for distribution
-pnpm release        # Build and package
-pnpm test           # Run tests
-pnpm test:watch     # Run tests in watch mode
-pnpm test:coverage  # Run tests with coverage report
-pnpm fixture:update # Fetch fresh HN HTML for test fixtures
+bun dev            # Start development server (loads extension from build/chrome-mv3-dev)
+bun run build      # Production build
+bun run package    # Package extension for distribution
+bun run release    # Build and package
+bun run test       # Run tests (uses Vitest)
+bun run test:watch # Run tests in watch mode
+bun run test:coverage # Run tests with coverage report
+bun run fixture:update # Fetch fresh HN HTML for test fixtures
 ```
 
 ## Architecture
@@ -75,7 +75,7 @@ Use `~` prefix for imports from project root (e.g., `~app/components/ControlPane
 - `app/__fixtures__/hn-homepage.html` - Real HN HTML snapshot for DOM testing
 - `app/__fixtures__/loadFixture.ts` - Helper functions to load fixtures
 - `app/__fixtures__/updateFixture.ts` - Script to refresh fixtures from live HN
-- Run `pnpm fixture:update` to refresh when HN markup changes
+- Run `bun run fixture:update` to refresh when HN markup changes
 
 ### Test Files
 Tests are co-located with source files using `.test.ts` / `.test.tsx` suffix:
