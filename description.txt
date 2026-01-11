@@ -1,0 +1,18 @@
+Sort Hacker News posts by points, time, or comments with one click.
+
+Features:
+- Sort by points (most upvoted)
+- Sort by time (newest first)
+- Sort by comments (most discussed)
+- Restore default HN ranking
+- Remembers your preferred sort
+- Keyboard shortcuts for quick sorting
+
+Keyboard shortcuts:
+P = Points | T = Time | C = Comments | D = Default
+
+Changelog:
+v2.2 - Added keyboard shortcuts, Vimium compatibility
+v2.1 - Active sort column highlighting, performance improvements
+v2.0 - Complete rewrite with TypeScript, persistent preferences
+v1.0 - Initial release
