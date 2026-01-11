@@ -6,12 +6,14 @@
 * `new` added Vimium compatibility - shortcuts auto-disable if another extension handles the keys
 * `new` added comprehensive test suite with Vitest and React Testing Library (94 tests)
 * `new` added fixture system for DOM testing with real HN HTML snapshots
-* `new` added `pnpm fixture:update` script to refresh test fixtures
+* `new` added `bun run fixture:update` script to refresh test fixtures
+* `new` added GitHub Actions CI workflow for running tests and build
 * `fix` fixed type safety issue in useParsedRows (footer array could contain undefined)
 * `perf` changed innerText to textContent in parsers to avoid layout reflows
+* `chg` switched from pnpm to bun as package manager
 * `chg` extracted HN DOM selectors and CSS classes to constants module
 * `chg` removed unused regex constants (MINUTES_REGEX, HOURS_REGEX, DAYS_REGEX)
-* `chg` added test scripts: `pnpm test`, `pnpm test:watch`, `pnpm test:coverage`
+* `chg` added test scripts: `bun run test`, `bun run test:watch`, `bun run test:coverage`
 
 ## v2.1.0
 

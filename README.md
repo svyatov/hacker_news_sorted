@@ -17,13 +17,13 @@ git clone git://github.com/svyatov/hacker_news_sorted.git
 ### Step 2
 
 ```bash
-pnpm install
+bun install
 ```
 
 ### Step 3
 
 ```bash
-pnpm dev
+bun dev
 ```
 
 ### Step 4
