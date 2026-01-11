@@ -1,40 +1,42 @@
 # Hacker News Sorted
 
-Extension for [Google Chrome](https://www.google.com/chrome/) which gives the ability to sort the news on the [Hacker News](https://news.ycombinator.com) site!
+[![Chrome Web Store Version](https://img.shields.io/chrome-web-store/v/djkcnbncofmjekhlhemlkinfpkamlkaj)](https://chrome.google.com/webstore/detail/hacker-news-sorted/djkcnbncofmjekhlhemlkinfpkamlkaj)
+[![Chrome Web Store Users](https://img.shields.io/chrome-web-store/users/djkcnbncofmjekhlhemlkinfpkamlkaj)](https://chrome.google.com/webstore/detail/hacker-news-sorted/djkcnbncofmjekhlhemlkinfpkamlkaj)
+[![Chrome Web Store Rating](https://img.shields.io/chrome-web-store/stars/djkcnbncofmjekhlhemlkinfpkamlkaj)](https://chrome.google.com/webstore/detail/hacker-news-sorted/djkcnbncofmjekhlhemlkinfpkamlkaj)
+[![CI](https://img.shields.io/github/actions/workflow/status/svyatov/hacker_news_sorted/main.yml)](https://github.com/svyatov/hacker_news_sorted/actions)
+[![License](https://img.shields.io/github/license/svyatov/hacker_news_sorted)](https://github.com/svyatov/hacker_news_sorted/blob/main/LICENSE)
+
+A Chrome extension that adds sorting capabilities to [Hacker News](https://news.ycombinator.com). Quickly re-order posts by points, time, or comment count with a single click or keyboard shortcut.
+
+## Features
+
+- **Sort by Points** — Find the most upvoted stories
+- **Sort by Time** — See the newest posts first
+- **Sort by Comments** — Discover the most discussed topics
+- **Restore Default** — Return to HN's original ranking
+- **Keyboard Shortcuts** — Press `P`, `T`, `C`, or `D` to sort instantly
+- **Persistent Preference** — Your last sort choice is remembered across sessions
+- **Visual Highlighting** — Active sort column is highlighted for clarity
+- **Vimium Compatible** — Shortcuts auto-disable if Vimium or similar extensions are detected
 
 ## Install
 
 [![Install](images/webstore-badge.png)](https://chrome.google.com/webstore/detail/hacker-news-sorted/djkcnbncofmjekhlhemlkinfpkamlkaj)
 
-## Manual install
-
-### Step 1
+## Development
 
 ```bash
 git clone git://github.com/svyatov/hacker_news_sorted.git
-```
-
-### Step 2
-
-```bash
+cd hacker_news_sorted
 bun install
-```
-
-### Step 3
-
-```bash
 bun dev
 ```
 
-### Step 4
+Then load the extension in Chrome: go to `chrome://extensions`, enable "Developer mode", click "Load unpacked", and select the `build/chrome-mv3-dev` folder.
 
-Open your browser and load the appropriate development build. For example, if
-you are developing for the Chrome browser, using manifest v3, use:
-`build/chrome-mv3-dev`.
+## Issues
 
-## Questions, suggestions and bugs
-
-* https://github.com/svyatov/hacker_news_sorted/issues
+Found a bug or have a suggestion? [Open an issue](https://github.com/svyatov/hacker_news_sorted/issues).
 
 ## Contributing
 
