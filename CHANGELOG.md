@@ -14,6 +14,7 @@
 * `chg` extracted HN DOM selectors and CSS classes to constants module
 * `chg` removed unused regex constants (MINUTES_REGEX, HOURS_REGEX, DAYS_REGEX)
 * `chg` added test scripts: `bun run test`, `bun run test:watch`, `bun run test:coverage`
+* `sec` fixed security vulnerabilities via dependency overrides (msgpackr, lmdb, svelte, content-security-policy-parser)
 
 ## v2.1.0
 
