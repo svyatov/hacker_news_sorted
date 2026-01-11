@@ -1,6 +1,6 @@
 /**
  * Utility script to fetch and update the HN homepage fixture.
- * Run with: npx tsx app/__fixtures__/updateFixture.ts
+ * Run with: bun run fixture:update
  *
  * This is similar to VCR in Ruby - it captures real HTML for testing.
  */
