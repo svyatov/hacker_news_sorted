@@ -15,7 +15,7 @@ export const useParsedRows = (): { parsedRows: ParsedRow[]; footerRows: HTMLElem
     const infoRows = [...getInfoRows(tableBody)];
     const spacerRows = [...getSpacerRows(tableBody)];
 
-    const footer = [titleRows.pop(), infoRows.pop()];
+    const footer = [titleRows.pop(), infoRows.pop()].filter((row): row is HTMLElement => row !== undefined);
 
     const parsed = titleRows.map((_titleRow, index) => {
       return {

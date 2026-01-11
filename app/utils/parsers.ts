@@ -5,7 +5,7 @@ export const getPoints = (infoRow: HTMLElement): number => {
   const pointsElement = getPointsElement(infoRow);
 
   if (pointsElement) {
-    return stringToNumber(pointsElement.innerText);
+    return stringToNumber(pointsElement.textContent ?? '');
   }
 
   return 0;
@@ -37,7 +37,7 @@ export const getComments = (infoRow: HTMLElement): number => {
   const commentsElement = getCommentsElement(infoRow);
 
   if (commentsElement) {
-    return stringToNumber(commentsElement.innerText);
+    return stringToNumber(commentsElement.textContent ?? '');
   }
 
   return 0;

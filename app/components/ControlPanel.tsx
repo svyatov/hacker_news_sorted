@@ -1,11 +1,12 @@
-import { Fragment, useEffect, useMemo, useState, type ReactElement } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
 
 import SortButton from '~app/components/SortButton';
+import { useKeyboardShortcuts } from '~app/hooks/useKeyboardShortcuts';
 import { useParsedRows } from '~app/hooks/useParsedRows';
 import type { SortOption, SortVariant } from '~app/types';
 import { updateTable } from '~app/utils/presenters';
 import { sortRows } from '~app/utils/sorters';
-import { getLastActiveSort } from '~app/utils/storage';
+import { getLastActiveSort, setLastActiveSort } from '~app/utils/storage';
 
 const sortOptions: SortOption[] = [
   { sortBy: 'points', text: 'points', shortcut: 'P' },
@@ -25,6 +26,19 @@ const ControlPanel = (): ReactElement => {
   useEffect(() => {
     updateTable(sortedRows, footerRows, activeSort);
   }, [sortedRows, footerRows, activeSort]);
+
+  // Handler for keyboard shortcuts
+  const handleSort = useCallback(
+    (sortBy: SortVariant) => {
+      if (sortBy === activeSort) return;
+      setActiveSort(sortBy);
+      setLastActiveSort(sortBy);
+    },
+    [activeSort]
+  );
+
+  // Enable keyboard shortcuts (P, T, C, D keys)
+  useKeyboardShortcuts({ onSort: handleSort });
 
   return (
     <>
