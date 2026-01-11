@@ -15,6 +15,7 @@
 * `chg` removed unused regex constants (MINUTES_REGEX, HOURS_REGEX, DAYS_REGEX)
 * `chg` added test scripts: `bun run test`, `bun run test:watch`, `bun run test:coverage`
 * `sec` fixed security vulnerabilities via dependency overrides (msgpackr, lmdb, svelte, content-security-policy-parser)
+* `chg` removed unused submit.yml GitHub Actions workflow
 
 ## v2.1.0
 
