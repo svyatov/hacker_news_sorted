@@ -1,5 +1,18 @@
 # Changelog
 
+## v2.2.0
+
+* `new` added keyboard shortcuts for sorting (P=points, T=time, C=comments, D=default)
+* `new` added Vimium compatibility - shortcuts auto-disable if another extension handles the keys
+* `new` added comprehensive test suite with Vitest and React Testing Library (94 tests)
+* `new` added fixture system for DOM testing with real HN HTML snapshots
+* `new` added `pnpm fixture:update` script to refresh test fixtures
+* `fix` fixed type safety issue in useParsedRows (footer array could contain undefined)
+* `perf` changed innerText to textContent in parsers to avoid layout reflows
+* `chg` extracted HN DOM selectors and CSS classes to constants module
+* `chg` removed unused regex constants (MINUTES_REGEX, HOURS_REGEX, DAYS_REGEX)
+* `chg` added test scripts: `pnpm test`, `pnpm test:watch`, `pnpm test:coverage`
+
 ## v2.1.0
 
 * `new` active sort column is now highlighted with bold text
