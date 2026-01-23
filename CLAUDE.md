@@ -16,6 +16,7 @@ bun run release    # Build and package
 bun run test       # Run tests (uses Vitest)
 bun run test:watch # Run tests in watch mode
 bun run test:coverage # Run tests with coverage report
+bun run lint       # Run ESLint and Prettier checks
 bun run fixture:update # Fetch fresh HN HTML for test fixtures
 ```
 
@@ -67,6 +68,13 @@ bun run fixture:update # Fetch fresh HN HTML for test fixtures
 
 Use `~` prefix for imports from project root (e.g., `~app/components/ControlPanel`).
 
+## Linting
+
+- **ESLint**: `eslint.config.ts` with TypeScript and React Hooks plugins
+- **Prettier**: `.prettierrc.mjs` with single quotes, trailing commas, 120 char width
+- **Pre-commit hook**: `simple-git-hooks` + `lint-staged` runs ESLint on `*.{ts,tsx}` and Prettier on all files
+- Run `bun run prepare` after cloning to install git hooks
+
 ## Code Style
 
 - Prettier configured with single quotes, trailing commas, 120 char width
@@ -92,3 +100,36 @@ Tests are co-located with source files using `.test.ts` / `.test.tsx` suffix:
 - `app/utils/*.test.ts` - Unit tests for utility functions
 - `app/components/*.test.tsx` - Component tests
 - `app/hooks/*.test.ts` - Hook tests
+
+## Commit Conventions
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) for commit messages:
+
+- `feat:` — new feature
+- `fix:` — bug fix
+- `perf:` — performance improvement
+- `refactor:` — code change that neither fixes a bug nor adds a feature
+- `docs:` — documentation only
+- `style:` — formatting, linting (no code logic change)
+- `test:` — adding/updating tests
+- `chore:` — maintenance, dependencies, config
+- `ci:` — CI/CD changes
+- `build:` — build system or external dependencies
+
+Use a scope when relevant: `feat(shortcuts): add vim-style navigation`
+
+## Changelog
+
+The changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format with these categories: Added, Changed, Deprecated, Removed, Fixed, Security.
+
+## Chrome Web Store Description
+
+`description.txt` is the copy used on the Chrome Web Store listing page. It contains a plain-language feature summary and a short changelog for end users. When doing a version bump/release, add a one-line summary to the `Changelog:` section in this file (e.g., `v2.2 - Added keyboard shortcuts, Vimium compatibility`). Keep it non-technical.
+
+## Before Committing
+
+Before committing any meaningful change, ensure:
+
+1. `README.md` is updated if the change affects user-facing features or setup instructions
+2. `CLAUDE.md` is updated if the change affects architecture, commands, or development workflow
+3. `CHANGELOG.md` has the change listed under the `## [Unreleased]` section

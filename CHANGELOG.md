@@ -1,88 +1,155 @@
 # Changelog
 
-## v2.2.0
+All notable changes to this project will be documented in this file.
 
-- `new` added keyboard shortcuts for sorting (P=points, T=time, C=comments, D=default)
-- `new` added Vimium compatibility - shortcuts auto-disable if another extension handles the keys
-- `new` added comprehensive test suite with Vitest and React Testing Library (94 tests)
-- `new` added fixture system for DOM testing with real HN HTML snapshots
-- `new` added `bun run fixture:update` script to refresh test fixtures
-- `new` added GitHub Actions CI workflow for running tests and build
-- `fix` fixed type safety issue in useParsedRows (footer array could contain undefined)
-- `perf` changed innerText to textContent in parsers to avoid layout reflows
-- `chg` switched from pnpm to bun as package manager
-- `chg` extracted HN DOM selectors and CSS classes to constants module
-- `chg` removed unused regex constants (MINUTES_REGEX, HOURS_REGEX, DAYS_REGEX)
-- `chg` added test scripts: `bun run test`, `bun run test:watch`, `bun run test:coverage`
-- `sec` fixed security vulnerabilities via dependency overrides (msgpackr, lmdb, svelte, content-security-policy-parser)
-- `chg` removed unused submit.yml GitHub Actions workflow
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v2.1.0
+## [Unreleased]
 
-- `new` active sort column is now highlighted with bold text
-- `fix` fixed array mutation bug in sortRows (now creates a copy before sorting)
-- `fix` fixed null reference issues in parsers and selectors (added proper null checks)
-- `fix` fixed typo: hightlightText → highlightText
-- `fix` fixed date validation in getTime parser (now correctly checks isNaN instead of === 0)
-- `fix` added missing footerRows dependency to useEffect in ControlPanel
-- `fix` added missing setActiveSort dependency to useCallback in SortButton
-- `perf` replaced polling mechanism with MutationObserver in content.tsx for better performance
-- `perf` optimized getLastActiveSort to use useState initializer instead of calling on every render
-- `perf` added useMemo for parsedRows to memoize expensive DOM parsing operations
-- `perf` replaced DOM cloning with CSS classes in highlightActiveSort to avoid expensive cloneNode operations
-- `perf` memoized sorted rows calculation in ControlPanel to avoid re-sorting on every render
-- `chg` improved localStorage error handling with try/catch blocks
-- `chg` simplified CSS class construction in SortButton (template literal instead of array join)
-- `chg` extracted root element injection logic into injectRootElement function in content.tsx
-- `chg` refactored highlightActiveSort to use lookup map instead of if/else chain
-- `chg` added NonDefaultSortVariant type for better type safety
-- `chg` removed unused relativeTimeToMinutes function from converters
-- `chg` added SortOption type and refactored SortButton to use it
-- `chg` changed reset button text from 'reset' to 'default' and shortcut from 'R' to 'D'
-- `chg` moved sortOptions array outside ControlPanel component
-- `chg` removed clsx dependency, replaced with manual className construction
-- `chg` refactored constants naming convention to UPPER_SNAKE_CASE
-- `chg` moved regex constants from converters to constants module
-- `chg` added editor settings configuration (.cursor/settings.json)
-- `chg` migrated prettier config from .mjs to .ts format and cleaned up (removed JSDoc, formatting adjustments)
+### Added
 
-## v2.0.3
+- ESLint with TypeScript and React Hooks plugins
+- Prettier check in CI lint step
+- Pre-commit hook via simple-git-hooks and lint-staged
+- Chrome Web Store description file (`description.txt`)
 
-- `fix` fixed time parsing by extracting date from timestamp title attribute
-- `chg` updated dependencies (React 19, Plasmo 0.90.5, and others)
+### Changed
 
-## v2.0.2
+- Updated dev dependencies to latest versions
+- Improved README with badges, features section, and cleaner layout
+- Switched to Conventional Commits and Keep a Changelog formats
+- Removed Cursor-specific editor settings
 
-- `fix` fixes typo
+## [2.2.0]
 
-## v2.0.1
+### Added
 
-- `new` support lower resolutions by switching to single letters
-- `chg` control panel lower-cased to better fit the design
+- Keyboard shortcuts for sorting (P=points, T=time, C=comments, D=default)
+- Vimium compatibility — shortcuts auto-disable if another extension handles the keys
+- Comprehensive test suite with Vitest and React Testing Library (94 tests)
+- Fixture system for DOM testing with real HN HTML snapshots
+- `bun run fixture:update` script to refresh test fixtures
+- GitHub Actions CI workflow for running tests and build
 
-## v2.0.0
+### Fixed
 
-- `new` the project is rewritten with TypeScript and [Plasmo framework](https://docs.plasmo.com)
-- `new` the chosen sorting method is now persists across the sessions
-- `new` return to the original sort order is now available
-- `chg` the license is changed to MIT
-- `chg` switched to Manifest v3
-- `chg` changelog moved to the separate file
+- Type safety issue in useParsedRows (footer array could contain undefined)
 
-## v1.0.1
+### Changed
 
-- `fix` query selectors fixed
-- `chg` code slightly simplified and reformatted with prettier
+- `innerText` to `textContent` in parsers to avoid layout reflows
+- Switched from pnpm to bun as package manager
+- Extracted HN DOM selectors and CSS classes to constants module
+- Removed unused regex constants (MINUTES_REGEX, HOURS_REGEX, DAYS_REGEX)
+- Added test scripts: `bun run test`, `bun run test:watch`, `bun run test:coverage`
+- Removed unused submit.yml GitHub Actions workflow
 
-## v1.0.0
+### Security
 
-- `new` extension uploaded to [Google Web Store](https://chrome.google.com/webstore/detail/hacker-news-sorted/djkcnbncofmjekhlhemlkinfpkamlkaj)
-- `add` icons and screenshots added
+- Fixed vulnerabilities via dependency overrides (msgpackr, lmdb, svelte, content-security-policy-parser)
 
-## v0.0.2
+## [2.1.0]
 
-- `add` menu to the top right corner for sorting by points, time and comments (points is default)
+### Added
 
-## v0.0.1
+- Active sort column is now highlighted with bold text
 
-- `add` auto-sorting news by points in descending order
+### Fixed
+
+- Array mutation bug in sortRows (now creates a copy before sorting)
+- Null reference issues in parsers and selectors (added proper null checks)
+- Typo: hightlightText → highlightText
+- Date validation in getTime parser (now correctly checks isNaN instead of === 0)
+- Missing footerRows dependency to useEffect in ControlPanel
+- Missing setActiveSort dependency to useCallback in SortButton
+
+### Changed
+
+- Replaced polling mechanism with MutationObserver in content.tsx for better performance
+- Optimized getLastActiveSort to use useState initializer instead of calling on every render
+- Added useMemo for parsedRows to memoize expensive DOM parsing operations
+- Replaced DOM cloning with CSS classes in highlightActiveSort to avoid expensive cloneNode operations
+- Memoized sorted rows calculation in ControlPanel to avoid re-sorting on every render
+- Improved localStorage error handling with try/catch blocks
+- Simplified CSS class construction in SortButton (template literal instead of array join)
+- Extracted root element injection logic into injectRootElement function in content.tsx
+- Refactored highlightActiveSort to use lookup map instead of if/else chain
+- Added NonDefaultSortVariant type for better type safety
+- Removed unused relativeTimeToMinutes function from converters
+- Added SortOption type and refactored SortButton to use it
+- Changed reset button text from 'reset' to 'default' and shortcut from 'R' to 'D'
+- Moved sortOptions array outside ControlPanel component
+- Removed clsx dependency, replaced with manual className construction
+- Refactored constants naming convention to UPPER_SNAKE_CASE
+- Moved regex constants from converters to constants module
+- Migrated prettier config from .mjs to .ts format
+
+## [2.0.3]
+
+### Fixed
+
+- Time parsing by extracting date from timestamp title attribute
+
+### Changed
+
+- Updated dependencies (React 19, Plasmo 0.90.5, and others)
+
+## [2.0.2]
+
+### Fixed
+
+- Typo fix
+
+## [2.0.1]
+
+### Added
+
+- Support lower resolutions by switching to single letters
+
+### Changed
+
+- Control panel lower-cased to better fit the design
+
+## [2.0.0]
+
+### Added
+
+- Rewritten with TypeScript and [Plasmo framework](https://docs.plasmo.com)
+- Chosen sorting method now persists across sessions
+- Return to original sort order is now available
+
+### Changed
+
+- License changed to MIT
+- Switched to Manifest v3
+- Changelog moved to separate file
+
+## [1.0.1]
+
+### Fixed
+
+- Query selectors fixed
+
+### Changed
+
+- Code slightly simplified and reformatted with prettier
+
+## [1.0.0]
+
+### Added
+
+- Extension uploaded to [Google Web Store](https://chrome.google.com/webstore/detail/hacker-news-sorted/djkcnbncofmjekhlhemlkinfpkamlkaj)
+- Icons and screenshots
+
+## [0.0.2]
+
+### Added
+
+- Menu to the top right corner for sorting by points, time and comments (points is default)
+
+## [0.0.1]
+
+### Added
+
+- Auto-sorting news by points in descending order
