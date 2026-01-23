@@ -18,6 +18,7 @@ bun run test:watch # Run tests in watch mode
 bun run test:coverage # Run tests with coverage report
 bun run lint       # Run ESLint and Prettier checks
 bun run fixture:update # Fetch fresh HN HTML for test fixtures
+bun run screenshots    # Generate Chrome Web Store screenshots (requires `bun run build` first)
 ```
 
 ## Architecture
@@ -55,7 +56,10 @@ bun run fixture:update # Fetch fresh HN HTML for test fixtures
 ### Constants
 
 - `app/constants.ts` - Centralized constants including:
-  - Extension constants (CSS classes, localStorage keys)
+  - Extension constants (`CONTROL_PANEL_ROOT_ID`, `LAST_ACTIVE_SORT_KEY`)
+  - `CSS_CLASSES` - Extension CSS class names (highlight, buttons, labels)
+  - `CSS_SELECTORS` - Derived CSS selectors from class names
+  - `SORT_OPTIONS` - Sort option configuration array (sort variant, display text, keyboard shortcut)
   - `HN_SELECTORS` - DOM selectors for HN page structure
   - `HN_CLASSES` - HN CSS class names for building test fixtures
 
@@ -100,6 +104,19 @@ Tests are co-located with source files using `.test.ts` / `.test.tsx` suffix:
 - `app/utils/*.test.ts` - Unit tests for utility functions
 - `app/components/*.test.tsx` - Component tests
 - `app/hooks/*.test.ts` - Hook tests
+
+## Screenshots
+
+Chrome Web Store screenshots are auto-generated using Playwright:
+
+- `scripts/generate-screenshots.ts` - Entry point, orchestrates browser setup and capture
+- `scripts/screenshots/browser.ts` - Browser launch, extension injection, variant capture loop
+- `scripts/screenshots/constants.ts` - Variant configs (sort type, title, subtitle, filename), overlay/arrow styles
+- `scripts/screenshots/overlays.ts` - Injects descriptive overlay cards and pointer arrows into the page
+- `scripts/screenshots/paths.ts` - Resolves build output and image directory paths
+- `scripts/screenshots/types.ts` - `VariantConfig` type
+
+Workflow: `bun run build` then `bun run screenshots`. Output goes to `images/`.
 
 ## Commit Conventions
 
