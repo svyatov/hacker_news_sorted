@@ -16,3 +16,5 @@ v2.2 - Added keyboard shortcuts, Vimium compatibility
 v2.1 - Active sort column highlighting, performance improvements
 v2.0 - Complete rewrite with TypeScript, persistent preferences
 v1.0 - Initial release
+
+Source code: https://github.com/svyatov/hacker_news_sorted
