@@ -1,21 +1,15 @@
 import { Fragment, useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
 
 import SortButton from '~app/components/SortButton';
+import { HNS_CLASSES, SORT_OPTIONS } from '~app/constants';
 import { useKeyboardShortcuts } from '~app/hooks/useKeyboardShortcuts';
 import { useParsedRows } from '~app/hooks/useParsedRows';
-import type { SortOption, SortVariant } from '~app/types';
+import type { SortVariant } from '~app/types';
 import { updateTable } from '~app/utils/presenters';
 import { sortRows } from '~app/utils/sorters';
 import { getLastActiveSort, setLastActiveSort } from '~app/utils/storage';
 
-const sortOptions: SortOption[] = [
-  { sortBy: 'points', text: 'points', shortcut: 'P' },
-  { sortBy: 'time', text: 'time', shortcut: 'T' },
-  { sortBy: 'comments', text: 'comments', shortcut: 'C' },
-  { sortBy: 'default', text: 'default', shortcut: 'D' },
-];
-
-const sortOptionsCount = sortOptions.length - 1;
+const sortOptionsCount = SORT_OPTIONS.length - 1;
 
 const ControlPanel = (): ReactElement => {
   const [activeSort, setActiveSort] = useState<SortVariant>(() => getLastActiveSort());
@@ -42,16 +36,16 @@ const ControlPanel = (): ReactElement => {
 
   return (
     <>
-      <span className="hns-sort-by-label">sort by:</span>
+      <span className={HNS_CLASSES.SORT_BY_LABEL}>sort by:</span>
 
-      {sortOptions.map((option, index) => (
+      {SORT_OPTIONS.map((option, index) => (
         <Fragment key={option.sortBy}>
           <SortButton sortOption={option} activeSort={activeSort} setActiveSort={setActiveSort} />
           {index < sortOptionsCount && ' · '}
         </Fragment>
       ))}
 
-      <span className="hns-divider">|</span>
+      <span className={HNS_CLASSES.DIVIDER}>|</span>
     </>
   );
 };
