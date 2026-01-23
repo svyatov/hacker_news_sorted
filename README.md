@@ -10,7 +10,9 @@ Sort [Hacker News](https://news.ycombinator.com) your way — by points, time, o
 
 ## Install
 
-[![Install](images/webstore-badge.png)](https://chrome.google.com/webstore/detail/hacker-news-sorted/djkcnbncofmjekhlhemlkinfpkamlkaj)
+<a href="https://chrome.google.com/webstore/detail/hacker-news-sorted/djkcnbncofmjekhlhemlkinfpkamlkaj">
+  <img src="images/webstore-badge.png" alt="Available in the Chrome Web Store" width="248" height="75">
+</a>
 
 ## Features
 
