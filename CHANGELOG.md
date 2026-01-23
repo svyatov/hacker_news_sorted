@@ -7,11 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- Sort buttons use semantic `<button>` elements with `aria-pressed` for accessibility
-- Added visible `:focus-visible` outline for keyboard navigation of sort buttons
-
 ### Added
 
 - ESLint with TypeScript and React Hooks plugins
@@ -21,12 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Playwright-based screenshot generator for Chrome Web Store images (`bun run screenshots`)
 - New screenshots: default order and compact/responsive mode
 
-### Security
-
-- Added explicit read-only permissions to CI workflow to restrict GITHUB_TOKEN scope
-
 ### Changed
 
+- Sort buttons use semantic `<button>` elements with `aria-pressed` for accessibility
+- Added visible `:focus-visible` outline for keyboard navigation of sort buttons
 - Replaced Chrome Web Store badge with high-resolution version for Retina displays
 - Updated dev dependencies to latest versions
 - Improved README with badges, features section, and cleaner layout
@@ -35,6 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Consolidated CSS class constants into `CSS_CLASSES`, `CSS_SELECTORS`, and `SORT_OPTIONS` objects
 - Added `data-sort` attribute to sort buttons for programmatic access
 - Regenerated Chrome Web Store screenshots with current HN content and optimized file sizes
+
+### Security
+
+- Added explicit read-only permissions to CI workflow to restrict GITHUB_TOKEN scope
 
 ## [2.2.0]
 
