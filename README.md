@@ -43,6 +43,10 @@ Found a bug or have a suggestion? [Open an issue](https://github.com/svyatov/hac
 1. Fork it
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Make your changes and run tests (`bun run test`)
-4. Commit your changes (`git commit -am 'Added some feature'`)
+4. Commit using [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) format (`git commit -m 'feat: add some feature'`)
 5. Push to the branch (`git push origin my-new-feature`)
 6. Create new Pull Request
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes, following [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
