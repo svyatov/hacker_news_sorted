@@ -22,14 +22,16 @@ const SortButton = ({ sortOption, activeSort, setActiveSort }: ControlPanelButto
   }, [sortBy, isActive, setActiveSort]);
 
   return (
-    <span
+    <button
+      type="button"
       onClick={updateActiveSort}
       className={cssClasses}
       data-sort={sortBy}
+      aria-pressed={isActive}
       title={sortBy === 'default' ? 'Original sort order' : `Sort by ${sortBy}`}>
       <span className={CSS_CLASSES.BTN_TEXT}>{text}</span>
       <span className={CSS_CLASSES.BTN_SHORTCUT}>{shortcut}</span>
-    </span>
+    </button>
   );
 };
 

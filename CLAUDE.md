@@ -137,7 +137,7 @@ Use a scope when relevant: `feat(shortcuts): add vim-style navigation`
 
 ## Changelog
 
-The changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format with these categories: Added, Changed, Deprecated, Removed, Fixed, Security.
+The changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format with these categories (in order): Added, Changed, Deprecated, Removed, Fixed, Security. Each category must appear at most once per release section — always append to an existing category rather than creating a duplicate.
 
 ## Chrome Web Store Description
 
