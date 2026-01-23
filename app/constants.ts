@@ -3,17 +3,20 @@ import type { SortOption } from '~app/types';
 // Extension constants
 export const CONTROL_PANEL_ROOT_ID = 'hns-control-panel';
 export const LAST_ACTIVE_SORT_KEY = 'hns-last-active-sort';
-export const HIGHLIGHT_CLASS = 'hns-highlight';
-export const HIGHLIGHT_SELECTOR = `.${HIGHLIGHT_CLASS}`;
 
 // Extension CSS classes
-export const HNS_CLASSES = {
+export const CSS_CLASSES = {
+  HIGHLIGHT: 'hns-highlight',
   SORT_BY_LABEL: 'hns-sort-by-label',
   BTN: 'hns-btn',
   BTN_TEXT: 'hns-btn-text',
   BTN_SHORTCUT: 'hns-btn-shortcut',
   ACTIVE: 'hns-active',
   DIVIDER: 'hns-divider',
+} as const;
+
+export const CSS_SELECTORS = {
+  HIGHLIGHT: `.${CSS_CLASSES.HIGHLIGHT}`,
 } as const;
 
 // Sort options configuration

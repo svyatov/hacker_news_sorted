@@ -2,7 +2,7 @@ import { readdirSync } from 'fs';
 import path from 'path';
 import { chromium } from 'playwright';
 
-import { CONTROL_PANEL_ROOT_ID, HNS_CLASSES } from '~app/constants';
+import { CONTROL_PANEL_ROOT_ID, CSS_CLASSES } from '~app/constants';
 import type { SortVariant } from '~app/types';
 
 // @ts-expect-error Bun-specific API
@@ -77,8 +77,8 @@ async function main() {
     if (variant.forceCompact) {
       await page.addStyleTag({
         content: `
-          #${CONTROL_PANEL_ROOT_ID} .${HNS_CLASSES.BTN_TEXT} { display: none !important; }
-          #${CONTROL_PANEL_ROOT_ID} .${HNS_CLASSES.BTN_SHORTCUT} { display: inline !important; }
+          #${CONTROL_PANEL_ROOT_ID} .${CSS_CLASSES.BTN_TEXT} { display: none !important; }
+          #${CONTROL_PANEL_ROOT_ID} .${CSS_CLASSES.BTN_SHORTCUT} { display: inline !important; }
         `,
       });
       await page.evaluate(() => {

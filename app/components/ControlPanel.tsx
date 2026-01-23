@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
 
 import SortButton from '~app/components/SortButton';
-import { HNS_CLASSES, SORT_OPTIONS } from '~app/constants';
+import { CSS_CLASSES, SORT_OPTIONS } from '~app/constants';
 import { useKeyboardShortcuts } from '~app/hooks/useKeyboardShortcuts';
 import { useParsedRows } from '~app/hooks/useParsedRows';
 import type { SortVariant } from '~app/types';
@@ -36,7 +36,7 @@ const ControlPanel = (): ReactElement => {
 
   return (
     <>
-      <span className={HNS_CLASSES.SORT_BY_LABEL}>sort by:</span>
+      <span className={CSS_CLASSES.SORT_BY_LABEL}>sort by:</span>
 
       {SORT_OPTIONS.map((option, index) => (
         <Fragment key={option.sortBy}>
@@ -45,7 +45,7 @@ const ControlPanel = (): ReactElement => {
         </Fragment>
       ))}
 
-      <span className={HNS_CLASSES.DIVIDER}>|</span>
+      <span className={CSS_CLASSES.DIVIDER}>|</span>
     </>
   );
 };

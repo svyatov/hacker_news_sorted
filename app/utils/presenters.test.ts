@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { HIGHLIGHT_CLASS, HN_CLASSES } from '~app/constants';
+import { CSS_CLASSES, HN_CLASSES } from '~app/constants';
 
 import { highlightActiveSort } from './presenters';
 
@@ -24,24 +24,24 @@ describe('presenters', () => {
     it('should highlight points element when sorting by points', () => {
       highlightActiveSort(infoRow, 'points');
       const score = infoRow.querySelector(`.${HN_CLASSES.SCORE}`);
-      expect(score?.classList.contains(HIGHLIGHT_CLASS)).toBe(true);
+      expect(score?.classList.contains(CSS_CLASSES.HIGHLIGHT)).toBe(true);
     });
 
     it('should highlight time element when sorting by time', () => {
       highlightActiveSort(infoRow, 'time');
       const age = infoRow.querySelector(`.${HN_CLASSES.AGE}`);
-      expect(age?.classList.contains(HIGHLIGHT_CLASS)).toBe(true);
+      expect(age?.classList.contains(CSS_CLASSES.HIGHLIGHT)).toBe(true);
     });
 
     it('should highlight comments element when sorting by comments', () => {
       highlightActiveSort(infoRow, 'comments');
       const comments = infoRow.querySelector('a[href^="item?id="]');
-      expect(comments?.classList.contains(HIGHLIGHT_CLASS)).toBe(true);
+      expect(comments?.classList.contains(CSS_CLASSES.HIGHLIGHT)).toBe(true);
     });
 
     it('should not add highlight for default sort', () => {
       highlightActiveSort(infoRow, 'default');
-      expect(infoRow.querySelector(`.${HIGHLIGHT_CLASS}`)).toBeNull();
+      expect(infoRow.querySelector(`.${CSS_CLASSES.HIGHLIGHT}`)).toBeNull();
     });
 
     it('should remove previous highlight when changing sort', () => {
@@ -49,17 +49,17 @@ describe('presenters', () => {
       highlightActiveSort(infoRow, 'comments');
 
       const score = infoRow.querySelector(`.${HN_CLASSES.SCORE}`);
-      expect(score?.classList.contains(HIGHLIGHT_CLASS)).toBe(false);
+      expect(score?.classList.contains(CSS_CLASSES.HIGHLIGHT)).toBe(false);
 
       const comments = infoRow.querySelector('a[href^="item?id="]');
-      expect(comments?.classList.contains(HIGHLIGHT_CLASS)).toBe(true);
+      expect(comments?.classList.contains(CSS_CLASSES.HIGHLIGHT)).toBe(true);
     });
 
     it('should remove highlight when switching to default', () => {
       highlightActiveSort(infoRow, 'points');
       highlightActiveSort(infoRow, 'default');
 
-      expect(infoRow.querySelector(`.${HIGHLIGHT_CLASS}`)).toBeNull();
+      expect(infoRow.querySelector(`.${CSS_CLASSES.HIGHLIGHT}`)).toBeNull();
     });
 
     it('should return the same infoRow element', () => {
@@ -72,7 +72,7 @@ describe('presenters', () => {
       emptyInfoRow.innerHTML = `<td class="${HN_CLASSES.SUBTEXT}"></td>`;
 
       expect(() => highlightActiveSort(emptyInfoRow, 'points')).not.toThrow();
-      expect(emptyInfoRow.querySelector(`.${HIGHLIGHT_CLASS}`)).toBeNull();
+      expect(emptyInfoRow.querySelector(`.${CSS_CLASSES.HIGHLIGHT}`)).toBeNull();
     });
 
     it('should handle multiple highlight/unhighlight cycles', () => {
@@ -82,7 +82,7 @@ describe('presenters', () => {
       highlightActiveSort(infoRow, 'default');
       highlightActiveSort(infoRow, 'points');
 
-      const highlighted = infoRow.querySelectorAll(`.${HIGHLIGHT_CLASS}`);
+      const highlighted = infoRow.querySelectorAll(`.${CSS_CLASSES.HIGHLIGHT}`);
       expect(highlighted.length).toBe(1);
       expect(highlighted[0].classList.contains(HN_CLASSES.SCORE)).toBe(true);
     });
