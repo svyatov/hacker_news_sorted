@@ -1,5 +1,3 @@
-Sort Hacker News posts by points, time, or comments with one click.
-
 Features:
 - Sort by points (most upvoted)
 - Sort by time (newest first)

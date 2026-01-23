@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { CSS_CLASSES } from '~app/constants';
 import type { SortOption } from '~app/types';
 
 import SortButton from './SortButton';
@@ -44,7 +45,7 @@ describe('SortButton', () => {
       <SortButton sortOption={sortOption} activeSort="points" setActiveSort={mockSetActiveSort} />,
     );
 
-    expect(container.querySelector('.hns-active')).toBeInTheDocument();
+    expect(container.querySelector(`.${CSS_CLASSES.ACTIVE}`)).toBeInTheDocument();
   });
 
   it('should not apply active class when not active', () => {
@@ -52,7 +53,7 @@ describe('SortButton', () => {
       <SortButton sortOption={sortOption} activeSort="default" setActiveSort={mockSetActiveSort} />,
     );
 
-    expect(container.querySelector('.hns-active')).not.toBeInTheDocument();
+    expect(container.querySelector(`.${CSS_CLASSES.ACTIVE}`)).not.toBeInTheDocument();
   });
 
   it('should have correct title for non-default sort', () => {
@@ -60,7 +61,7 @@ describe('SortButton', () => {
       <SortButton sortOption={sortOption} activeSort="default" setActiveSort={mockSetActiveSort} />,
     );
 
-    const button = container.querySelector('.hns-btn');
+    const button = container.querySelector(`.${CSS_CLASSES.BTN}`);
     expect(button?.getAttribute('title')).toBe('Sort by points');
   });
 
@@ -70,7 +71,7 @@ describe('SortButton', () => {
       <SortButton sortOption={defaultOption} activeSort="points" setActiveSort={mockSetActiveSort} />,
     );
 
-    const button = container.querySelector('.hns-btn');
+    const button = container.querySelector(`.${CSS_CLASSES.BTN}`);
     expect(button?.getAttribute('title')).toBe('Original sort order');
   });
 

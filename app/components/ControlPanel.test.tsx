@@ -2,6 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { CSS_CLASSES } from '~app/constants';
+
 import ControlPanel from './ControlPanel';
 
 // Mock the hooks and utilities
@@ -59,19 +61,19 @@ describe('ControlPanel', () => {
     render(<ControlPanel />);
 
     // Initially points should be active (mocked getLastActiveSort returns 'points')
-    const pointsButton = screen.getByText('points').closest('.hns-btn');
-    expect(pointsButton?.classList.contains('hns-active')).toBe(true);
+    const pointsButton = screen.getByText('points').closest(`.${CSS_CLASSES.BTN}`);
+    expect(pointsButton?.classList.contains(CSS_CLASSES.ACTIVE)).toBe(true);
 
     // Click time button
     fireEvent.click(screen.getByText('time'));
 
     // Time button should now be active
-    const timeButton = screen.getByText('time').closest('.hns-btn');
-    expect(timeButton?.classList.contains('hns-active')).toBe(true);
+    const timeButton = screen.getByText('time').closest(`.${CSS_CLASSES.BTN}`);
+    expect(timeButton?.classList.contains(CSS_CLASSES.ACTIVE)).toBe(true);
 
     // Points button should no longer be active
-    const updatedPointsButton = screen.getByText('points').closest('.hns-btn');
-    expect(updatedPointsButton?.classList.contains('hns-active')).toBe(false);
+    const updatedPointsButton = screen.getByText('points').closest(`.${CSS_CLASSES.BTN}`);
+    expect(updatedPointsButton?.classList.contains(CSS_CLASSES.ACTIVE)).toBe(false);
   });
 
   it('should render separators between buttons', () => {

@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Prettier check in CI lint step
 - Pre-commit hook via simple-git-hooks and lint-staged
 - Chrome Web Store description file (`description.txt`)
+- Playwright-based screenshot generator for Chrome Web Store images (`bun run screenshots`)
+- New screenshots: default order and compact/responsive mode
 
 ### Security
 
@@ -25,6 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved README with badges, features section, and cleaner layout
 - Switched to Conventional Commits and Keep a Changelog formats
 - Removed Cursor-specific editor settings
+- Consolidated CSS class constants into `CSS_CLASSES`, `CSS_SELECTORS`, and `SORT_OPTIONS` objects
+- Added `data-sort` attribute to sort buttons for programmatic access
+- Regenerated Chrome Web Store screenshots with current HN content and optimized file sizes
 
 ## [2.2.0]
 

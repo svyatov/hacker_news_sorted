@@ -52,6 +52,7 @@ bun run test:watch     # Run tests in watch mode
 bun run test:coverage  # Run tests with coverage report
 bun run lint           # Run ESLint and Prettier checks
 bun run fixture:update # Fetch fresh HN HTML for test fixtures
+bun run screenshots    # Generate Chrome Web Store screenshots (requires build first)
 ```
 
 ## Issues

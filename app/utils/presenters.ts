@@ -1,4 +1,4 @@
-import { HIGHLIGHT_CLASS, HIGHLIGHT_SELECTOR } from '~app/constants';
+import { CSS_CLASSES, CSS_SELECTORS } from '~app/constants';
 import type { NonDefaultSortVariant, ParsedRow, SortVariant } from '~app/types';
 import { getCommentsElement, getPointsElement, getTableBody, getTimeElement } from '~app/utils/selectors';
 
@@ -31,10 +31,10 @@ const SORT_TO_ELEMENT_GETTER: Record<NonDefaultSortVariant, (row: HTMLElement) =
 };
 
 export const highlightActiveSort = (infoRow: HTMLElement, activeSort: SortVariant): HTMLElement => {
-  const previousHighlight = infoRow.querySelector(HIGHLIGHT_SELECTOR);
+  const previousHighlight = infoRow.querySelector(CSS_SELECTORS.HIGHLIGHT);
 
   if (previousHighlight) {
-    previousHighlight.classList.remove(HIGHLIGHT_CLASS);
+    previousHighlight.classList.remove(CSS_CLASSES.HIGHLIGHT);
   }
 
   if (activeSort === 'default') {
@@ -45,7 +45,7 @@ export const highlightActiveSort = (infoRow: HTMLElement, activeSort: SortVarian
   const elementToHighlight = elementGetter(infoRow);
 
   if (elementToHighlight) {
-    elementToHighlight.classList.add(HIGHLIGHT_CLASS);
+    elementToHighlight.classList.add(CSS_CLASSES.HIGHLIGHT);
   }
 
   return infoRow;
