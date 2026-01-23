@@ -2,7 +2,7 @@
   "name": "hacked_news_sorted",
   "displayName": "Hacker News Sorted",
   "version": "2.2.0",
-  "description": "Gives the ability to sort posts on the news.ycombinator.com site by the number of points, time, or comments.",
+  "description": "Sort Hacker News your way — by points, time, or comments — instantly.",
   "author": "Leonid Svyatov <leonid@svyatov.com>",
   "license": "MIT",
   "type": "module",

@@ -6,7 +6,11 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/svyatov/hacker_news_sorted/main.yml)](https://github.com/svyatov/hacker_news_sorted/actions)
 [![License](https://img.shields.io/github/license/svyatov/hacker_news_sorted)](https://github.com/svyatov/hacker_news_sorted/blob/main/LICENSE)
 
-A Chrome extension that adds sorting capabilities to [Hacker News](https://news.ycombinator.com). Quickly re-order posts by points, time, or comment count with a single click or keyboard shortcut.
+Sort [Hacker News](https://news.ycombinator.com) your way — by points, time, or comments — instantly.
+
+## Install
+
+[![Install](images/webstore-badge.png)](https://chrome.google.com/webstore/detail/hacker-news-sorted/djkcnbncofmjekhlhemlkinfpkamlkaj)
 
 ## Features
 
@@ -19,9 +23,15 @@ A Chrome extension that adds sorting capabilities to [Hacker News](https://news.
 - **Visual Highlighting** — Active sort column is highlighted for clarity
 - **Vimium Compatible** — Shortcuts auto-disable if Vimium or similar extensions are detected
 
-## Install
+**Compatibility:** Works on any HN page with a post list (front page, Newest, Ask, Show, etc.)
 
-[![Install](images/webstore-badge.png)](https://chrome.google.com/webstore/detail/hacker-news-sorted/djkcnbncofmjekhlhemlkinfpkamlkaj)
+## Privacy
+
+No data collection, no external requests — works entirely in your browser.
+
+## Tech Stack
+
+Plasmo · React 19 · TypeScript · Vitest · Bun
 
 ## Development
 
@@ -33,6 +43,14 @@ bun dev
 ```
 
 Then load the extension in Chrome: go to `chrome://extensions`, enable "Developer mode", click "Load unpacked", and select the `build/chrome-mv3-dev` folder.
+
+```bash
+bun run test           # Run tests
+bun run test:watch     # Run tests in watch mode
+bun run test:coverage  # Run tests with coverage report
+bun run lint           # Run ESLint and Prettier checks
+bun run fixture:update # Fetch fresh HN HTML for test fixtures
+```
 
 ## Issues
 
@@ -50,3 +68,7 @@ Found a bug or have a suggestion? [Open an issue](https://github.com/svyatov/hac
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes, following [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
+
+## License
+
+[MIT](LICENSE)
