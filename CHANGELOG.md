@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Replaced Chrome Web Store badge with high-resolution version for Retina displays
 - Updated dev dependencies to latest versions
 - Improved README with badges, features section, and cleaner layout
 - Switched to Conventional Commits and Keep a Changelog formats
