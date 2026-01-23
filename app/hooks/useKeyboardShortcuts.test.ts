@@ -24,11 +24,7 @@ describe('useKeyboardShortcuts', () => {
     return event;
   };
 
-  const simulateKeyPressOnElement = (
-    element: HTMLElement,
-    key: string,
-    options: Partial<KeyboardEventInit> = {}
-  ) => {
+  const simulateKeyPressOnElement = (element: HTMLElement, key: string, options: Partial<KeyboardEventInit> = {}) => {
     const event = new KeyboardEvent('keydown', {
       key,
       bubbles: true,

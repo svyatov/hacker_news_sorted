@@ -71,7 +71,7 @@ export const useKeyboardShortcuts = ({ onSort }: KeyboardShortcutsConfig): void 
       event.preventDefault();
       onSort(KEY_TO_SORT[key as (typeof TARGET_KEYS)[number]]);
     },
-    [onSort]
+    [onSort],
   );
 
   useEffect(() => {

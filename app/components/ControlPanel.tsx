@@ -34,7 +34,7 @@ const ControlPanel = (): ReactElement => {
       setActiveSort(sortBy);
       setLastActiveSort(sortBy);
     },
-    [activeSort]
+    [activeSort],
   );
 
   // Enable keyboard shortcuts (P, T, C, D keys)

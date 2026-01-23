@@ -56,7 +56,7 @@ describe('ControlPanel', () => {
   });
 
   it('should switch active sort when clicking buttons', () => {
-    const { container } = render(<ControlPanel />);
+    render(<ControlPanel />);
 
     // Initially points should be active (mocked getLastActiveSort returns 'points')
     const pointsButton = screen.getByText('points').closest('.hns-btn');

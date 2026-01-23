@@ -41,7 +41,7 @@ describe('SortButton', () => {
 
   it('should apply active class when active', () => {
     const { container } = render(
-      <SortButton sortOption={sortOption} activeSort="points" setActiveSort={mockSetActiveSort} />
+      <SortButton sortOption={sortOption} activeSort="points" setActiveSort={mockSetActiveSort} />,
     );
 
     expect(container.querySelector('.hns-active')).toBeInTheDocument();
@@ -49,7 +49,7 @@ describe('SortButton', () => {
 
   it('should not apply active class when not active', () => {
     const { container } = render(
-      <SortButton sortOption={sortOption} activeSort="default" setActiveSort={mockSetActiveSort} />
+      <SortButton sortOption={sortOption} activeSort="default" setActiveSort={mockSetActiveSort} />,
     );
 
     expect(container.querySelector('.hns-active')).not.toBeInTheDocument();
@@ -57,7 +57,7 @@ describe('SortButton', () => {
 
   it('should have correct title for non-default sort', () => {
     const { container } = render(
-      <SortButton sortOption={sortOption} activeSort="default" setActiveSort={mockSetActiveSort} />
+      <SortButton sortOption={sortOption} activeSort="default" setActiveSort={mockSetActiveSort} />,
     );
 
     const button = container.querySelector('.hns-btn');
@@ -67,7 +67,7 @@ describe('SortButton', () => {
   it('should have correct title for default sort', () => {
     const defaultOption: SortOption = { sortBy: 'default', text: 'default', shortcut: 'D' };
     const { container } = render(
-      <SortButton sortOption={defaultOption} activeSort="points" setActiveSort={mockSetActiveSort} />
+      <SortButton sortOption={defaultOption} activeSort="points" setActiveSort={mockSetActiveSort} />,
     );
 
     const button = container.querySelector('.hns-btn');
