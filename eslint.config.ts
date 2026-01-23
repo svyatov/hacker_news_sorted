@@ -15,6 +15,6 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ['build/', '.plasmo/', '.claude/'],
+    ignores: ['build/', '.plasmo/', '.claude/', 'app/__fixtures__/'],
   },
 );
