@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- New post indicators — orange dot marks posts that appeared since your last visit (enabled by default)
+- Popup settings UI to toggle new-post indicators from the extension icon
+- `@plasmohq/storage` for reactive settings sync between popup and content script
 - ESLint with TypeScript and React Hooks plugins
 - Prettier check in CI lint step
 - Pre-commit hook via simple-git-hooks and lint-staged

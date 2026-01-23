@@ -26,11 +26,17 @@ bun run screenshots    # Generate Chrome Web Store screenshots (requires `bun ru
 ### Content Script Entry Point
 
 - `content.tsx` - Main entry point, injects the ControlPanel into HN's header using Plasmo's content script UI lifecycle
-- `content.css` - Styles for the control panel and sort highlighting
+- `content.css` - Styles for the control panel, sort highlighting, and new-post indicators
+
+### Popup Entry Point
+
+- `popup.tsx` - Settings popup UI with toggle switch for new-post indicators
+- `popup.css` - Popup styles (toggle switches, layout)
+- Uses `@plasmohq/storage` `useStorage` hook for reactive persistence to `chrome.storage.sync`
 
 ### Component Structure
 
-- `app/components/ControlPanel.tsx` - Main UI component with sort buttons, manages active sort state
+- `app/components/ControlPanel.tsx` - Main UI component with sort buttons, manages active sort state, applies settings and new-post markers
 - `app/components/SortButton.tsx` - Individual sort option buttons (points/time/comments/default)
 
 ### Data Flow
@@ -46,6 +52,8 @@ bun run screenshots    # Generate Chrome Web Store screenshots (requires `bun ru
 - `app/utils/sorters.ts` - Sort functions for each sort variant
 - `app/utils/presenters.ts` - DOM manipulation to update table and highlight active sort column
 - `app/utils/storage.ts` - localStorage persistence for last active sort preference
+- `app/utils/settings.ts` - Settings keys (`SETTINGS_KEYS`) and defaults (`SETTINGS_DEFAULTS`) for popup↔content script sync
+- `app/utils/newPosts.ts` - New post detection: extracts post IDs, compares against previous visit, marks new rows with CSS class
 
 ### Keyboard Shortcuts
 
@@ -53,11 +61,17 @@ bun run screenshots    # Generate Chrome Web Store screenshots (requires `bun ru
 - Keys: P (points), T (time), C (comments), D (default)
 - Auto-disables if another extension (e.g., Vimium) handles any of the keys
 
+### Settings & New Post Detection
+
+- `app/hooks/useSettings.ts` - Content script settings watcher using `@plasmohq/storage` `Storage.watch()`. Applies/removes `hns-show-new` class on the posts table body in real-time
+- Settings are stored in `chrome.storage.sync` (syncs across devices)
+- Post ID snapshots for new-post detection stay in `localStorage` (keyed by page pathname)
+
 ### Constants
 
 - `app/constants.ts` - Centralized constants including:
   - Extension constants (`CONTROL_PANEL_ROOT_ID`, `LAST_ACTIVE_SORT_KEY`)
-  - `CSS_CLASSES` - Extension CSS class names (highlight, buttons, labels)
+  - `CSS_CLASSES` - Extension CSS class names (highlight, buttons, labels, `SHOW_NEW`, `NEW_POST`)
   - `CSS_SELECTORS` - Derived CSS selectors from class names
   - `SORT_OPTIONS` - Sort option configuration array (sort variant, display text, keyboard shortcut)
   - `HN_SELECTORS` - DOM selectors for HN page structure
@@ -67,6 +81,7 @@ bun run screenshots    # Generate Chrome Web Store screenshots (requires `bun ru
 
 - `SortVariant`: 'default' | 'points' | 'time' | 'comments'
 - `ParsedRow`: Contains DOM elements (title, info, spacer) and parsed numeric values for a single post
+- `Settings`: Shape for extension settings (`hns-show-new` boolean)
 
 ## Path Aliases
 

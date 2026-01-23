@@ -13,6 +13,8 @@ export const CSS_CLASSES = {
   BTN_SHORTCUT: 'hns-btn-shortcut',
   ACTIVE: 'hns-active',
   DIVIDER: 'hns-divider',
+  SHOW_NEW: 'hns-show-new',
+  NEW_POST: 'hns-new-post',
 } as const;
 
 export const CSS_SELECTORS = {

@@ -16,3 +16,7 @@ export type SortOption = {
   text: string;
   shortcut: string;
 };
+
+export type Settings = {
+  'hns-show-new': boolean;
+};

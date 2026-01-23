@@ -8,20 +8,19 @@ export const updateTable = (parsedRows: ParsedRow[], footerRows: HTMLElement[], 
   const tableBody = getTableBody();
   if (!tableBody) return;
 
-  const sortedRowsFragment = document.createDocumentFragment();
-  const sortedTableBody = sortedRowsFragment.appendChild(document.createElement('tbody'));
+  const fragment = document.createDocumentFragment();
 
   parsedRows.forEach((rowSet) => {
-    sortedTableBody.appendChild(rowSet.title);
-    sortedTableBody.appendChild(highlightActiveSort(rowSet.info, activeSort));
-    sortedTableBody.appendChild(rowSet.spacer);
+    fragment.appendChild(rowSet.title);
+    fragment.appendChild(highlightActiveSort(rowSet.info, activeSort));
+    fragment.appendChild(rowSet.spacer);
   });
 
   footerRows.forEach((row) => {
-    sortedTableBody.appendChild(row);
+    fragment.appendChild(row);
   });
 
-  tableBody.replaceWith(sortedRowsFragment);
+  tableBody.replaceChildren(fragment);
 };
 
 const SORT_TO_ELEMENT_GETTER: Record<NonDefaultSortVariant, (row: HTMLElement) => HTMLElement | null> = {

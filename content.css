@@ -56,3 +56,11 @@
     display: none;
   }
 }
+
+/* New post indicator - only active when table body has .hns-show-new */
+.hns-show-new tr.hns-new-post .titleline::before {
+  content: '\2022';
+  color: #ff6600;
+  margin-right: 4px;
+  font-weight: bold;
+}
