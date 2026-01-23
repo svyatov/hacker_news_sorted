@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pre-commit hook via simple-git-hooks and lint-staged
 - Chrome Web Store description file (`description.txt`)
 
+### Security
+
+- Added explicit read-only permissions to CI workflow to restrict GITHUB_TOKEN scope
+
 ### Changed
 
 - Replaced Chrome Web Store badge with high-resolution version for Retina displays
