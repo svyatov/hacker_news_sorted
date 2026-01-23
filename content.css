@@ -10,9 +10,16 @@
 }
 
 .hns-btn {
+  all: unset;
   cursor: pointer;
   display: inline-block;
   margin: 0 5px;
+}
+
+.hns-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 .hns-btn-text {
