@@ -2,7 +2,7 @@ import { CSS_CLASSES, HN_SELECTORS } from '~app/constants';
 
 export const isFirstPage = (): boolean => {
   const params = new URLSearchParams(window.location.search);
-  return !(params.has('next') && params.has('n'));
+  return !(params.has('p') || params.has('next'));
 };
 
 export const getPostIds = (): string[] => {

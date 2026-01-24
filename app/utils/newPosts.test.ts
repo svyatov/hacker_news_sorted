@@ -112,14 +112,14 @@ describe('newPosts', () => {
       expect(isFirstPage()).toBe(true);
     });
 
-    it('should return false when both next and n params are present', () => {
+    it('should return false when next param is present', () => {
       vi.stubGlobal('location', { pathname: '/newest', search: '?next=46739210&n=31' });
       expect(isFirstPage()).toBe(false);
     });
 
-    it('should return true when only next param is present', () => {
-      vi.stubGlobal('location', { pathname: '/newest', search: '?next=46739210' });
-      expect(isFirstPage()).toBe(true);
+    it('should return false when p param is present', () => {
+      vi.stubGlobal('location', { pathname: '/news', search: '?p=2' });
+      expect(isFirstPage()).toBe(false);
     });
 
     it('should return true when only n param is present', () => {

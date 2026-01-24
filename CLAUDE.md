@@ -67,7 +67,7 @@ bun run screenshots    # Generate Chrome Web Store screenshots (requires `bun ru
   - Post ID snapshots — stores/compares post IDs for new-post detection, first-page only
   - Show-new toggle — applies/removes `hns-show-new` CSS class on table body
 - All settings sync across devices via `chrome.storage.sync`
-- New-post detection only runs on first pages (skips paginated pages with `?next=...&n=...`)
+- New-post detection only runs on first pages (skips paginated pages with `?p=...` or `?next=...`)
 
 ### Constants
 
