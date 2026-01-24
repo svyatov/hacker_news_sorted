@@ -60,8 +60,16 @@ h1 {
   transition: transform 0.2s;
 }
 
+.hns-toggle-slider:hover {
+  background-color: #bbb;
+}
+
 .hns-toggle input:checked + .hns-toggle-slider {
   background-color: #ff6600;
+}
+
+.hns-toggle input:checked + .hns-toggle-slider:hover {
+  background-color: #e55c00;
 }
 
 .hns-toggle input:checked + .hns-toggle-slider::before {
@@ -71,6 +79,13 @@ h1 {
 .hns-toggle input:focus-visible + .hns-toggle-slider {
   outline: 2px solid #ff6600;
   outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hns-toggle-slider,
+  .hns-toggle-slider::before {
+    transition: none;
+  }
 }
 
 /* Suppress toggle animation on load while useStorage settles (see popup.tsx) */

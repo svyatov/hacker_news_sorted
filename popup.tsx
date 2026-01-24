@@ -25,7 +25,13 @@ const Popup = () => {
       <div className="hns-setting">
         <span>Highlight new posts</span>
         <label className="hns-toggle">
-          <input type="checkbox" checked={showNew} onChange={(e) => setShowNew(e.target.checked)} />
+          <input
+            type="checkbox"
+            name="show-new"
+            aria-label="Highlight new posts"
+            checked={showNew}
+            onChange={(e) => setShowNew(e.target.checked)}
+          />
           <span className="hns-toggle-slider" />
         </label>
       </div>

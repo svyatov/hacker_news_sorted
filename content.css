@@ -34,8 +34,16 @@
   color: #fff;
 }
 
+.hns-btn:hover {
+  opacity: 0.7;
+}
+
 .hns-active.hns-btn {
   cursor: default;
+}
+
+.hns-active.hns-btn:hover {
+  opacity: 1;
 }
 
 .hns-divider {
