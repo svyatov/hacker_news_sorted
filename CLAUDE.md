@@ -36,14 +36,15 @@ bun run screenshots    # Generate Chrome Web Store screenshots (requires `bun ru
 
 ### Component Structure
 
-- `app/components/ControlPanel.tsx` - Main UI component with sort buttons, manages active sort state, applies settings and new-post markers
+- `app/components/ControlPanel.tsx` - Main UI component with sort buttons, consumes sort state from `useSettings` hook
 - `app/components/SortButton.tsx` - Individual sort option buttons (points/time/comments/default)
 
 ### Data Flow
 
-1. `useParsedRows` hook extracts post data from HN's DOM on mount (title, info, spacer rows per post)
-2. `sortRows` creates a new sorted array based on active sort option
-3. `updateTable` replaces the table body with reordered rows and highlights the active sort column
+1. `useSettings` hook reads sort preference and post IDs from `chrome.storage.sync`, marks new posts, exposes reactive `activeSort`
+2. `useParsedRows` hook extracts post data from HN's DOM on mount (title, info, spacer rows per post)
+3. `sortRows` creates a new sorted array based on active sort option
+4. `updateTable` replaces the table body with reordered rows and highlights the active sort column
 
 ### Key Utils
 
@@ -51,9 +52,7 @@ bun run screenshots    # Generate Chrome Web Store screenshots (requires `bun ru
 - `app/utils/parsers.ts` - Extract numeric values (points, time, comments) from info rows
 - `app/utils/sorters.ts` - Sort functions for each sort variant
 - `app/utils/presenters.ts` - DOM manipulation to update table and highlight active sort column
-- `app/utils/storage.ts` - localStorage persistence for last active sort preference
-- `app/utils/settings.ts` - Settings keys (`SETTINGS_KEYS`) and defaults (`SETTINGS_DEFAULTS`) for popup↔content script sync
-- `app/utils/newPosts.ts` - New post detection: extracts post IDs, compares against previous visit, marks new rows with CSS class
+- `app/utils/newPosts.ts` - New post detection: extracts post IDs from DOM, marks new rows with CSS class, provides `isFirstPage` guard
 
 ### Keyboard Shortcuts
 
@@ -63,17 +62,22 @@ bun run screenshots    # Generate Chrome Web Store screenshots (requires `bun ru
 
 ### Settings & New Post Detection
 
-- `app/hooks/useSettings.ts` - Content script settings watcher using `@plasmohq/storage` `Storage.watch()`. Applies/removes `hns-show-new` class on the posts table body in real-time
-- Settings are stored in `chrome.storage.sync` (syncs across devices)
-- Post ID snapshots for new-post detection stay in `localStorage` (keyed by page pathname)
+- `app/hooks/useSettings.ts` - Central hook managing all synced state via `@plasmohq/storage` (chrome.storage.sync):
+  - Sort preference (`activeSort` / `setActiveSort`) — syncs across devices, reactive via watchers
+  - Post ID snapshots — stores/compares post IDs for new-post detection, first-page only
+  - Show-new toggle — applies/removes `hns-show-new` CSS class on table body
+- All settings sync across devices via `chrome.storage.sync`
+- New-post detection only runs on first pages (skips paginated pages with `?next=...&n=...`)
 
 ### Constants
 
 - `app/constants.ts` - Centralized constants including:
-  - Extension constants (`CONTROL_PANEL_ROOT_ID`, `LAST_ACTIVE_SORT_KEY`)
+  - Extension constants (`CONTROL_PANEL_ROOT_ID`)
   - `CSS_CLASSES` - Extension CSS class names (highlight, buttons, labels, `SHOW_NEW`, `NEW_POST`)
   - `CSS_SELECTORS` - Derived CSS selectors from class names
   - `SORT_OPTIONS` - Sort option configuration array (sort variant, display text, keyboard shortcut)
+  - `SETTINGS_KEYS` - Storage key names for chrome.storage.sync (`SHOW_NEW`, `LAST_ACTIVE_SORT`, `POST_IDS_PREFIX`)
+  - `SETTINGS_DEFAULTS` - Default values for settings
   - `HN_SELECTORS` - DOM selectors for HN page structure
   - `HN_CLASSES` - HN CSS class names for building test fixtures
 
@@ -81,7 +85,7 @@ bun run screenshots    # Generate Chrome Web Store screenshots (requires `bun ru
 
 - `SortVariant`: 'default' | 'points' | 'time' | 'comments'
 - `ParsedRow`: Contains DOM elements (title, info, spacer) and parsed numeric values for a single post
-- `Settings`: Shape for extension settings (`hns-show-new` boolean)
+- `Settings`: Shape for extension settings (`hns-show-new` boolean, `hns-last-active-sort` SortVariant)
 
 ## Path Aliases
 

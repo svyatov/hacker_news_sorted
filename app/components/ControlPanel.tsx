@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, type ReactElement } from 'react';
 
 import SortButton from '~app/components/SortButton';
 import { CSS_CLASSES, SORT_OPTIONS } from '~app/constants';
@@ -6,28 +6,14 @@ import { useKeyboardShortcuts } from '~app/hooks/useKeyboardShortcuts';
 import { useParsedRows } from '~app/hooks/useParsedRows';
 import { useSettings } from '~app/hooks/useSettings';
 import type { SortVariant } from '~app/types';
-import { getPostIds, getStoredPostIds, markNewPosts, storePostIds } from '~app/utils/newPosts';
 import { updateTable } from '~app/utils/presenters';
 import { sortRows } from '~app/utils/sorters';
-import { getLastActiveSort, setLastActiveSort } from '~app/utils/storage';
 
 const sortOptionsCount = SORT_OPTIONS.length - 1;
 
 const ControlPanel = (): ReactElement => {
-  const [activeSort, setActiveSort] = useState<SortVariant>(() => getLastActiveSort());
+  const { activeSort, setActiveSort } = useSettings();
   const { parsedRows, footerRows } = useParsedRows();
-
-  useSettings();
-
-  // Mark new posts on mount
-  useEffect(() => {
-    const currentIds = getPostIds();
-    if (currentIds.length === 0) return;
-
-    const previousIds = getStoredPostIds();
-    markNewPosts(currentIds, previousIds);
-    storePostIds(currentIds);
-  }, []);
 
   const sortedRows = useMemo(() => sortRows(parsedRows, activeSort), [parsedRows, activeSort]);
 
@@ -35,17 +21,14 @@ const ControlPanel = (): ReactElement => {
     updateTable(sortedRows, footerRows, activeSort);
   }, [sortedRows, footerRows, activeSort]);
 
-  // Handler for keyboard shortcuts
   const handleSort = useCallback(
     (sortBy: SortVariant) => {
       if (sortBy === activeSort) return;
       setActiveSort(sortBy);
-      setLastActiveSort(sortBy);
     },
-    [activeSort],
+    [activeSort, setActiveSort],
   );
 
-  // Enable keyboard shortcuts (P, T, C, D keys)
   useKeyboardShortcuts({ onSort: handleSort });
 
   return (

@@ -2,7 +2,18 @@ import type { SortOption } from '~app/types';
 
 // Extension constants
 export const CONTROL_PANEL_ROOT_ID = 'hns-control-panel';
-export const LAST_ACTIVE_SORT_KEY = 'hns-last-active-sort';
+
+// Settings keys and defaults (chrome.storage.sync)
+export const SETTINGS_KEYS = {
+  SHOW_NEW: 'hns-show-new',
+  LAST_ACTIVE_SORT: 'hns-last-active-sort',
+  POST_IDS_PREFIX: 'hns-post-ids:',
+} as const;
+
+export const SETTINGS_DEFAULTS = {
+  [SETTINGS_KEYS.SHOW_NEW]: true,
+  [SETTINGS_KEYS.LAST_ACTIVE_SORT]: 'points' as const,
+} as const;
 
 // Extension CSS classes
 export const CSS_CLASSES = {

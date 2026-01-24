@@ -72,3 +72,9 @@ h1 {
   outline: 2px solid #ff6600;
   outline-offset: 2px;
 }
+
+/* Suppress toggle animation on load while useStorage settles (see popup.tsx) */
+.hns-no-transition .hns-toggle-slider,
+.hns-no-transition .hns-toggle-slider::before {
+  transition: none;
+}

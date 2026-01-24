@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CSS_CLASSES, HN_SELECTORS } from '~app/constants';
 
-import { clearNewPostMarkers, getPostIds, getStoredPostIds, markNewPosts, storePostIds } from './newPosts';
+import { clearNewPostMarkers, getPostIds, isFirstPage, markNewPosts } from './newPosts';
 
 const setupTableBody = (ids: string[]) => {
   const center = document.createElement('center');
@@ -96,86 +96,35 @@ describe('newPosts', () => {
     });
   });
 
-  describe('getStoredPostIds', () => {
-    it('should return stored IDs as a Set', () => {
-      vi.spyOn(localStorage, 'getItem').mockReturnValue(JSON.stringify(['post-1', 'post-2', 'post-3']));
-
-      const result = getStoredPostIds();
-      expect(result).toBeInstanceOf(Set);
-      expect(result.size).toBe(3);
-      expect(result.has('post-1')).toBe(true);
-      expect(result.has('post-2')).toBe(true);
-      expect(result.has('post-3')).toBe(true);
+  describe('isFirstPage', () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+      vi.unstubAllGlobals();
     });
 
-    it('should return empty Set when nothing stored', () => {
-      vi.spyOn(localStorage, 'getItem').mockReturnValue(null);
-      expect(getStoredPostIds()).toEqual(new Set());
+    it('should return true for root path without params', () => {
+      vi.stubGlobal('location', { pathname: '/', search: '' });
+      expect(isFirstPage()).toBe(true);
     });
 
-    it('should key storage by pathname', () => {
-      vi.stubGlobal('location', { pathname: '/ask' });
-      vi.spyOn(localStorage, 'getItem').mockReturnValue(JSON.stringify(['post-4']));
-
-      const result = getStoredPostIds();
-      expect(result.has('post-4')).toBe(true);
-      expect(localStorage.getItem).toHaveBeenCalledWith('hns-post-ids:/ask');
+    it('should return true for /newest without params', () => {
+      vi.stubGlobal('location', { pathname: '/newest', search: '' });
+      expect(isFirstPage()).toBe(true);
     });
 
-    it('should work with /show pathname', () => {
-      vi.stubGlobal('location', { pathname: '/show' });
-      vi.spyOn(localStorage, 'getItem').mockReturnValue(JSON.stringify(['post-6']));
-
-      expect(getStoredPostIds().has('post-6')).toBe(true);
-      expect(localStorage.getItem).toHaveBeenCalledWith('hns-post-ids:/show');
+    it('should return false when both next and n params are present', () => {
+      vi.stubGlobal('location', { pathname: '/newest', search: '?next=46739210&n=31' });
+      expect(isFirstPage()).toBe(false);
     });
 
-    it('should use / pathname by default', () => {
-      vi.spyOn(localStorage, 'getItem').mockReturnValue(JSON.stringify(['post-1']));
-
-      getStoredPostIds();
-      expect(localStorage.getItem).toHaveBeenCalledWith('hns-post-ids:/');
+    it('should return true when only next param is present', () => {
+      vi.stubGlobal('location', { pathname: '/newest', search: '?next=46739210' });
+      expect(isFirstPage()).toBe(true);
     });
 
-    it('should deduplicate stored IDs via Set', () => {
-      vi.spyOn(localStorage, 'getItem').mockReturnValue(JSON.stringify(['post-1', 'post-1', 'post-2']));
-
-      const result = getStoredPostIds();
-      expect(result.size).toBe(2);
-    });
-
-    it('should throw on malformed JSON', () => {
-      vi.spyOn(localStorage, 'getItem').mockReturnValue('not-valid-json');
-
-      expect(() => getStoredPostIds()).toThrow();
-    });
-  });
-
-  describe('storePostIds', () => {
-    it('should store IDs as JSON in localStorage', () => {
-      storePostIds(['post-1', 'post-2']);
-
-      expect(localStorage.setItem).toHaveBeenCalledWith('hns-post-ids:/', JSON.stringify(['post-1', 'post-2']));
-    });
-
-    it('should key storage by pathname', () => {
-      vi.stubGlobal('location', { pathname: '/ask' });
-      storePostIds(['post-3']);
-
-      expect(localStorage.setItem).toHaveBeenCalledWith('hns-post-ids:/ask', JSON.stringify(['post-3']));
-    });
-
-    it('should store with /show pathname', () => {
-      vi.stubGlobal('location', { pathname: '/show' });
-      storePostIds(['post-4']);
-
-      expect(localStorage.setItem).toHaveBeenCalledWith('hns-post-ids:/show', JSON.stringify(['post-4']));
-    });
-
-    it('should handle empty array', () => {
-      storePostIds([]);
-
-      expect(localStorage.setItem).toHaveBeenCalledWith('hns-post-ids:/', '[]');
+    it('should return true when only n param is present', () => {
+      vi.stubGlobal('location', { pathname: '/newest', search: '?n=31' });
+      expect(isFirstPage()).toBe(true);
     });
   });
 

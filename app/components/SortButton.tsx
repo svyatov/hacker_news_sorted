@@ -2,7 +2,6 @@ import { useCallback, type ReactElement } from 'react';
 
 import { CSS_CLASSES } from '~app/constants';
 import type { SortOption, SortVariant } from '~app/types';
-import { setLastActiveSort } from '~app/utils/storage';
 
 type ControlPanelButtonProps = {
   sortOption: SortOption;
@@ -18,7 +17,6 @@ const SortButton = ({ sortOption, activeSort, setActiveSort }: ControlPanelButto
   const updateActiveSort = useCallback(() => {
     if (isActive) return;
     setActiveSort(sortBy);
-    setLastActiveSort(sortBy);
   }, [sortBy, isActive, setActiveSort]);
 
   return (

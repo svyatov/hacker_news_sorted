@@ -1,3 +1,5 @@
+import { SETTINGS_KEYS } from '~app/constants';
+
 export type SortVariant = 'default' | 'points' | 'time' | 'comments';
 export type NonDefaultSortVariant = Exclude<SortVariant, 'default'>;
 
@@ -18,5 +20,6 @@ export type SortOption = {
 };
 
 export type Settings = {
-  'hns-show-new': boolean;
+  [(typeof SETTINGS_KEYS)['SHOW_NEW']]: boolean;
+  [(typeof SETTINGS_KEYS)['LAST_ACTIVE_SORT']]: SortVariant;
 };

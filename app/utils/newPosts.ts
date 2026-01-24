@@ -1,8 +1,9 @@
 import { CSS_CLASSES, HN_SELECTORS } from '~app/constants';
 
-const STORAGE_PREFIX = 'hns-post-ids:';
-
-const getStorageKey = (): string => `${STORAGE_PREFIX}${window.location.pathname}`;
+export const isFirstPage = (): boolean => {
+  const params = new URLSearchParams(window.location.search);
+  return !(params.has('next') && params.has('n'));
+};
 
 export const getPostIds = (): string[] => {
   const tableBody = document.querySelector(HN_SELECTORS.TABLE_BODY);
@@ -10,16 +11,6 @@ export const getPostIds = (): string[] => {
 
   const rows = tableBody.querySelectorAll<HTMLElement>('tr.athing[id]');
   return Array.from(rows, (row) => row.id);
-};
-
-export const getStoredPostIds = (): Set<string> => {
-  const stored = localStorage.getItem(getStorageKey());
-  if (!stored) return new Set();
-  return new Set(JSON.parse(stored) as string[]);
-};
-
-export const storePostIds = (ids: string[]): void => {
-  localStorage.setItem(getStorageKey(), JSON.stringify(ids));
 };
 
 export const markNewPosts = (currentIds: string[], previousIds: Set<string>): void => {

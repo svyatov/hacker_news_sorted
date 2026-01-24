@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Sort preference and new-post detection now sync across devices via `chrome.storage.sync`
+- New-post indicators only appear on first pages (not paginated pages)
 - Sort buttons use semantic `<button>` elements with `aria-pressed` for accessibility
 - Added visible `:focus-visible` outline for keyboard navigation of sort buttons
 - Replaced Chrome Web Store badge with high-resolution version for Retina displays
