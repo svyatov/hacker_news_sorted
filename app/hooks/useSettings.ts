@@ -2,9 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Storage, type StorageCallbackMap } from '@plasmohq/storage';
 
-import { CSS_CLASSES, HN_SELECTORS, SETTINGS_DEFAULTS, SETTINGS_KEYS } from '~app/constants';
+import { CSS_CLASSES, SETTINGS_DEFAULTS, SETTINGS_KEYS } from '~app/constants';
 import type { SortVariant } from '~app/types';
 import { clearNewPostMarkers, getPostIds, isFirstPage, markNewPosts } from '~app/utils/newPosts';
+import { getTableBody } from '~app/utils/selectors';
 
 const storage = new Storage();
 
@@ -25,7 +26,7 @@ export const useSettings = (): UseSettingsReturn => {
   }, []);
 
   useEffect(() => {
-    const tableBody = document.querySelector(HN_SELECTORS.TABLE_BODY);
+    const tableBody = getTableBody();
 
     // --- Show New ---
     const applyShowNew = (enabled: boolean) => {

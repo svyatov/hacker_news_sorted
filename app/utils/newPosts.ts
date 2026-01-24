@@ -1,4 +1,5 @@
-import { CSS_CLASSES, HN_SELECTORS } from '~app/constants';
+import { CSS_CLASSES } from '~app/constants';
+import { getTableBody } from '~app/utils/selectors';
 
 export const isFirstPage = (): boolean => {
   const params = new URLSearchParams(window.location.search);
@@ -6,7 +7,7 @@ export const isFirstPage = (): boolean => {
 };
 
 export const getPostIds = (): string[] => {
-  const tableBody = document.querySelector(HN_SELECTORS.TABLE_BODY);
+  const tableBody = getTableBody();
   if (!tableBody) return [];
 
   const rows = tableBody.querySelectorAll<HTMLElement>('tr.athing[id]');
@@ -16,7 +17,7 @@ export const getPostIds = (): string[] => {
 export const markNewPosts = (currentIds: string[], previousIds: Set<string>): void => {
   if (previousIds.size === 0) return;
 
-  const tableBody = document.querySelector(HN_SELECTORS.TABLE_BODY);
+  const tableBody = getTableBody();
   if (!tableBody) return;
 
   for (const id of currentIds) {
@@ -28,7 +29,7 @@ export const markNewPosts = (currentIds: string[], previousIds: Set<string>): vo
 };
 
 export const clearNewPostMarkers = (): void => {
-  const tableBody = document.querySelector(HN_SELECTORS.TABLE_BODY);
+  const tableBody = getTableBody();
   if (!tableBody) return;
 
   const rows = tableBody.querySelectorAll(`.${CSS_CLASSES.NEW_POST}`);
