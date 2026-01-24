@@ -6,13 +6,17 @@ export async function removeOverlays(page: Page): Promise<void> {
   await page.evaluate((ids) => {
     document.querySelector(`#${ids.OVERLAY}`)?.remove();
     document.querySelector(`#${ids.ARROW}`)?.remove();
-    document.querySelector(`#${ids.COMPACT_OVERRIDE}`)?.remove();
   }, SCREENSHOT_IDS);
 }
 
-export async function injectOverlayCard(page: Page, title: string, subtitle: string): Promise<void> {
+export async function injectOverlayCard(
+  page: Page,
+  title: string,
+  subtitle: string,
+  titleNote?: string,
+): Promise<void> {
   await page.evaluate(
-    ({ id, styles, title, subtitle }) => {
+    ({ id, styles, title, subtitle, titleNote }) => {
       const overlay = document.createElement('div');
       overlay.id = id;
       overlay.style.cssText = styles.CARD;
@@ -20,6 +24,14 @@ export async function injectOverlayCard(page: Page, title: string, subtitle: str
       const titleEl = document.createElement('div');
       titleEl.style.cssText = styles.TITLE;
       titleEl.textContent = title;
+
+      if (titleNote) {
+        const noteEl = document.createElement('span');
+        noteEl.style.cssText = styles.TITLE_NOTE + ' margin-left: 12px;';
+        noteEl.textContent = titleNote;
+        titleEl.appendChild(noteEl);
+      }
+
       overlay.appendChild(titleEl);
 
       const subtitleEl = document.createElement('div');
@@ -29,7 +41,7 @@ export async function injectOverlayCard(page: Page, title: string, subtitle: str
 
       document.body.appendChild(overlay);
     },
-    { id: SCREENSHOT_IDS.OVERLAY, styles: OVERLAY_STYLES, title, subtitle },
+    { id: SCREENSHOT_IDS.OVERLAY, styles: OVERLAY_STYLES, title, subtitle, titleNote },
   );
 }
 

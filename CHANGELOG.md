@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pre-commit hook via simple-git-hooks and lint-staged
 - Chrome Web Store description file (`description.txt`)
 - Playwright-based screenshot generator for Chrome Web Store images (`bun run screenshots`)
-- New screenshots: default order and compact/responsive mode
+- New screenshots: default order and new-post indicators
 
 ### Changed
 

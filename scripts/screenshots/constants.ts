@@ -3,7 +3,6 @@ import type { VariantConfig } from './types';
 export const SCREENSHOT_IDS = {
   OVERLAY: 'hns-screenshot-overlay',
   ARROW: 'hns-screenshot-arrow',
-  COMPACT_OVERRIDE: 'hns-compact-override',
 } as const;
 
 export const OVERLAY_STYLES = {
@@ -19,10 +18,11 @@ export const OVERLAY_STYLES = {
     'padding: 40px 56px',
     'z-index: 9999',
     "font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-    'max-width: 560px',
+    'max-width: 600px',
   ].join('; '),
   TITLE: 'font-size: 36px; font-weight: 700; color: #1a1a1a; margin-bottom: 12px;',
   SUBTITLE: 'font-size: 28px; font-weight: 400; color: #666;',
+  TITLE_NOTE: 'font-size: 24px; font-weight: 400; color: #999;',
 } as const;
 
 export const ARROW_STYLES = {
@@ -50,9 +50,11 @@ export const VARIANTS: VariantConfig[] = [
   },
   {
     sort: 'default',
-    title: 'Compact Mode',
-    subtitle: 'Keyboard shortcuts on smaller screens',
-    filename: 'screen_responsive.png',
-    forceCompact: true,
+    title: 'New Post Indicators',
+    titleNote: '(optional)',
+    subtitle: 'Orange dots mark new posts since your last visit',
+    filename: 'screen_new_posts.png',
+    showNewPosts: true,
+    hideArrow: true,
   },
 ];
