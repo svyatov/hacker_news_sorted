@@ -160,7 +160,7 @@ The changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) f
 
 ## Chrome Web Store Description
 
-`description.txt` is the copy used on the Chrome Web Store listing page. It contains a plain-language feature summary and a short changelog for end users. When doing a version bump/release, add a one-line summary to the `Changelog:` section in this file (e.g., `v2.2 - Added keyboard shortcuts, Vimium compatibility`). Keep it non-technical.
+`description.txt` is the copy used on the Chrome Web Store listing page. It contains a plain-language feature summary and a short changelog for end users. When doing a version bump/release, add a one-line summary to the `Changelog:` section in this file with the release month and year in parentheses (e.g., `v2.3 (Jan 2026) - New post indicators, popup settings`). Keep it non-technical.
 
 ## Before Committing
 

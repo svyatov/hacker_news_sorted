@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.3.0]
+## [2.3.0] - 2026-01-29
 
 ### Added
 
@@ -38,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added explicit read-only permissions to CI workflow to restrict GITHUB_TOKEN scope
 
-## [2.2.0]
+## [2.2.0] - 2026-01-12
 
 ### Added
 
@@ -66,7 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed vulnerabilities via dependency overrides (msgpackr, lmdb, svelte, content-security-policy-parser)
 
-## [2.1.0]
+## [2.1.0] - 2025-12-24
 
 ### Added
 
@@ -102,7 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved regex constants from converters to constants module
 - Migrated prettier config from .mjs to .ts format
 
-## [2.0.3]
+## [2.0.3] - 2025-12-23
 
 ### Fixed
 
@@ -112,13 +112,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated dependencies (React 19, Plasmo 0.90.5, and others)
 
-## [2.0.2]
+## [2.0.2] - 2024-03-06
 
 ### Fixed
 
 - Typo fix
 
-## [2.0.1]
+## [2.0.1] - 2024-03-06
 
 ### Added
 
@@ -128,7 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Control panel lower-cased to better fit the design
 
-## [2.0.0]
+## [2.0.0] - 2024-03-05
 
 ### Added
 
@@ -142,7 +142,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Switched to Manifest v3
 - Changelog moved to separate file
 
-## [1.0.1]
+## [1.0.1] - 2014-04-29
 
 ### Fixed
 
@@ -152,20 +152,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Code slightly simplified and reformatted with prettier
 
-## [1.0.0]
+## [1.0.0] - 2014-04-29
 
 ### Added
 
 - Extension uploaded to [Google Web Store](https://chrome.google.com/webstore/detail/hacker-news-sorted/djkcnbncofmjekhlhemlkinfpkamlkaj)
 - Icons and screenshots
 
-## [0.0.2]
+## [0.0.2] - 2014-04-28
 
 ### Added
 
 - Menu to the top right corner for sorting by points, time and comments (points is default)
 
-## [0.0.1]
+## [0.0.1] - 2014-04-28
 
 ### Added
 
