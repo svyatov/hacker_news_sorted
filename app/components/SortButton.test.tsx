@@ -7,10 +7,6 @@ import type { SortOption } from '~app/types';
 
 import SortButton from './SortButton';
 
-vi.mock('~app/utils/storage', () => ({
-  setLastActiveSort: vi.fn(),
-}));
-
 describe('SortButton', () => {
   const mockSetActiveSort = vi.fn();
   const sortOption: SortOption = { sortBy: 'points', text: 'points', shortcut: 'P' };

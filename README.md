@@ -20,6 +20,8 @@ Sort [Hacker News](https://news.ycombinator.com) your way — by points, time, o
 - **Sort by Time** — See the newest posts first
 - **Sort by Comments** — Discover the most discussed topics
 - **Restore Default** — Return to HN's original ranking
+- **New Post Indicators** — Orange dot marks posts that appeared since your last visit
+- **Popup Settings** — Toggle new-post indicators from the extension icon
 - **Keyboard Shortcuts** — Press `P`, `T`, `C`, or `D` to sort instantly
 - **Persistent Preference** — Your last sort choice is remembered across sessions
 - **Visual Highlighting** — Active sort column is highlighted for clarity

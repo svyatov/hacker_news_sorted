@@ -9,15 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- New post indicators — orange dot marks posts that appeared since your last visit (enabled by default)
+- Popup settings UI to toggle new-post indicators from the extension icon
+- `@plasmohq/storage` for reactive settings sync between popup and content script
 - ESLint with TypeScript and React Hooks plugins
 - Prettier check in CI lint step
 - Pre-commit hook via simple-git-hooks and lint-staged
 - Chrome Web Store description file (`description.txt`)
 - Playwright-based screenshot generator for Chrome Web Store images (`bun run screenshots`)
-- New screenshots: default order and compact/responsive mode
+- New screenshots: default order and new-post indicators
 
 ### Changed
 
+- Sort preference and new-post detection now sync across devices via `chrome.storage.sync`
+- New-post indicators only appear on first pages (not paginated pages)
 - Sort buttons use semantic `<button>` elements with `aria-pressed` for accessibility
 - Added visible `:focus-visible` outline for keyboard navigation of sort buttons
 - Replaced Chrome Web Store badge with high-resolution version for Retina displays

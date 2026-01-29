@@ -5,6 +5,9 @@ Features:
 - Restore default HN ranking
 - Remembers your preferred sort
 - Keyboard shortcuts for quick sorting
+- New post indicators (orange dot for posts since last visit)
+- Toggle new-post indicators from extension popup
+- Settings sync across devices
 
 Keyboard shortcuts:
 P = Points | T = Time | C = Comments | D = Default

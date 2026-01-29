@@ -1,8 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
+import React, { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CSS_CLASSES } from '~app/constants';
+import type { SortVariant } from '~app/types';
 
 import ControlPanel from './ControlPanel';
 
@@ -15,9 +16,11 @@ vi.mock('~app/utils/presenters', () => ({
   updateTable: vi.fn(),
 }));
 
-vi.mock('~app/utils/storage', () => ({
-  getLastActiveSort: () => 'points',
-  setLastActiveSort: vi.fn(),
+vi.mock('~app/hooks/useSettings', () => ({
+  useSettings: () => {
+    const [activeSort, setActiveSort] = useState<SortVariant>('points');
+    return { activeSort, setActiveSort };
+  },
 }));
 
 vi.mock('~app/utils/sorters', () => ({
