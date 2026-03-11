@@ -43,8 +43,8 @@ export const SORT_OPTIONS: SortOption[] = [
 // HN DOM selectors and classes
 export const HN_SELECTORS = {
   // Page structure
-  CONTROL_PANEL_PARENT: 'body > center > table > tbody > tr:nth-child(2) > td > table > tbody > tr > td:nth-child(3)',
-  TABLE_BODY: 'body > center > table > tbody > tr:nth-child(4) > td > table > tbody',
+  CONTROL_PANEL_PARENT: '#hnmain tr:has(.hnname) > td:last-child',
+  TABLE_BODY: '#hnmain #bigbox > td > table > tbody',
 
   // Row patterns (relative to table body)
   TITLE_ROWS: 'tr:nth-child(3n+1)',

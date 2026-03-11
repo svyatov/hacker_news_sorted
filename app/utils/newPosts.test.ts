@@ -5,11 +5,12 @@ import { CSS_CLASSES, HN_SELECTORS } from '~app/constants';
 import { clearNewPostMarkers, getPostIds, isFirstPage, markNewPosts } from './newPosts';
 
 const setupTableBody = (ids: string[]) => {
-  const center = document.createElement('center');
   const outerTable = document.createElement('table');
-  const outerTbody = document.createElement('tbody');
-  const row3 = document.createElement('tr');
-  const td = document.createElement('td');
+  outerTable.id = 'hnmain';
+
+  const bigboxRow = document.createElement('tr');
+  bigboxRow.id = 'bigbox';
+  const bigboxTd = document.createElement('td');
   const innerTable = document.createElement('table');
   const tbody = document.createElement('tbody');
 
@@ -28,19 +29,10 @@ const setupTableBody = (ids: string[]) => {
   }
 
   innerTable.appendChild(tbody);
-  td.appendChild(innerTable);
-  row3.appendChild(td);
-
-  const row1 = document.createElement('tr');
-  const row2 = document.createElement('tr');
-  const row3spacer = document.createElement('tr');
-  outerTbody.appendChild(row1);
-  outerTbody.appendChild(row2);
-  outerTbody.appendChild(row3spacer);
-  outerTbody.appendChild(row3);
-  outerTable.appendChild(outerTbody);
-  center.appendChild(outerTable);
-  document.body.appendChild(center);
+  bigboxTd.appendChild(innerTable);
+  bigboxRow.appendChild(bigboxTd);
+  outerTable.appendChild(bigboxRow);
+  document.body.appendChild(outerTable);
 };
 
 const clearBody = () => {
