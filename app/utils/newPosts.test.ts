@@ -33,8 +33,10 @@ const setupTableBody = (ids: string[]) => {
 
   const row1 = document.createElement('tr');
   const row2 = document.createElement('tr');
+  const row3spacer = document.createElement('tr');
   outerTbody.appendChild(row1);
   outerTbody.appendChild(row2);
+  outerTbody.appendChild(row3spacer);
   outerTbody.appendChild(row3);
   outerTable.appendChild(outerTbody);
   center.appendChild(outerTable);
