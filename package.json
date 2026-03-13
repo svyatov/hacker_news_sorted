@@ -12,6 +12,7 @@
     "package": "plasmo package",
     "release": "bun run build && bun run package",
     "test": "vitest run",
+    "test:integration": "vitest run app/utils/selectors.integration.test.ts",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint . && prettier --check .",
