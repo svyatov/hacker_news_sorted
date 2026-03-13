@@ -1,7 +1,7 @@
 {
   "name": "hacked_news_sorted",
   "displayName": "Hacker News Sorted",
-  "version": "2.3.1",
+  "version": "2.4.0",
   "description": "Sort Hacker News your way — by points, time, or comments — instantly.",
   "author": "Leonid Svyatov <leonid@svyatov.com>",
   "license": "MIT",

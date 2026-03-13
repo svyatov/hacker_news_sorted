@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-03-13
+
 ### Added
 
 - Graceful degradation: warning badge on extension icon and popup banner when HN layout changes break sorting

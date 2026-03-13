@@ -26,6 +26,7 @@ Sort [Hacker News](https://news.ycombinator.com) your way — by points, time, o
 - **Keyboard Shortcuts** — Press `P`, `T`, `C`, or `D` to sort instantly
 - **Persistent Preference** — Your last sort choice is remembered across sessions
 - **Visual Highlighting** — Active sort column is highlighted for clarity
+- **Layout Change Detection** — Warning badge and popup banner if HN changes break sorting
 - **Vimium Compatible** — Shortcuts auto-disable if Vimium or similar extensions are detected
 
 **Compatibility:** Works on any HN page with a post list (front page, Newest, Ask, Show, etc.)
