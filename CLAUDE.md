@@ -27,11 +27,18 @@ bun run screenshots    # Generate Chrome Web Store screenshots (requires `bun ru
 
 - `content.tsx` - Main entry point, injects the ControlPanel into HN's header using Plasmo's content script UI lifecycle
 - `content.css` - Styles for the control panel, sort highlighting, and new-post indicators
+- Detects layout breakage: writes `hns-layout-ok` to `chrome.storage.sync` based on whether expected DOM elements are found (with a 3-second timeout)
+
+### Background Service Worker
+
+- `background.ts` - Manages the extension badge based on layout health status
+- Shows a red "!" badge when `hns-layout-ok` is `false` in `chrome.storage.sync`
+- Listens for storage changes and restores badge state on service worker restart
 
 ### Popup Entry Point
 
-- `popup.tsx` - Settings popup UI with toggle switch for new-post indicators
-- `popup.css` - Popup styles (toggle switches, layout)
+- `popup.tsx` - Settings popup UI with toggle switch for new-post indicators; shows a warning banner when layout detection fails
+- `popup.css` - Popup styles (toggle switches, layout, warning banner)
 - Uses `@plasmohq/storage` `useStorage` hook for reactive persistence to `chrome.storage.sync`
 
 ### Component Structure

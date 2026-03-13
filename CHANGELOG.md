@@ -7,9 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Graceful degradation: warning badge on extension icon and popup banner when HN layout changes break sorting
+- Background service worker for badge management (`background.ts`)
+
 ### Changed
 
 - Replace fragile `nth-child` selectors with stable DOM anchors (`#hnmain`, `#bigbox`, `.hnname`)
+
+### Fixed
+
+- Control panel injecting above the header instead of next to "login" (tightened `CONTROL_PANEL_PARENT` selector with direct-child combinators)
 
 ## [2.3.1] - 2026-03-11
 

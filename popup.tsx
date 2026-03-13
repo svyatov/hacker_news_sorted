@@ -8,6 +8,7 @@ import './popup.css';
 
 const Popup = () => {
   const [showNew, setShowNew] = useStorage(SETTINGS_KEYS.SHOW_NEW, SETTINGS_DEFAULTS[SETTINGS_KEYS.SHOW_NEW]);
+  const [layoutOk] = useStorage(SETTINGS_KEYS.LAYOUT_OK, SETTINGS_DEFAULTS[SETTINGS_KEYS.LAYOUT_OK]);
   // useStorage renders with the default value first, then async-loads the stored value.
   // When stored !== default, the CSS transition animates the toggle visibly (on→off flash).
   // Suppress transitions for 50ms to let storage settle, then re-enable for user interactions.
@@ -21,6 +22,16 @@ const Popup = () => {
   return (
     <div className={isReady ? undefined : 'hns-no-transition'}>
       <h1>HN Sorted Settings</h1>
+
+      {layoutOk === false && (
+        <div className="hns-warning">
+          <strong>Sorting temporarily unavailable :(</strong>
+          <p>
+            Hacker News appears to have changed its page layout. We’re aware, and a fix is on the way. Thanks for your
+            patience!
+          </p>
+        </div>
+      )}
 
       <div className="hns-setting">
         <span>Highlight new posts</span>

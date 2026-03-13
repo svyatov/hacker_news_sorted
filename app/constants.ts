@@ -8,11 +8,13 @@ export const SETTINGS_KEYS = {
   SHOW_NEW: 'hns-show-new',
   LAST_ACTIVE_SORT: 'hns-last-active-sort',
   POST_IDS_PREFIX: 'hns-post-ids:',
+  LAYOUT_OK: 'hns-layout-ok',
 } as const;
 
 export const SETTINGS_DEFAULTS = {
-  [SETTINGS_KEYS.SHOW_NEW]: true,
+  [SETTINGS_KEYS.SHOW_NEW]: true as boolean,
   [SETTINGS_KEYS.LAST_ACTIVE_SORT]: 'points' as const,
+  [SETTINGS_KEYS.LAYOUT_OK]: true as boolean,
 } as const;
 
 // Extension CSS classes
@@ -43,7 +45,7 @@ export const SORT_OPTIONS: SortOption[] = [
 // HN DOM selectors and classes
 export const HN_SELECTORS = {
   // Page structure
-  CONTROL_PANEL_PARENT: '#hnmain tr:has(.hnname) > td:last-child',
+  CONTROL_PANEL_PARENT: '#hnmain tr:has(> td > .pagetop > .hnname) > td:last-child',
   TABLE_BODY: '#hnmain #bigbox > td > table > tbody',
 
   // Row patterns (relative to table body)
