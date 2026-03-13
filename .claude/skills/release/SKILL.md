@@ -14,7 +14,7 @@ Walk through each step, confirming the version number with the user before start
 
 2. **Bump version**: Update `version` in `package.json`.
 
-3. **Finalize changelog**: In `CHANGELOG.md`, rename `## [Unreleased]` to `## [<version>] - <today's date>` (YYYY-MM-DD format). Add a fresh empty `## [Unreleased]` section above it.
+3. **Finalize changelog**: In `CHANGELOG.md`, rename `## [Unreleased]` to `## [<version>] - <today's date>` (YYYY-MM-DD format). Add a fresh empty `## [Unreleased]` section above it. Make sure changelog contains only changes between releases, not intermediate commits.
 
 4. **Update description.txt**: Add a one-line entry to the `Changelog:` section with the new version, month/year, and a short non-technical summary. Insert it as the first changelog line (below the `Changelog:` header).
 
@@ -26,4 +26,4 @@ Walk through each step, confirming the version number with the user before start
 
 8. **Tag**: Create a git tag `v<version>` on the release commit.
 
-Do NOT push to remote — let the user decide when to push.
+9. **Push**: Push everything and create GitHub release.
