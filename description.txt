@@ -14,7 +14,6 @@ P = Points | T = Time | C = Comments | D = Default
 
 Changelog:
 v2.4 (Mar 2026) - Layout change detection with warning badge, more robust selectors
-v2.3.1 (Mar 2026) - Fix for HN layout change
 v2.3 (Jan 2026) - New post indicators, popup settings, cross-device sync
 v2.2 (Jan 2026) - Added keyboard shortcuts, Vimium compatibility
 v2.1 (Dec 2025) - Active sort column highlighting, performance improvements
