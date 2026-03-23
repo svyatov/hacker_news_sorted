@@ -18,6 +18,7 @@
     "lint": "eslint . && prettier --check .",
     "fixture:update": "bun app/__fixtures__/updateFixture.ts",
     "screenshots": "bun scripts/generate-screenshots.ts",
+    "demo": "bun scripts/generate-demo.ts",
     "prepare": "simple-git-hooks"
   },
   "simple-git-hooks": {

@@ -19,6 +19,7 @@ bun run test:coverage # Run tests with coverage report
 bun run lint       # Run ESLint and Prettier checks
 bun run fixture:update # Fetch fresh HN HTML for test fixtures
 bun run screenshots    # Generate Chrome Web Store screenshots (requires `bun run build` first)
+bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run build` first)
 ```
 
 ## Architecture
@@ -28,6 +29,7 @@ bun run screenshots    # Generate Chrome Web Store screenshots (requires `bun ru
 - `content.tsx` - Main entry point, injects the ControlPanel into HN's header using Plasmo's content script UI lifecycle
 - `content.css` - Styles for the control panel, sort highlighting, and new-post indicators
 - Detects layout breakage: writes `hns-layout-ok` to `chrome.storage.sync` based on whether expected DOM elements are found (with a 3-second timeout)
+- **Dev gotcha**: Plasmo hot-reload often doesn't pick up content script CSS or `useState` initial value changes — reload the HN page (or the extension itself) to see updates
 
 ### Background Service Worker
 
@@ -75,6 +77,14 @@ bun run screenshots    # Generate Chrome Web Store screenshots (requires `bun ru
   - Show-new toggle — applies/removes `hns-show-new` CSS class on table body
 - All settings sync across devices via `chrome.storage.sync`
 - New-post detection only runs on first pages (skips paginated pages with `?p=...` or `?next=...`)
+
+### Review Prompt
+
+- `app/hooks/useReviewPrompt.ts` - Manages review prompt lifecycle:
+  - Tracks install timestamp and sort count in `chrome.storage.sync`
+  - Shows a dismissible speech-bubble toast below the sort menu after 7 days of use OR 20 sorts
+  - Dismissal persists to storage (shown at most once)
+  - Persistent review link always visible in extension popup (`popup.tsx`)
 
 ### Constants
 
@@ -144,6 +154,13 @@ Chrome Web Store screenshots are auto-generated using Playwright:
 
 Workflow: `bun run build` then `bun run screenshots`. Output goes to `images/`.
 
+### Demo Video/GIF
+
+- `scripts/generate-demo.ts` - Records a Playwright video of the extension in action, converts to `.mp4` (YouTube/CWS) and `.gif` (README) via ffmpeg
+- `scripts/screenshots/chromePolyfill.ts` - Minimal `chrome.storage` polyfill for running content scripts in Playwright (used by both screenshot and demo scripts). Required because content scripts call `chrome.storage.sync` which doesn't exist outside an extension context.
+
+Workflow: `bun run build` then `bun run demo`. Requires ffmpeg installed. Output goes to `images/`.
+
 ## Commit Conventions
 
 This project uses [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) for commit messages:
@@ -167,7 +184,7 @@ The changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) f
 
 ## Chrome Web Store Description
 
-`description.txt` is the copy used on the Chrome Web Store listing page. It contains a plain-language feature summary and a short changelog for end users. When doing a version bump/release, add a one-line summary to the `Changelog:` section in this file with the release month and year in parentheses (e.g., `v2.3 (Jan 2026) - New post indicators, popup settings`). Keep it non-technical.
+`description.txt` is the copy used on the Chrome Web Store listing page. It contains benefit-oriented copy with a trimmed recent changelog at the bottom. When doing a version bump/release, update the `Recent changes:` section (keep only 2-3 latest versions). Keep it non-technical.
 
 ## Before Committing
 

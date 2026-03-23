@@ -9,6 +9,8 @@
 
 Sort [Hacker News](https://news.ycombinator.com) your way — by points, time, or comments — instantly.
 
+![Demo](images/demo.gif)
+
 ## Install
 
 <a href="https://chrome.google.com/webstore/detail/hacker-news-sorted/djkcnbncofmjekhlhemlkinfpkamlkaj">

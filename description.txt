@@ -1,23 +1,17 @@
-Features:
-- Sort by points (most upvoted)
-- Sort by time (newest first)
-- Sort by comments (most discussed)
-- Restore default HN ranking
-- Remembers your preferred sort
-- Keyboard shortcuts for quick sorting
-- New post indicators (orange dot for posts since last visit)
-- Toggle new-post indicators from extension popup
-- Settings sync across devices
+Sort Hacker News your way — by points, time, or comments — instantly.
 
-Keyboard shortcuts:
-P = Points | T = Time | C = Comments | D = Default
+HN's default ranking is great, but sometimes you want something different. Want the most upvoted stories? Sort by points. Looking for fresh posts? Sort by time. Curious what everyone's talking about? Sort by comments. One click and the page reorders — no reload, no new tab.
 
-Changelog:
-v2.4 (Mar 2026) - Layout change detection with warning badge, more robust selectors
+The sort controls sit right in HN's header bar. Pick a sort, and your preference sticks across sessions and devices. Come back tomorrow and it remembers.
+
+New post indicators mark stories that appeared since your last visit with an orange dot, so you never re-scan the same front page twice. Toggle them on or off from the extension popup.
+
+Keyboard shortcuts: P for points, T for time, C for comments, D for default. If you use Vimium, the shortcuts step aside automatically.
+
+Works on every HN page with a post list — front page, Newest, Ask, Show, Jobs, and more.
+
+No data collection. No tracking. Runs entirely in your browser.
+
+Recent changes:
+v2.4 (Mar 2026) - Layout change detection, more robust selectors
 v2.3 (Jan 2026) - New post indicators, popup settings, cross-device sync
-v2.2 (Jan 2026) - Added keyboard shortcuts, Vimium compatibility
-v2.1 (Dec 2025) - Active sort column highlighting, performance improvements
-v2.0 (Mar 2024) - Complete rewrite with TypeScript, persistent preferences
-v1.0 (Apr 2014) - Initial release
-
-Source code: https://github.com/svyatov/hacker_news_sorted
