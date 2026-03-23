@@ -27,6 +27,17 @@ vi.mock('~app/utils/sorters', () => ({
   sortRows: vi.fn(() => []),
 }));
 
+const mockIncrementSortCount = vi.fn();
+const mockDismissPrompt = vi.fn();
+
+vi.mock('~app/hooks/useReviewPrompt', () => ({
+  useReviewPrompt: () => ({
+    showPrompt: true,
+    dismissPrompt: mockDismissPrompt,
+    incrementSortCount: mockIncrementSortCount,
+  }),
+}));
+
 describe('ControlPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -86,5 +97,33 @@ describe('ControlPanel', () => {
     const text = container.textContent;
     const separatorCount = (text?.match(/·/g) || []).length;
     expect(separatorCount).toBe(3);
+  });
+
+  it('should call incrementSortCount when switching sort', () => {
+    render(<ControlPanel />);
+
+    fireEvent.click(screen.getByText('time'));
+    expect(mockIncrementSortCount).toHaveBeenCalledOnce();
+  });
+
+  it('should not call incrementSortCount when clicking active sort', () => {
+    render(<ControlPanel />);
+
+    fireEvent.click(screen.getByText('points'));
+    expect(mockIncrementSortCount).not.toHaveBeenCalled();
+  });
+
+  it('should render review toast when showPrompt is true', () => {
+    render(<ControlPanel />);
+
+    expect(screen.getByText(/Leave a review/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Dismiss')).toBeInTheDocument();
+  });
+
+  it('should call dismissPrompt when clicking dismiss button', () => {
+    render(<ControlPanel />);
+
+    fireEvent.click(screen.getByLabelText('Dismiss'));
+    expect(mockDismissPrompt).toHaveBeenCalledOnce();
   });
 });

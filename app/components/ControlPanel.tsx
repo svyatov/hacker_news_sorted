@@ -40,7 +40,7 @@ const ControlPanel = (): ReactElement => {
 
       {SORT_OPTIONS.map((option, index) => (
         <Fragment key={option.sortBy}>
-          <SortButton sortOption={option} activeSort={activeSort} setActiveSort={setActiveSort} />
+          <SortButton sortOption={option} activeSort={activeSort} setActiveSort={handleSort} />
           {index < sortOptionsCount && ' · '}
         </Fragment>
       ))}
