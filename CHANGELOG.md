@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Review prompt: dismissible bar above post table after 7 days or 20 sorts
+- Persistent review link in extension popup
+- Demo video and GIF generation script (`bun run demo`)
+- Chrome storage polyfill for Playwright-based screenshot/demo scripts
+
+### Changed
+
+- Rewrite Chrome Web Store description for better discoverability
+
 ## [2.4.0] - 2026-03-13
 
 ### Added

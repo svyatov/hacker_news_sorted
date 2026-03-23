@@ -4,6 +4,7 @@ import { chromium } from 'playwright';
 
 import { CONTROL_PANEL_ROOT_ID, CSS_CLASSES, HN_SELECTORS } from '~app/constants';
 
+import { injectChromeStoragePolyfill } from './chromePolyfill';
 import { VARIANTS } from './constants';
 import { injectArrow, injectOverlayCard, removeOverlays } from './overlays';
 import { CSS_PATH, JS_PATH, SCREENSHOTS_DIR } from './paths';
@@ -12,6 +13,7 @@ export async function setupBrowser(): Promise<{ browser: Browser; page: Page }> 
   const browser = await chromium.launch();
   const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
   const page = await context.newPage();
+  await injectChromeStoragePolyfill(page);
   return { browser, page };
 }
 

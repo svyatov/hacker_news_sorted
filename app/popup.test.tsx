@@ -44,4 +44,14 @@ describe('Popup', () => {
 
     expect(screen.getByLabelText('Highlight new posts')).toBeInTheDocument();
   });
+
+  it('should render persistent review link', () => {
+    storageValues = {};
+    render(<Popup />);
+
+    const link = screen.getByText(/Leave a review/);
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute('href', expect.stringContaining('chromewebstore.google.com'));
+    expect(link).toHaveAttribute('target', '_blank');
+  });
 });

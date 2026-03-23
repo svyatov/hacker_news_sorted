@@ -9,13 +9,27 @@ export const SETTINGS_KEYS = {
   LAST_ACTIVE_SORT: 'hns-last-active-sort',
   POST_IDS_PREFIX: 'hns-post-ids:',
   LAYOUT_OK: 'hns-layout-ok',
+  REVIEW_DISMISSED: 'hns-review-dismissed',
+  INSTALL_TIMESTAMP: 'hns-install-ts',
+  SORT_COUNT: 'hns-sort-count',
 } as const;
 
 export const SETTINGS_DEFAULTS = {
   [SETTINGS_KEYS.SHOW_NEW]: true as boolean,
   [SETTINGS_KEYS.LAST_ACTIVE_SORT]: 'points' as const,
   [SETTINGS_KEYS.LAYOUT_OK]: true as boolean,
+  [SETTINGS_KEYS.REVIEW_DISMISSED]: false as boolean,
+  [SETTINGS_KEYS.INSTALL_TIMESTAMP]: 0 as number,
+  [SETTINGS_KEYS.SORT_COUNT]: 0 as number,
 } as const;
+
+// Chrome Web Store
+export const CWS_REVIEW_URL =
+  'https://chromewebstore.google.com/detail/hacker-news-sorted/djkcnbncofmjekhlhemlkinfpkamlkaj/reviews';
+
+// Review prompt thresholds
+export const REVIEW_PROMPT_DAYS = 7;
+export const REVIEW_PROMPT_SORTS = 20;
 
 // Extension CSS classes
 export const CSS_CLASSES = {
@@ -28,6 +42,10 @@ export const CSS_CLASSES = {
   DIVIDER: 'hns-divider',
   SHOW_NEW: 'hns-show-new',
   NEW_POST: 'hns-new-post',
+  REVIEW_TOAST: 'hns-review-toast',
+  REVIEW_LINK: 'hns-review-link',
+  REVIEW_SUB: 'hns-review-sub',
+  REVIEW_CLOSE: 'hns-review-close',
 } as const;
 
 export const CSS_SELECTORS = {

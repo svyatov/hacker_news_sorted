@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { useStorage } from '@plasmohq/storage/hook';
 
-import { SETTINGS_DEFAULTS, SETTINGS_KEYS } from '~app/constants';
+import { CWS_REVIEW_URL, SETTINGS_DEFAULTS, SETTINGS_KEYS } from '~app/constants';
 
 import './popup.css';
 
@@ -45,6 +45,13 @@ const Popup = () => {
           />
           <span className="hns-toggle-slider" />
         </label>
+      </div>
+
+      <div className="hns-review-link">
+        Enjoying HN Sorted?{' '}
+        <a href={CWS_REVIEW_URL} target="_blank" rel="noopener">
+          {'Leave a review \u2764\ufe0f'}
+        </a>
       </div>
     </div>
   );

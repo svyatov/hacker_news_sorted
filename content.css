@@ -1,4 +1,6 @@
 #hns-control-panel {
+  display: inline-block;
+  position: relative;
   color: #222;
   line-height: 12px;
 }
@@ -71,4 +73,86 @@
   color: #ff6600;
   margin-right: 4px;
   font-weight: bold;
+}
+
+/* Review toast (speech bubble below sort menu) */
+.hns-review-toast {
+  position: absolute;
+  top: 22px;
+  left: 10px;
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 8px 24px 8px 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  font-size: 12px;
+  color: #444;
+  white-space: nowrap;
+  z-index: 1000;
+  text-align: left;
+}
+
+/* Arrow pointing up toward "sort by:" */
+.hns-review-toast::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 20px;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-left: 1px solid #ddd;
+  border-top: 1px solid #ddd;
+  transform: rotate(45deg);
+}
+
+.hns-review-link {
+  display: block;
+  color: #444;
+  font-weight: normal;
+  text-decoration: none;
+  text-align: left;
+  transition: color 0.15s;
+}
+
+.hns-review-link:hover {
+  color: #ff6600;
+  text-decoration: none;
+}
+
+.hns-review-sub {
+  display: block;
+  font-size: 11px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.hns-review-close {
+  all: unset;
+  cursor: pointer;
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  color: #bbb;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.hns-review-close:hover {
+  color: #888;
+}
+
+.hns-review-close:focus-visible {
+  outline: 2px solid #ff6600;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hns-review-link {
+    transition: none;
+  }
 }
