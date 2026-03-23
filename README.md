@@ -9,7 +9,7 @@
 
 Sort [Hacker News](https://news.ycombinator.com) your way — by points, time, or comments — instantly.
 
-![Demo](images/demo.gif)
+<img src="images/demo.gif" width="640" alt="Demo">
 
 ## Install
 

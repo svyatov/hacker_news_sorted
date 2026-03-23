@@ -1,6 +1,6 @@
 import { execFileSync } from 'child_process';
 import path from 'path';
-import type { BrowserContext, Page } from 'playwright';
+import type { Browser, BrowserContext, Page } from 'playwright';
 import { chromium } from 'playwright';
 
 import { CONTROL_PANEL_ROOT_ID, CSS_CLASSES, HN_SELECTORS } from '~app/constants';
@@ -11,7 +11,7 @@ import { CSS_PATH, JS_PATH, SCREENSHOTS_DIR } from './screenshots/paths';
 const VIEWPORT = { width: 1280, height: 720 };
 const OVERLAY_ID = 'hns-demo-overlay';
 
-async function setupBrowserWithVideo(): Promise<{ context: BrowserContext; page: Page }> {
+async function setupBrowserWithVideo(): Promise<{ browser: Browser; context: BrowserContext; page: Page }> {
   const browser = await chromium.launch();
   const context = await browser.newContext({
     viewport: VIEWPORT,
@@ -19,7 +19,7 @@ async function setupBrowserWithVideo(): Promise<{ context: BrowserContext; page:
   });
   const page = await context.newPage();
   await injectChromeStoragePolyfill(page);
-  return { context, page };
+  return { browser, context, page };
 }
 
 async function injectExtension(page: Page): Promise<void> {
@@ -118,9 +118,31 @@ async function recordDemo(page: Page): Promise<void> {
   await page.waitForTimeout(500);
 }
 
+async function getContentBounds(page: Page): Promise<{ x: number; y: number; w: number; h: number }> {
+  const rect = await page.evaluate(
+    (viewport) => {
+      const el = document.querySelector('#hnmain');
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return {
+        x: Math.floor(r.x),
+        y: 0,
+        w: Math.min(Math.ceil(r.width), viewport.width - Math.floor(r.x)),
+        h: viewport.height,
+      };
+    },
+    { width: VIEWPORT.width, height: VIEWPORT.height },
+  );
+  if (!rect) throw new Error('#hnmain not found for crop measurement');
+  // Ensure even dimensions (required by h264)
+  rect.w = rect.w % 2 === 0 ? rect.w : rect.w - 1;
+  rect.h = rect.h % 2 === 0 ? rect.h : rect.h - 1;
+  return rect;
+}
+
 async function main() {
   console.log('Recording demo...');
-  const { context, page } = await setupBrowserWithVideo();
+  const { browser, context, page } = await setupBrowserWithVideo();
 
   const recordingStart = Date.now();
   await injectExtension(page);
@@ -128,11 +150,16 @@ async function main() {
   const loadSeconds = ((Date.now() - recordingStart) / 1000).toFixed(2);
   console.log(`Page loaded in ${loadSeconds}s — trimming that from the video.`);
 
+  const crop = await getContentBounds(page);
+  console.log(`Content bounds: ${crop.w}x${crop.h} at (${crop.x}, ${crop.y})`);
+  const cropFilter = `crop=${crop.w}:${crop.h}:${crop.x}:${crop.y}`;
+
   await recordDemo(page);
 
   await page.close();
   const videoPath = await page.video()?.path();
   await context.close();
+  await browser.close();
 
   if (!videoPath) throw new Error('No video recorded');
 
@@ -146,6 +173,8 @@ async function main() {
     loadSeconds,
     '-i',
     videoPath,
+    '-vf',
+    cropFilter,
     '-c:v',
     'libx264',
     '-pix_fmt',
@@ -155,7 +184,7 @@ async function main() {
     mp4Path,
   ]);
 
-  console.log('Converting to GIF...');
+  console.log('Converting to GIF (full resolution for Retina)...');
   execFileSync('ffmpeg', [
     '-y',
     '-ss',
@@ -163,7 +192,7 @@ async function main() {
     '-i',
     videoPath,
     '-vf',
-    'fps=12,scale=640:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse',
+    `${cropFilter},fps=12,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse`,
     gifPath,
   ]);
 
