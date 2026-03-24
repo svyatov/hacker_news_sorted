@@ -21,7 +21,7 @@ vi.mock('~app/utils/presenters', () => ({
 vi.mock('~app/hooks/useSettings', () => ({
   useSettings: () => {
     const [activeSort, setActiveSort] = useState<SortVariant>('points');
-    return { activeSort, setActiveSort, showTrueTimeAgo: false };
+    return { activeSort, setActiveSort, showTrueTimeAgo: true };
   },
 }));
 

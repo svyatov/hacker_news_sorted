@@ -166,5 +166,32 @@ describe('presenters', () => {
       expect(link.textContent).toBe('14 hours ago');
       expect(link.hasAttribute('data-original-age')).toBe(false);
     });
+
+    it('should skip rows with time === 0', () => {
+      const row = makeRow('3 hours ago', 0);
+      row.time = 0;
+      correctAgeTexts([row]);
+      expect(row.info.querySelector('a')!.textContent).toBe('3 hours ago');
+    });
+
+    it('should skip rows without a link inside .age', () => {
+      const row = makeRow('3 hours ago', Math.floor(Date.now() / 1000) - 86400);
+      row.info.querySelector('a')!.remove();
+      expect(() => correctAgeTexts([row])).not.toThrow();
+    });
+
+    it('should not overwrite already-saved original text on repeated calls', () => {
+      const nowSec = Math.floor(Date.now() / 1000);
+      const row = makeRow('14 hours ago', nowSec - 3 * 86400);
+      correctAgeTexts([row]);
+      correctAgeTexts([row]);
+      expect(row.info.querySelector('a')!.getAttribute('data-original-age')).toBe('14 hours ago');
+    });
+
+    it('restoreAgeTexts should be a no-op when no original was saved', () => {
+      const row = makeRow('3 hours ago', Math.floor(Date.now() / 1000) - 3600);
+      restoreAgeTexts([row]);
+      expect(row.info.querySelector('a')!.textContent).toBe('3 hours ago');
+    });
   });
 });
