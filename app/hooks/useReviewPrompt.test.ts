@@ -1,23 +1,13 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createStorageMock } from '~app/__fixtures__/testHelpers';
 import { REVIEW_PROMPT_DAYS, REVIEW_PROMPT_SORTS, SETTINGS_KEYS } from '~app/constants';
 
 const MS_PER_DAY = 86_400_000;
 
-const storageStore: Record<string, unknown> = {};
-const mockSet = vi.fn((key: string, value: unknown) => {
-  storageStore[key] = value;
-  return Promise.resolve();
-});
-const mockGet = vi.fn((key: string) => Promise.resolve(storageStore[key]));
-
-vi.mock('@plasmohq/storage', () => ({
-  Storage: class {
-    get = mockGet;
-    set = mockSet;
-  },
-}));
+const { store, mockSet, reset, StorageClass } = createStorageMock();
+vi.mock('@plasmohq/storage', () => ({ Storage: StorageClass }));
 
 const { shouldPrompt, useReviewPrompt } = await import('./useReviewPrompt');
 
@@ -60,7 +50,7 @@ describe('shouldPrompt', () => {
 describe('useReviewPrompt', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    for (const key of Object.keys(storageStore)) delete storageStore[key];
+    reset();
   });
 
   it('sets install timestamp on first run', async () => {
@@ -71,7 +61,7 @@ describe('useReviewPrompt', () => {
   });
 
   it('does not overwrite existing install timestamp', async () => {
-    storageStore[SETTINGS_KEYS.INSTALL_TIMESTAMP] = 1000;
+    store[SETTINGS_KEYS.INSTALL_TIMESTAMP] = 1000;
 
     renderHook(() => useReviewPrompt());
     await act(() => Promise.resolve());
@@ -80,9 +70,9 @@ describe('useReviewPrompt', () => {
   });
 
   it('showPrompt is true when thresholds met', async () => {
-    storageStore[SETTINGS_KEYS.INSTALL_TIMESTAMP] = Date.now() - REVIEW_PROMPT_DAYS * MS_PER_DAY - 1;
-    storageStore[SETTINGS_KEYS.REVIEW_DISMISSED] = false;
-    storageStore[SETTINGS_KEYS.SORT_COUNT] = 0;
+    store[SETTINGS_KEYS.INSTALL_TIMESTAMP] = Date.now() - REVIEW_PROMPT_DAYS * MS_PER_DAY - 1;
+    store[SETTINGS_KEYS.REVIEW_DISMISSED] = false;
+    store[SETTINGS_KEYS.SORT_COUNT] = 0;
 
     const { result } = renderHook(() => useReviewPrompt());
     await act(() => Promise.resolve());
@@ -91,9 +81,9 @@ describe('useReviewPrompt', () => {
   });
 
   it('showPrompt stays false when dismissed', async () => {
-    storageStore[SETTINGS_KEYS.INSTALL_TIMESTAMP] = Date.now() - REVIEW_PROMPT_DAYS * MS_PER_DAY - 1;
-    storageStore[SETTINGS_KEYS.REVIEW_DISMISSED] = true;
-    storageStore[SETTINGS_KEYS.SORT_COUNT] = 100;
+    store[SETTINGS_KEYS.INSTALL_TIMESTAMP] = Date.now() - REVIEW_PROMPT_DAYS * MS_PER_DAY - 1;
+    store[SETTINGS_KEYS.REVIEW_DISMISSED] = true;
+    store[SETTINGS_KEYS.SORT_COUNT] = 100;
 
     const { result } = renderHook(() => useReviewPrompt());
     await act(() => Promise.resolve());
@@ -102,8 +92,8 @@ describe('useReviewPrompt', () => {
   });
 
   it('incrementSortCount writes to storage', async () => {
-    storageStore[SETTINGS_KEYS.INSTALL_TIMESTAMP] = Date.now();
-    storageStore[SETTINGS_KEYS.SORT_COUNT] = 5;
+    store[SETTINGS_KEYS.INSTALL_TIMESTAMP] = Date.now();
+    store[SETTINGS_KEYS.SORT_COUNT] = 5;
 
     const { result } = renderHook(() => useReviewPrompt());
     await act(() => Promise.resolve());
@@ -114,8 +104,8 @@ describe('useReviewPrompt', () => {
   });
 
   it('dismissPrompt sets dismissed in storage and hides prompt', async () => {
-    storageStore[SETTINGS_KEYS.INSTALL_TIMESTAMP] = Date.now() - REVIEW_PROMPT_DAYS * MS_PER_DAY - 1;
-    storageStore[SETTINGS_KEYS.REVIEW_DISMISSED] = false;
+    store[SETTINGS_KEYS.INSTALL_TIMESTAMP] = Date.now() - REVIEW_PROMPT_DAYS * MS_PER_DAY - 1;
+    store[SETTINGS_KEYS.REVIEW_DISMISSED] = false;
 
     const { result } = renderHook(() => useReviewPrompt());
     await act(() => Promise.resolve());

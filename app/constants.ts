@@ -27,9 +27,14 @@ export const SETTINGS_DEFAULTS = {
   [SETTINGS_KEYS.TRUE_TIME_AGO]: true as boolean,
 } as const;
 
+// Time conversions
+export const SECONDS_PER_MINUTE = 60;
+export const SECONDS_PER_HOUR = 3_600;
+export const SECONDS_PER_DAY = 86_400;
+
 export const COOLDOWN_BOUNDS = {
   MIN: 10,
-  MAX: 86_400,
+  MAX: SECONDS_PER_DAY,
 } as const;
 
 // Chrome Web Store

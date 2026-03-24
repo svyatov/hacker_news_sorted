@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { clearBody, createStorageMock, FAKE_NOW, getRowById, setupTableBody } from '~app/__fixtures__/testHelpers';
 import { CSS_CLASSES, SETTINGS_DEFAULTS, SETTINGS_KEYS } from '~app/constants';
 import type { PostTimestamps } from '~app/utils/newPosts';
 
@@ -8,61 +9,8 @@ const COOLDOWN = SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN];
 const COOLDOWN_MS = COOLDOWN * 1000;
 
 // --- Storage mock ---
-const storageStore: Record<string, unknown> = {};
-const watcherCallbacks: Record<string, (change: { newValue: unknown }) => void> = {};
-const mockSet = vi.fn((key: string, value: unknown) => {
-  storageStore[key] = value;
-  return Promise.resolve();
-});
-const mockGet = vi.fn((key: string) => Promise.resolve(storageStore[key]));
-const mockWatch = vi.fn((map: Record<string, (change: { newValue: unknown }) => void>) => {
-  Object.assign(watcherCallbacks, map);
-});
-const mockUnwatch = vi.fn();
-
-vi.mock('@plasmohq/storage', () => ({
-  Storage: class {
-    get = mockGet;
-    set = mockSet;
-    watch = mockWatch;
-    unwatch = mockUnwatch;
-  },
-}));
-
-// --- DOM helpers ---
-const setupTableBody = (ids: string[]) => {
-  const outerTable = document.createElement('table');
-  outerTable.id = 'hnmain';
-  const bigboxRow = document.createElement('tr');
-  bigboxRow.id = 'bigbox';
-  const bigboxTd = document.createElement('td');
-  const innerTable = document.createElement('table');
-  const tbody = document.createElement('tbody');
-
-  for (const id of ids) {
-    const tr = document.createElement('tr');
-    tr.classList.add('athing');
-    tr.id = id;
-    tbody.appendChild(tr);
-    tbody.appendChild(document.createElement('tr'));
-    const spacer = document.createElement('tr');
-    spacer.classList.add('spacer');
-    tbody.appendChild(spacer);
-  }
-
-  innerTable.appendChild(tbody);
-  bigboxTd.appendChild(innerTable);
-  bigboxRow.appendChild(bigboxTd);
-  outerTable.appendChild(bigboxRow);
-  document.body.appendChild(outerTable);
-  return tbody;
-};
-
-const clearBody = () => {
-  while (document.body.firstChild) document.body.removeChild(document.body.firstChild);
-};
-
-const getRowById = (id: string) => document.querySelector(`[id="${id}"]`) as HTMLElement;
+const { store, mockSet, mockUnwatch, watcherCallbacks, reset, StorageClass } = createStorageMock();
+vi.mock('@plasmohq/storage', () => ({ Storage: StorageClass }));
 
 // --- Stubs ---
 vi.stubGlobal('location', { pathname: '/', search: '' });
@@ -74,9 +22,8 @@ describe('useSettings', () => {
     clearBody();
     vi.clearAllMocks();
     vi.useFakeTimers();
-    vi.setSystemTime(1_000_000_000_000);
-    for (const key of Object.keys(storageStore)) delete storageStore[key];
-    for (const key of Object.keys(watcherCallbacks)) delete watcherCallbacks[key];
+    vi.setSystemTime(FAKE_NOW);
+    reset();
   });
 
   afterEach(() => {
@@ -87,8 +34,8 @@ describe('useSettings', () => {
   describe('init', () => {
     it('should migrate string[] format to PostTimestamps', async () => {
       setupTableBody(['post-1', 'post-2']);
-      storageStore[SETTINGS_KEYS.SHOW_NEW] = true;
-      storageStore['hns-post-ids:/'] = ['post-1', 'post-2'];
+      store[SETTINGS_KEYS.SHOW_NEW] = true;
+      store['hns-post-ids:/'] = ['post-1', 'post-2'];
 
       renderHook(() => useSettings());
       await act(() => Promise.resolve());
@@ -102,9 +49,9 @@ describe('useSettings', () => {
 
     it('should not re-migrate PostTimestamps format', async () => {
       setupTableBody(['post-1']);
-      storageStore[SETTINGS_KEYS.SHOW_NEW] = true;
+      store[SETTINGS_KEYS.SHOW_NEW] = true;
       const existing: PostTimestamps = { 'post-1': -1 };
-      storageStore['hns-post-ids:/'] = existing;
+      store['hns-post-ids:/'] = existing;
 
       renderHook(() => useSettings());
       await act(() => Promise.resolve());
@@ -116,8 +63,8 @@ describe('useSettings', () => {
 
     it('should mark new posts and start fade interval', async () => {
       setupTableBody(['post-1', 'post-2']);
-      storageStore[SETTINGS_KEYS.SHOW_NEW] = true;
-      storageStore['hns-post-ids:/'] = { 'post-1': -1 } as PostTimestamps;
+      store[SETTINGS_KEYS.SHOW_NEW] = true;
+      store['hns-post-ids:/'] = { 'post-1': -1 } as PostTimestamps;
 
       renderHook(() => useSettings());
       await act(() => Promise.resolve());
@@ -128,15 +75,14 @@ describe('useSettings', () => {
 
     it('should use default cooldown when none is stored', async () => {
       setupTableBody(['post-1', 'post-2']);
-      storageStore[SETTINGS_KEYS.SHOW_NEW] = true;
-      storageStore['hns-post-ids:/'] = { 'post-1': -1 } as PostTimestamps;
+      store[SETTINGS_KEYS.SHOW_NEW] = true;
+      store['hns-post-ids:/'] = { 'post-1': -1 } as PostTimestamps;
 
       renderHook(() => useSettings());
       await act(() => Promise.resolve());
 
-      // The interval period should be based on default cooldown (600s → 12000ms)
       const savedData = mockSet.mock.calls.find((c) => c[0] === 'hns-post-ids:/')?.[1] as PostTimestamps;
-      expect(savedData['post-2']).toBe(1_000_000_000_000);
+      expect(savedData['post-2']).toBe(FAKE_NOW);
     });
   });
 
@@ -188,8 +134,8 @@ describe('useSettings', () => {
   describe('fade interval', () => {
     it('should update opacity on interval tick', async () => {
       setupTableBody(['post-1']);
-      storageStore[SETTINGS_KEYS.SHOW_NEW] = true;
-      storageStore['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
+      store[SETTINGS_KEYS.SHOW_NEW] = true;
+      store['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
 
       renderHook(() => useSettings());
       await act(() => Promise.resolve());
@@ -206,8 +152,8 @@ describe('useSettings', () => {
 
     it('should remove class when cooldown expires but preserve timestamp', async () => {
       setupTableBody(['post-1']);
-      storageStore[SETTINGS_KEYS.SHOW_NEW] = true;
-      storageStore['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
+      store[SETTINGS_KEYS.SHOW_NEW] = true;
+      store['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
 
       renderHook(() => useSettings());
       await act(() => Promise.resolve());
@@ -221,8 +167,8 @@ describe('useSettings', () => {
 
     it('should clear interval on unmount', async () => {
       setupTableBody(['post-1']);
-      storageStore[SETTINGS_KEYS.SHOW_NEW] = true;
-      storageStore['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
+      store[SETTINGS_KEYS.SHOW_NEW] = true;
+      store['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
 
       const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval');
       const { unmount } = renderHook(() => useSettings());
@@ -236,8 +182,8 @@ describe('useSettings', () => {
   describe('cooldown watcher', () => {
     it('should restart interval with new period on cooldown change', async () => {
       setupTableBody(['post-1']);
-      storageStore[SETTINGS_KEYS.SHOW_NEW] = true;
-      storageStore['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
+      store[SETTINGS_KEYS.SHOW_NEW] = true;
+      store['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
 
       const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval');
       renderHook(() => useSettings());
@@ -256,8 +202,8 @@ describe('useSettings', () => {
 
     it('should revive indicators when cooldown is increased', async () => {
       setupTableBody(['post-1']);
-      storageStore[SETTINGS_KEYS.SHOW_NEW] = true;
-      storageStore['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
+      store[SETTINGS_KEYS.SHOW_NEW] = true;
+      store['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
 
       renderHook(() => useSettings());
       await act(() => Promise.resolve());
@@ -279,9 +225,9 @@ describe('useSettings', () => {
 
     it('should stop interval when no posts were ever new', async () => {
       setupTableBody(['post-1']);
-      storageStore[SETTINGS_KEYS.SHOW_NEW] = true;
+      store[SETTINGS_KEYS.SHOW_NEW] = true;
       // All posts are known (-1), none were ever new
-      storageStore['hns-post-ids:/'] = { 'post-1': -1 } as PostTimestamps;
+      store['hns-post-ids:/'] = { 'post-1': -1 } as PostTimestamps;
 
       const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
       renderHook(() => useSettings());
@@ -299,8 +245,8 @@ describe('useSettings', () => {
 
     it('should not restart interval when showNew is off', async () => {
       setupTableBody(['post-1']);
-      storageStore[SETTINGS_KEYS.SHOW_NEW] = false;
-      storageStore['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
+      store[SETTINGS_KEYS.SHOW_NEW] = false;
+      store['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
 
       const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
       renderHook(() => useSettings());
@@ -320,8 +266,8 @@ describe('useSettings', () => {
   describe('showNew watcher', () => {
     it('should stop interval when toggled off', async () => {
       setupTableBody(['post-1']);
-      storageStore[SETTINGS_KEYS.SHOW_NEW] = true;
-      storageStore['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
+      store[SETTINGS_KEYS.SHOW_NEW] = true;
+      store['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
 
       const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval');
       renderHook(() => useSettings());
@@ -336,8 +282,8 @@ describe('useSettings', () => {
 
     it('should restart interval when toggled back on', async () => {
       setupTableBody(['post-1']);
-      storageStore[SETTINGS_KEYS.SHOW_NEW] = true;
-      storageStore['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
+      store[SETTINGS_KEYS.SHOW_NEW] = true;
+      store['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
 
       const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
       renderHook(() => useSettings());
@@ -360,8 +306,8 @@ describe('useSettings', () => {
   describe('postIds watcher', () => {
     it('should re-apply marks from incoming timestamps without writing back', async () => {
       setupTableBody(['post-1', 'post-2']);
-      storageStore[SETTINGS_KEYS.SHOW_NEW] = true;
-      storageStore['hns-post-ids:/'] = { 'post-1': -1, 'post-2': -1 } as PostTimestamps;
+      store[SETTINGS_KEYS.SHOW_NEW] = true;
+      store['hns-post-ids:/'] = { 'post-1': -1, 'post-2': -1 } as PostTimestamps;
 
       renderHook(() => useSettings());
       await act(() => Promise.resolve());
@@ -382,8 +328,8 @@ describe('useSettings', () => {
 
     it('should handle migrated array format from watcher', async () => {
       setupTableBody(['post-1']);
-      storageStore[SETTINGS_KEYS.SHOW_NEW] = true;
-      storageStore['hns-post-ids:/'] = { 'post-1': -1 } as PostTimestamps;
+      store[SETTINGS_KEYS.SHOW_NEW] = true;
+      store['hns-post-ids:/'] = { 'post-1': -1 } as PostTimestamps;
 
       renderHook(() => useSettings());
       await act(() => Promise.resolve());
@@ -413,8 +359,8 @@ describe('useSettings', () => {
 
     it('should not start interval after unmount during async init', async () => {
       setupTableBody(['post-1']);
-      storageStore[SETTINGS_KEYS.SHOW_NEW] = true;
-      storageStore['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
+      store[SETTINGS_KEYS.SHOW_NEW] = true;
+      store['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
 
       const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
       const { unmount } = renderHook(() => useSettings());

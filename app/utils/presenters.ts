@@ -1,5 +1,6 @@
-import { CSS_CLASSES, CSS_SELECTORS } from '~app/constants';
+import { CSS_CLASSES, CSS_SELECTORS, SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_MINUTE } from '~app/constants';
 import type { NonDefaultSortVariant, ParsedRow, SortVariant } from '~app/types';
+import { nowInSeconds } from '~app/utils/converters';
 import { getCommentsElement, getPointsElement, getTableBody, getTimeElement } from '~app/utils/selectors';
 
 const DATA_ORIGINAL_AGE = 'data-original-age';
@@ -55,16 +56,16 @@ export const highlightActiveSort = (infoRow: HTMLElement, activeSort: SortVarian
 const pluralize = (count: number, singular: string): string => `${count} ${count === 1 ? singular : singular + 's'}`;
 
 export const formatAge = (unixTimestamp: number): string => {
-  const secondsAgo = Math.floor(Date.now() / 1000) - unixTimestamp;
+  const secondsAgo = nowInSeconds() - unixTimestamp;
   if (secondsAgo < 0) return '0 minutes ago';
 
-  const days = Math.floor(secondsAgo / 86400);
+  const days = Math.floor(secondsAgo / SECONDS_PER_DAY);
   if (days > 0) return `${pluralize(days, 'day')} ago`;
 
-  const hours = Math.floor(secondsAgo / 3600);
+  const hours = Math.floor(secondsAgo / SECONDS_PER_HOUR);
   if (hours > 0) return `${pluralize(hours, 'hour')} ago`;
 
-  const minutes = Math.floor(secondsAgo / 60);
+  const minutes = Math.floor(secondsAgo / SECONDS_PER_MINUTE);
   return `${pluralize(minutes, 'minute')} ago`;
 };
 

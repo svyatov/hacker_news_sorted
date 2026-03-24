@@ -11,42 +11,44 @@ import {
   getTitleRows,
 } from './selectors';
 
+const POST_COUNT = 3;
+const ROWS_PER_POST = 3; // title + info + spacer
+
 describe('selectors', () => {
   describe('row selectors', () => {
     let tableBody: HTMLElement;
 
     beforeEach(() => {
       tableBody = document.createElement('tbody');
-      // Create 9 rows: 3 posts worth (title, info, spacer x3)
-      for (let i = 0; i < 9; i++) {
+      for (let i = 0; i < POST_COUNT * ROWS_PER_POST; i++) {
         const tr = document.createElement('tr');
         tr.setAttribute('data-row', String(i + 1));
         tableBody.appendChild(tr);
       }
     });
 
-    it('should select title rows (3n+1: 1st, 4th, 7th)', () => {
+    it('should select the first row of each 3-row post group', () => {
       const titleRows = getTitleRows(tableBody);
-      expect(titleRows.length).toBe(3);
-      expect(titleRows[0].getAttribute('data-row')).toBe('1');
-      expect(titleRows[1].getAttribute('data-row')).toBe('4');
-      expect(titleRows[2].getAttribute('data-row')).toBe('7');
+      expect(titleRows.length).toBe(POST_COUNT);
+      for (let i = 0; i < POST_COUNT; i++) {
+        expect(titleRows[i].getAttribute('data-row')).toBe(String(i * ROWS_PER_POST + 1));
+      }
     });
 
-    it('should select info rows (3n+2: 2nd, 5th, 8th)', () => {
+    it('should select the second row of each 3-row post group', () => {
       const infoRows = getInfoRows(tableBody);
-      expect(infoRows.length).toBe(3);
-      expect(infoRows[0].getAttribute('data-row')).toBe('2');
-      expect(infoRows[1].getAttribute('data-row')).toBe('5');
-      expect(infoRows[2].getAttribute('data-row')).toBe('8');
+      expect(infoRows.length).toBe(POST_COUNT);
+      for (let i = 0; i < POST_COUNT; i++) {
+        expect(infoRows[i].getAttribute('data-row')).toBe(String(i * ROWS_PER_POST + 2));
+      }
     });
 
-    it('should select spacer rows (3n+3: 3rd, 6th, 9th)', () => {
+    it('should select the third row of each 3-row post group', () => {
       const spacerRows = getSpacerRows(tableBody);
-      expect(spacerRows.length).toBe(3);
-      expect(spacerRows[0].getAttribute('data-row')).toBe('3');
-      expect(spacerRows[1].getAttribute('data-row')).toBe('6');
-      expect(spacerRows[2].getAttribute('data-row')).toBe('9');
+      expect(spacerRows.length).toBe(POST_COUNT);
+      for (let i = 0; i < POST_COUNT; i++) {
+        expect(spacerRows[i].getAttribute('data-row')).toBe(String(i * ROWS_PER_POST + 3));
+      }
     });
 
     it('should handle empty table body', () => {

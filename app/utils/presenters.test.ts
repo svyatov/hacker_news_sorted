@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CSS_CLASSES, HN_CLASSES } from '~app/constants';
+import { CSS_CLASSES, HN_CLASSES, SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_MINUTE } from '~app/constants';
 import type { ParsedRow } from '~app/types';
+import { nowInSeconds } from '~app/utils/converters';
 
 import { correctAgeTexts, formatAge, highlightActiveSort, restoreAgeTexts } from './presenters';
 
@@ -98,14 +99,22 @@ describe('presenters', () => {
 
     const nowSec = Math.floor(new Date('2026-03-24T12:00:00Z').getTime() / 1000);
 
-    it('should format minutes', () => expect(formatAge(nowSec - 30 * 60)).toBe('30 minutes ago'));
-    it('should format singular minute', () => expect(formatAge(nowSec - 60)).toBe('1 minute ago'));
-    it('should format hours', () => expect(formatAge(nowSec - 5 * 3600)).toBe('5 hours ago'));
-    it('should format singular hour', () => expect(formatAge(nowSec - 3600)).toBe('1 hour ago'));
-    it('should format days', () => expect(formatAge(nowSec - 3 * 86400)).toBe('3 days ago'));
-    it('should format singular day', () => expect(formatAge(nowSec - 86400)).toBe('1 day ago'));
-    it('should use days for 25 hours', () => expect(formatAge(nowSec - 25 * 3600)).toBe('1 day ago'));
-    it('should handle future timestamps', () => expect(formatAge(nowSec + 100)).toBe('0 minutes ago'));
+    it('should return "30 minutes ago" for 30 minutes', () =>
+      expect(formatAge(nowSec - 30 * SECONDS_PER_MINUTE)).toBe('30 minutes ago'));
+    it('should return "1 minute ago" for exactly 1 minute', () =>
+      expect(formatAge(nowSec - SECONDS_PER_MINUTE)).toBe('1 minute ago'));
+    it('should return "5 hours ago" for 5 hours', () =>
+      expect(formatAge(nowSec - 5 * SECONDS_PER_HOUR)).toBe('5 hours ago'));
+    it('should return "1 hour ago" for exactly 1 hour', () =>
+      expect(formatAge(nowSec - SECONDS_PER_HOUR)).toBe('1 hour ago'));
+    it('should return "3 days ago" for 3 days', () =>
+      expect(formatAge(nowSec - 3 * SECONDS_PER_DAY)).toBe('3 days ago'));
+    it('should return "1 day ago" for exactly 1 day', () =>
+      expect(formatAge(nowSec - SECONDS_PER_DAY)).toBe('1 day ago'));
+    it('should round 25 hours down to "1 day ago"', () =>
+      expect(formatAge(nowSec - 25 * SECONDS_PER_HOUR)).toBe('1 day ago'));
+    it('should return "0 minutes ago" for future timestamps', () =>
+      expect(formatAge(nowSec + 100)).toBe('0 minutes ago'));
   });
 
   describe('correctAgeTexts / restoreAgeTexts', () => {
@@ -142,8 +151,8 @@ describe('presenters', () => {
     };
 
     it('should correct age text and preserve link', () => {
-      const nowSec = Math.floor(Date.now() / 1000);
-      const row = makeRow('14 hours ago', nowSec - 3 * 86400);
+      const nowSec = nowInSeconds();
+      const row = makeRow('14 hours ago', nowSec - 3 * SECONDS_PER_DAY);
       correctAgeTexts([row]);
       const link = row.info.querySelector('a')!;
       expect(link.textContent).toBe('3 days ago');
@@ -151,15 +160,15 @@ describe('presenters', () => {
     });
 
     it('should save original text in data attribute', () => {
-      const nowSec = Math.floor(Date.now() / 1000);
-      const row = makeRow('14 hours ago', nowSec - 3 * 86400);
+      const nowSec = nowInSeconds();
+      const row = makeRow('14 hours ago', nowSec - 3 * SECONDS_PER_DAY);
       correctAgeTexts([row]);
       expect(row.info.querySelector('a')!.getAttribute('data-original-age')).toBe('14 hours ago');
     });
 
     it('should restore original text', () => {
-      const nowSec = Math.floor(Date.now() / 1000);
-      const row = makeRow('14 hours ago', nowSec - 3 * 86400);
+      const nowSec = nowInSeconds();
+      const row = makeRow('14 hours ago', nowSec - 3 * SECONDS_PER_DAY);
       correctAgeTexts([row]);
       restoreAgeTexts([row]);
       const link = row.info.querySelector('a')!;
@@ -175,21 +184,21 @@ describe('presenters', () => {
     });
 
     it('should skip rows without a link inside .age', () => {
-      const row = makeRow('3 hours ago', Math.floor(Date.now() / 1000) - 86400);
+      const row = makeRow('3 hours ago', nowInSeconds() - SECONDS_PER_DAY);
       row.info.querySelector('a')!.remove();
       expect(() => correctAgeTexts([row])).not.toThrow();
     });
 
     it('should not overwrite already-saved original text on repeated calls', () => {
-      const nowSec = Math.floor(Date.now() / 1000);
-      const row = makeRow('14 hours ago', nowSec - 3 * 86400);
+      const nowSec = nowInSeconds();
+      const row = makeRow('14 hours ago', nowSec - 3 * SECONDS_PER_DAY);
       correctAgeTexts([row]);
       correctAgeTexts([row]);
       expect(row.info.querySelector('a')!.getAttribute('data-original-age')).toBe('14 hours ago');
     });
 
     it('restoreAgeTexts should be a no-op when no original was saved', () => {
-      const row = makeRow('3 hours ago', Math.floor(Date.now() / 1000) - 3600);
+      const row = makeRow('3 hours ago', nowInSeconds() - SECONDS_PER_HOUR);
       restoreAgeTexts([row]);
       expect(row.info.querySelector('a')!.textContent).toBe('3 hours ago');
     });
