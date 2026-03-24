@@ -59,6 +59,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 
 - `app/utils/selectors.ts` - DOM selectors for HN's table structure (title rows at 3n+1, info rows at 3n+2, spacer rows at 3n+3)
 - `app/utils/parsers.ts` - Extract numeric values (points, time, comments) from info rows; `getTime` parses the Unix timestamp (second part) from the `.age` title attribute (`"ISO_DATETIME UNIX_TIMESTAMP"`)
+- `app/utils/converters.ts` - `stringToNumber` (parseInt wrapper), `nowInSeconds` (current epoch in seconds — use instead of inline `Math.floor(Date.now() / 1000)`)
 - `app/utils/sorters.ts` - Sort functions for each sort variant
 - `app/utils/presenters.ts` - DOM manipulation to update table, highlight active sort column, and correct age text (`formatAge`, `correctAgeTexts`, `restoreAgeTexts`)
 - `app/utils/newPosts.ts` - New post detection and fade: exports `PostTimestamps` type, `migratePostIds`, `markNewPosts` (with cooldown-aware opacity), `updateFadeOpacities`, `clearNewPostMarkers`, `isFirstPage`
@@ -104,6 +105,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
   - `SETTINGS_KEYS` - Storage key names for chrome.storage.sync (`SHOW_NEW`, `LAST_ACTIVE_SORT`, `POST_IDS_PREFIX`, `COOLDOWN`, `TRUE_TIME_AGO`)
   - `SETTINGS_DEFAULTS` - Default values for settings
   - `COOLDOWN_BOUNDS` - Min/max bounds for cooldown input validation
+  - `SECONDS_PER_MINUTE`, `SECONDS_PER_HOUR`, `SECONDS_PER_DAY` - Time unit constants (used in presenters and tests)
   - `HN_SELECTORS` - DOM selectors for HN page structure
   - `HN_CLASSES` - HN CSS class names for building test fixtures
 
@@ -141,6 +143,7 @@ Use `~` prefix for imports from project root (e.g., `~app/components/ControlPane
 - `app/__fixtures__/hn-homepage.html` - Real HN HTML snapshot for DOM testing
 - `app/__fixtures__/loadFixture.ts` - Helper functions to load fixtures
 - `app/__fixtures__/updateFixture.ts` - Script to refresh fixtures from live HN
+- `app/__fixtures__/testHelpers.ts` - Shared test helpers: `setupTableBody` (HN DOM builder), `clearBody`, `getRowById`, `FAKE_NOW` constant, `createStorageMock` factory (for `@plasmohq/storage` mocks)
 - Run `bun run fixture:update` to refresh when HN markup changes
 
 ### Test Files
