@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- New post indicator cooldown with opacity fade — indicators persist across reloads and fade out over a configurable period (default 60 min, range 10s–24h)
+- Cooldown setting in extension popup (visible when "Highlight new posts" is on)
 - Review prompt: dismissible bar above post table after 7 days or 20 sorts
 - Persistent review link in extension popup
 - Demo video and GIF generation script (`bun run demo`)
