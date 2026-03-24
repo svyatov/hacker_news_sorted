@@ -21,9 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Rewrite Chrome Web Store description for better discoverability
-
-### Changed
-
 - Time sorting now uses Unix timestamp from title attribute instead of ISO date parsing
 
 ## [2.4.0] - 2026-03-13
