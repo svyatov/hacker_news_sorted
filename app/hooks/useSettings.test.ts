@@ -140,6 +140,35 @@ describe('useSettings', () => {
     });
   });
 
+  describe('setActiveSort', () => {
+    it('should update state and persist to storage', async () => {
+      setupTableBody([]);
+      renderHook(() => useSettings());
+      await act(() => Promise.resolve());
+
+      const { result } = renderHook(() => useSettings());
+      await act(() => Promise.resolve());
+
+      act(() => result.current.setActiveSort('time'));
+      expect(result.current.activeSort).toBe('time');
+      expect(mockSet).toHaveBeenCalledWith(SETTINGS_KEYS.LAST_ACTIVE_SORT, 'time');
+    });
+  });
+
+  describe('LAST_ACTIVE_SORT watcher', () => {
+    it('should update activeSort from watcher after init', async () => {
+      setupTableBody([]);
+      const { result } = renderHook(() => useSettings());
+      await act(() => Promise.resolve());
+
+      act(() => {
+        watcherCallbacks[SETTINGS_KEYS.LAST_ACTIVE_SORT]?.({ newValue: 'comments' });
+      });
+
+      expect(result.current.activeSort).toBe('comments');
+    });
+  });
+
   describe('fade interval', () => {
     it('should update opacity on interval tick', async () => {
       setupTableBody(['post-1']);
@@ -230,6 +259,26 @@ describe('useSettings', () => {
       });
 
       expect(getRowById('post-1').classList.contains(CSS_CLASSES.NEW_POST)).toBe(true);
+    });
+
+    it('should stop interval when no posts were ever new', async () => {
+      setupTableBody(['post-1']);
+      storageStore[SETTINGS_KEYS.SHOW_NEW] = true;
+      // All posts are known (-1), none were ever new
+      storageStore['hns-post-ids:/'] = { 'post-1': -1 } as PostTimestamps;
+
+      const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
+      renderHook(() => useSettings());
+      await act(() => Promise.resolve());
+
+      const callsBefore = setIntervalSpy.mock.calls.length;
+
+      // Change cooldown — should NOT start interval since no active timestamps
+      act(() => {
+        watcherCallbacks[SETTINGS_KEYS.COOLDOWN]?.({ newValue: 120 });
+      });
+
+      expect(setIntervalSpy.mock.calls.length).toBe(callsBefore);
     });
 
     it('should not restart interval when showNew is off', async () => {
