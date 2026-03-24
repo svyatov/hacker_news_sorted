@@ -12,6 +12,7 @@ export const SETTINGS_KEYS = {
   REVIEW_DISMISSED: 'hns-review-dismissed',
   INSTALL_TIMESTAMP: 'hns-install-ts',
   SORT_COUNT: 'hns-sort-count',
+  COOLDOWN: 'hns-cooldown',
 } as const;
 
 export const SETTINGS_DEFAULTS = {
@@ -21,6 +22,12 @@ export const SETTINGS_DEFAULTS = {
   [SETTINGS_KEYS.REVIEW_DISMISSED]: false as boolean,
   [SETTINGS_KEYS.INSTALL_TIMESTAMP]: 0 as number,
   [SETTINGS_KEYS.SORT_COUNT]: 0 as number,
+  [SETTINGS_KEYS.COOLDOWN]: 3600 as number,
+} as const;
+
+export const COOLDOWN_BOUNDS = {
+  MIN: 10,
+  MAX: 86_400,
 } as const;
 
 // Chrome Web Store

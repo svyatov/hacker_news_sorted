@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { SETTINGS_KEYS } from '~app/constants';
+import { COOLDOWN_BOUNDS, SETTINGS_KEYS } from '~app/constants';
 
 let storageValues: Record<string, unknown> = {};
 
@@ -53,5 +53,31 @@ describe('Popup', () => {
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute('href', expect.stringContaining('chromewebstore.google.com'));
     expect(link).toHaveAttribute('target', '_blank');
+  });
+
+  it('should show cooldown input when showNew is true', () => {
+    storageValues = { [SETTINGS_KEYS.SHOW_NEW]: true };
+    render(<Popup />);
+
+    const input = screen.getByLabelText('Fade duration in seconds');
+    expect(input).toBeInTheDocument();
+    expect(input).toHaveAttribute('type', 'number');
+    expect(input).toHaveAttribute('min', String(COOLDOWN_BOUNDS.MIN));
+    expect(input).toHaveAttribute('max', String(COOLDOWN_BOUNDS.MAX));
+  });
+
+  it('should hide cooldown input when showNew is false', () => {
+    storageValues = { [SETTINGS_KEYS.SHOW_NEW]: false };
+    render(<Popup />);
+
+    expect(screen.queryByLabelText('Fade duration in seconds')).not.toBeInTheDocument();
+  });
+
+  it('should display default cooldown value', () => {
+    storageValues = { [SETTINGS_KEYS.SHOW_NEW]: true, [SETTINGS_KEYS.COOLDOWN]: 300 };
+    render(<Popup />);
+
+    const input = screen.getByLabelText('Fade duration in seconds') as HTMLInputElement;
+    expect(input.value).toBe('300');
   });
 });

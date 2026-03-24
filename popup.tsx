@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 
 import { useStorage } from '@plasmohq/storage/hook';
 
-import { CWS_REVIEW_URL, SETTINGS_DEFAULTS, SETTINGS_KEYS } from '~app/constants';
+import { COOLDOWN_BOUNDS, CWS_REVIEW_URL, SETTINGS_DEFAULTS, SETTINGS_KEYS } from '~app/constants';
 
 import './popup.css';
 
 const Popup = () => {
   const [showNew, setShowNew] = useStorage(SETTINGS_KEYS.SHOW_NEW, SETTINGS_DEFAULTS[SETTINGS_KEYS.SHOW_NEW]);
+  const [cooldown, setCooldown] = useStorage(SETTINGS_KEYS.COOLDOWN, SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN]);
   const [layoutOk] = useStorage(SETTINGS_KEYS.LAYOUT_OK, SETTINGS_DEFAULTS[SETTINGS_KEYS.LAYOUT_OK]);
   // useStorage renders with the default value first, then async-loads the stored value.
   // When stored !== default, the CSS transition animates the toggle visibly (on→off flash).
@@ -46,6 +47,30 @@ const Popup = () => {
           <span className="hns-toggle-slider" />
         </label>
       </div>
+
+      {showNew && (
+        <div className="hns-setting">
+          <span>Fade duration (sec)</span>
+          <input
+            type="number"
+            name="cooldown"
+            aria-label="Fade duration in seconds"
+            min={COOLDOWN_BOUNDS.MIN}
+            max={COOLDOWN_BOUNDS.MAX}
+            value={cooldown}
+            onChange={(e) => setCooldown(Number(e.target.value))}
+            onBlur={(e) =>
+              setCooldown(
+                Math.max(
+                  COOLDOWN_BOUNDS.MIN,
+                  Math.min(COOLDOWN_BOUNDS.MAX, Number(e.target.value) || SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN]),
+                ),
+              )
+            }
+            className="hns-number-input"
+          />
+        </div>
+      )}
 
       <div className="hns-review-link">
         Enjoying HN Sorted?{' '}
