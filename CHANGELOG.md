@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Redesigned popup settings with grouped layout — dependent settings (new posts + highlight duration) are visually connected, independent settings are separated
+- Renamed "Fade duration" to "Highlight duration" for clarity
+- Added hint descriptions below each setting
+
 ### Added
 
 - New post indicator cooldown with opacity fade — indicators persist across reloads and fade out over a configurable period (default 60 min, range 10s–24h)
