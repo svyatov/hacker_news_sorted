@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CSS_CLASSES } from '~app/constants';
 import type { SortVariant } from '~app/types';
+import { correctAgeTexts, restoreAgeTexts } from '~app/utils/presenters';
 
 import ControlPanel from './ControlPanel';
 
@@ -18,10 +19,12 @@ vi.mock('~app/utils/presenters', () => ({
   restoreAgeTexts: vi.fn(),
 }));
 
+let mockShowTrueTimeAgo = true;
+
 vi.mock('~app/hooks/useSettings', () => ({
   useSettings: () => {
     const [activeSort, setActiveSort] = useState<SortVariant>('points');
-    return { activeSort, setActiveSort, showTrueTimeAgo: true };
+    return { activeSort, setActiveSort, showTrueTimeAgo: mockShowTrueTimeAgo };
   },
 }));
 
@@ -127,5 +130,17 @@ describe('ControlPanel', () => {
 
     fireEvent.click(screen.getByLabelText('Dismiss'));
     expect(mockDismissPrompt).toHaveBeenCalledOnce();
+  });
+
+  it('should call restoreAgeTexts when showTrueTimeAgo is false', () => {
+    mockShowTrueTimeAgo = false;
+    render(<ControlPanel />);
+    expect(restoreAgeTexts).toHaveBeenCalled();
+    mockShowTrueTimeAgo = true;
+  });
+
+  it('should call correctAgeTexts when showTrueTimeAgo is true', () => {
+    render(<ControlPanel />);
+    expect(correctAgeTexts).toHaveBeenCalled();
   });
 });
