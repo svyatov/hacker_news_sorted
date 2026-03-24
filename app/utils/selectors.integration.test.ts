@@ -58,5 +58,23 @@ describe('selectors (integration with live HN HTML)', () => {
     expect(commentsCount, `at least ${minWithElement}/${rowCount} should have COMMENTS`).toBeGreaterThanOrEqual(
       minWithElement,
     );
+
+    // Canary: validate HN's .age title attribute format ("ISO_DATETIME UNIX_TIMESTAMP")
+    const titleFormatRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2} \d+$/;
+    infoRows.forEach((row) => {
+      const ageEl = getTimeElement(row);
+      if (!ageEl) return;
+      const title = ageEl.getAttribute('title');
+      expect(title, 'age title should match "ISO UNIX" format').toMatch(titleFormatRegex);
+    });
+
+    // Canary: validate HN's .age text format ("X minute(s)/hour(s)/day(s) ago")
+    const ageTextRegex = /^\d+ (minute|hour|day)s? ago$/;
+    infoRows.forEach((row) => {
+      const ageEl = getTimeElement(row);
+      if (!ageEl) return;
+      const text = ageEl.textContent?.trim();
+      expect(text, 'age text should match "N unit(s) ago" format').toMatch(ageTextRegex);
+    });
   });
 });

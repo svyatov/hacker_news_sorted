@@ -13,6 +13,7 @@ export const SETTINGS_KEYS = {
   INSTALL_TIMESTAMP: 'hns-install-ts',
   SORT_COUNT: 'hns-sort-count',
   COOLDOWN: 'hns-cooldown',
+  TRUE_TIME_AGO: 'hns-true-time-ago',
 } as const;
 
 export const SETTINGS_DEFAULTS = {
@@ -23,6 +24,7 @@ export const SETTINGS_DEFAULTS = {
   [SETTINGS_KEYS.INSTALL_TIMESTAMP]: 0 as number,
   [SETTINGS_KEYS.SORT_COUNT]: 0 as number,
   [SETTINGS_KEYS.COOLDOWN]: 3600 as number,
+  [SETTINGS_KEYS.TRUE_TIME_AGO]: true as boolean,
 } as const;
 
 export const COOLDOWN_BOUNDS = {

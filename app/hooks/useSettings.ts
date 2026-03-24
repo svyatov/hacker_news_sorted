@@ -22,10 +22,12 @@ const getPostIdsKey = (): string => `${SETTINGS_KEYS.POST_IDS_PREFIX}${window.lo
 type UseSettingsReturn = {
   activeSort: SortVariant;
   setActiveSort: (sort: SortVariant) => void;
+  showTrueTimeAgo: boolean;
 };
 
 export const useSettings = (): UseSettingsReturn => {
   const [activeSort, setActiveSortState] = useState<SortVariant>(SETTINGS_DEFAULTS[SETTINGS_KEYS.LAST_ACTIVE_SORT]);
+  const [showTrueTimeAgo, setShowTrueTimeAgoState] = useState(SETTINGS_DEFAULTS[SETTINGS_KEYS.TRUE_TIME_AGO]);
   const initializedRef = useRef(false);
   const timestampsRef = useRef<PostTimestamps>({});
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -84,6 +86,9 @@ export const useSettings = (): UseSettingsReturn => {
       const cooldown = await storage.get<number>(SETTINGS_KEYS.COOLDOWN);
       cooldownRef.current = cooldown ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN];
 
+      const trueTimeAgo = await storage.get<boolean>(SETTINGS_KEYS.TRUE_TIME_AGO);
+      setShowTrueTimeAgoState(trueTimeAgo ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.TRUE_TIME_AGO]);
+
       if (isFirstPage()) {
         const stored = await storage.get<string[] | PostTimestamps>(postIdsKey);
         const currentIds = getPostIds();
@@ -136,6 +141,11 @@ export const useSettings = (): UseSettingsReturn => {
           (change.newValue as SortVariant | undefined) ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.LAST_ACTIVE_SORT],
         );
       },
+      [SETTINGS_KEYS.TRUE_TIME_AGO]: (change) => {
+        setShowTrueTimeAgoState(
+          (change.newValue as boolean | undefined) ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.TRUE_TIME_AGO],
+        );
+      },
       [SETTINGS_KEYS.COOLDOWN]: (change) => {
         cooldownRef.current = (change.newValue as number | undefined) ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN];
         if (showNewRef.current && isFirstPage()) {
@@ -174,5 +184,5 @@ export const useSettings = (): UseSettingsReturn => {
     };
   }, []);
 
-  return { activeSort, setActiveSort };
+  return { activeSort, setActiveSort, showTrueTimeAgo };
 };

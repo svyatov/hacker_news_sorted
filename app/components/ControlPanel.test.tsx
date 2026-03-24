@@ -14,12 +14,14 @@ vi.mock('~app/hooks/useParsedRows', () => ({
 
 vi.mock('~app/utils/presenters', () => ({
   updateTable: vi.fn(),
+  correctAgeTexts: vi.fn(),
+  restoreAgeTexts: vi.fn(),
 }));
 
 vi.mock('~app/hooks/useSettings', () => ({
   useSettings: () => {
     const [activeSort, setActiveSort] = useState<SortVariant>('points');
-    return { activeSort, setActiveSort };
+    return { activeSort, setActiveSort, showTrueTimeAgo: false };
   },
 }));
 
