@@ -39,8 +39,8 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 
 ### Popup Entry Point
 
-- `popup.tsx` - Settings popup UI with toggle switch for new-post indicators and cooldown number input; shows a warning banner when layout detection fails
-- `popup.css` - Popup styles (toggle switches, layout, warning banner)
+- `popup.tsx` - Settings popup UI with grouped layout: dependent settings (new-post toggle + highlight duration) share a `fieldset.hns-group`, independent settings get separate groups; each setting has a `hns-hint` description; shows a warning banner when layout detection fails
+- `popup.css` - Popup styles (toggle switches, setting groups, hints, warning banner)
 - Uses `useSettingsStorage` helper — a typed wrapper around `useStorage` that auto-resolves defaults from `SETTINGS_DEFAULTS`
 
 ### Component Structure

@@ -59,7 +59,7 @@ describe('Popup', () => {
     storageValues = { [SETTINGS_KEYS.SHOW_NEW]: true };
     render(<Popup />);
 
-    const input = screen.getByLabelText('Fade duration in seconds');
+    const input = screen.getByLabelText('Highlight duration in seconds');
     expect(input).toBeInTheDocument();
     expect(input).toHaveAttribute('type', 'number');
     expect(input).toHaveAttribute('min', String(COOLDOWN_BOUNDS.MIN));
@@ -70,14 +70,14 @@ describe('Popup', () => {
     storageValues = { [SETTINGS_KEYS.SHOW_NEW]: false };
     render(<Popup />);
 
-    expect(screen.queryByLabelText('Fade duration in seconds')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Highlight duration in seconds')).not.toBeInTheDocument();
   });
 
   it('should display default cooldown value', () => {
     storageValues = { [SETTINGS_KEYS.SHOW_NEW]: true, [SETTINGS_KEYS.COOLDOWN]: 300 };
     render(<Popup />);
 
-    const input = screen.getByLabelText('Fade duration in seconds') as HTMLInputElement;
+    const input = screen.getByLabelText('Highlight duration in seconds') as HTMLInputElement;
     expect(input.value).toBe('300');
   });
 });

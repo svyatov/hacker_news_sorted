@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Redesigned popup settings with grouped layout — dependent settings (new posts + highlight duration) are visually connected, independent settings are separated
+- Renamed "Fade duration" to "Highlight duration" for clarity
+- Added hint descriptions below each setting
 - Rewrite Chrome Web Store description for better discoverability
 - Time sorting now uses Unix timestamp from title attribute instead of ISO date parsing
 

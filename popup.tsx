@@ -38,57 +38,70 @@ const Popup = () => {
         </div>
       )}
 
-      <div className="hns-setting">
-        <span>Highlight new posts</span>
-        <label className="hns-toggle">
-          <input
-            type="checkbox"
-            name="show-new"
-            aria-label="Highlight new posts"
-            checked={showNew}
-            onChange={(e) => setShowNew(e.target.checked)}
-          />
-          <span className="hns-toggle-slider" />
-        </label>
-      </div>
-
-      {showNew && (
+      <fieldset className="hns-group">
         <div className="hns-setting">
-          <span>Fade duration (sec)</span>
-          <input
-            type="number"
-            name="cooldown"
-            aria-label="Fade duration in seconds"
-            min={COOLDOWN_BOUNDS.MIN}
-            max={COOLDOWN_BOUNDS.MAX}
-            value={cooldown}
-            onChange={(e) => setCooldown(Number(e.target.value))}
-            onBlur={(e) =>
-              setCooldown(
-                Math.max(
-                  COOLDOWN_BOUNDS.MIN,
-                  Math.min(COOLDOWN_BOUNDS.MAX, Number(e.target.value) || SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN]),
-                ),
-              )
-            }
-            className="hns-number-input"
-          />
+          <div className="hns-setting-label">
+            <span>Highlight new posts</span>
+            <span className="hns-hint">Mark posts added since your last visit</span>
+          </div>
+          <label className="hns-toggle">
+            <input
+              type="checkbox"
+              name="show-new"
+              aria-label="Highlight new posts"
+              checked={showNew}
+              onChange={(e) => setShowNew(e.target.checked)}
+            />
+            <span className="hns-toggle-slider" />
+          </label>
         </div>
-      )}
 
-      <div className="hns-setting">
-        <span>Show true time ago</span>
-        <label className="hns-toggle">
-          <input
-            type="checkbox"
-            name="true-time-ago"
-            aria-label="Show true time ago"
-            checked={trueTimeAgo}
-            onChange={(e) => setTrueTimeAgo(e.target.checked)}
-          />
-          <span className="hns-toggle-slider" />
-        </label>
-      </div>
+        {showNew && (
+          <div className="hns-setting hns-setting-child">
+            <div className="hns-setting-label">
+              <span>Highlight duration in seconds</span>
+              <span className="hns-hint">How long the indicator stays visible</span>
+            </div>
+            <input
+              type="number"
+              name="cooldown"
+              aria-label="Highlight duration in seconds"
+              min={COOLDOWN_BOUNDS.MIN}
+              max={COOLDOWN_BOUNDS.MAX}
+              value={cooldown}
+              onChange={(e) => setCooldown(Number(e.target.value))}
+              onBlur={(e) =>
+                setCooldown(
+                  Math.max(
+                    COOLDOWN_BOUNDS.MIN,
+                    Math.min(COOLDOWN_BOUNDS.MAX, Number(e.target.value) || SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN]),
+                  ),
+                )
+              }
+              className="hns-number-input"
+            />
+          </div>
+        )}
+      </fieldset>
+
+      <fieldset className="hns-group">
+        <div className="hns-setting">
+          <div className="hns-setting-label">
+            <span>Show true &ldquo;time ago&rdquo;</span>
+            <span className="hns-hint">Fix misleading ages on resurfaced posts</span>
+          </div>
+          <label className="hns-toggle">
+            <input
+              type="checkbox"
+              name="true-time-ago"
+              aria-label="Show true time ago setting"
+              checked={trueTimeAgo}
+              onChange={(e) => setTrueTimeAgo(e.target.checked)}
+            />
+            <span className="hns-toggle-slider" />
+          </label>
+        </div>
+      </fieldset>
 
       <div className="hns-review-link">
         Enjoying HN Sorted?{' '}
