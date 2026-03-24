@@ -7,10 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-03-24
+
 ### Added
 
-- New post indicator cooldown with opacity fade — indicators persist across reloads and fade out over a configurable period (default 60 min, range 10s–24h)
-- Cooldown setting in extension popup (visible when "Highlight new posts" is on)
+- New post indicator cooldown with opacity fade — indicators persist across reloads and fade out over a configurable period (default 60 min, range 10s–24h), with setting in extension popup
 - "Show true time ago" setting — corrects misleading age text on HN "second chance" posts (e.g., "7 hours ago" → "3 days ago"), enabled by default with toggle in popup
 - Review prompt: dismissible bar above post table after 7 days or 20 sorts
 - Persistent review link in extension popup
@@ -20,9 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Redesigned popup settings with grouped layout — dependent settings (new posts + highlight duration) are visually connected, independent settings are separated
-- Renamed "Fade duration" to "Highlight duration" for clarity
-- Added hint descriptions below each setting
+- Redesigned popup settings with grouped layout and hint descriptions — dependent settings (new posts + highlight duration) are visually connected, independent settings are separated
 - Rewrite Chrome Web Store description for better discoverability
 - Time sorting now uses Unix timestamp from title attribute instead of ISO date parsing
 

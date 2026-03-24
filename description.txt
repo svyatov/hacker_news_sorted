@@ -41,8 +41,8 @@ No data leaves your browser. No analytics, no tracking, no external API calls. T
 Source code: https://github.com/svyatov/hacker_news_sorted
 
 Recent changes:
+2026-03-24 - v2.5.0 - True time ago, new post fade cooldown, review prompt, redesigned settings
 2026-03-13 - v2.4.0 - Layout change detection, more reliable selectors
 2026-03-11 - v2.3.1 - Fix selectors for HN layout update
 2026-01-29 - v2.3.0 - New post indicators, popup settings, cross-device sync
 2026-01-12 - v2.2.0 - Keyboard shortcuts, Vimium compatibility
-2025-12-24 - v2.1.0 - Active sort highlighting, performance improvements
