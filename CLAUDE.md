@@ -194,7 +194,7 @@ The changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) f
 
 ## Chrome Web Store Description
 
-`description.txt` is the copy used on the Chrome Web Store listing page. It contains benefit-oriented copy with a trimmed recent changelog at the bottom. When doing a version bump/release, update the `Recent changes:` section (keep only 2-3 latest versions). Keep it non-technical.
+`description.txt` is the copy used on the Chrome Web Store listing page. It contains benefit-oriented copy with a changelog at the bottom in the format `YYYY-MM-DD - vX.Y.Z - summary`. When doing a version bump/release, update the `Recent changes:` section (keep last 5 versions). Keep it non-technical.
 
 ## Before Committing
 
