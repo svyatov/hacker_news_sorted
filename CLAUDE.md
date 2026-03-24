@@ -39,7 +39,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 
 ### Popup Entry Point
 
-- `popup.tsx` - Settings popup UI with toggle switch for new-post indicators; shows a warning banner when layout detection fails
+- `popup.tsx` - Settings popup UI with toggle switch for new-post indicators and cooldown number input; shows a warning banner when layout detection fails
 - `popup.css` - Popup styles (toggle switches, layout, warning banner)
 - Uses `@plasmohq/storage` `useStorage` hook for reactive persistence to `chrome.storage.sync`
 
@@ -61,7 +61,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 - `app/utils/parsers.ts` - Extract numeric values (points, time, comments) from info rows
 - `app/utils/sorters.ts` - Sort functions for each sort variant
 - `app/utils/presenters.ts` - DOM manipulation to update table and highlight active sort column
-- `app/utils/newPosts.ts` - New post detection: extracts post IDs from DOM, marks new rows with CSS class, provides `isFirstPage` guard
+- `app/utils/newPosts.ts` - New post detection and fade: exports `PostTimestamps` type, `migratePostIds`, `markNewPosts` (with cooldown-aware opacity), `updateFadeOpacities`, `clearNewPostMarkers`, `isFirstPage`
 
 ### Keyboard Shortcuts
 
@@ -73,8 +73,9 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 
 - `app/hooks/useSettings.ts` - Central hook managing all synced state via `@plasmohq/storage` (chrome.storage.sync):
   - Sort preference (`activeSort` / `setActiveSort`) — syncs across devices, reactive via watchers
-  - Post ID snapshots — stores/compares post IDs for new-post detection, first-page only
+  - Post timestamps — stores `Record<string, number>` (post ID → discovery timestamp, `-1` for known) per page; migrates old `string[]` format automatically
   - Show-new toggle — applies/removes `hns-show-new` CSS class on table body
+  - Fade interval — drives `--hns-fade` CSS custom property on new-post rows, with cooldown/showNew-aware lifecycle and memory leak guards (`mountedRef`, `intervalRef`, `showNewRef`)
 - All settings sync across devices via `chrome.storage.sync`
 - New-post detection only runs on first pages (skips paginated pages with `?p=...` or `?next=...`)
 
@@ -93,8 +94,9 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
   - `CSS_CLASSES` - Extension CSS class names (highlight, buttons, labels, `SHOW_NEW`, `NEW_POST`)
   - `CSS_SELECTORS` - Derived CSS selectors from class names
   - `SORT_OPTIONS` - Sort option configuration array (sort variant, display text, keyboard shortcut)
-  - `SETTINGS_KEYS` - Storage key names for chrome.storage.sync (`SHOW_NEW`, `LAST_ACTIVE_SORT`, `POST_IDS_PREFIX`)
+  - `SETTINGS_KEYS` - Storage key names for chrome.storage.sync (`SHOW_NEW`, `LAST_ACTIVE_SORT`, `POST_IDS_PREFIX`, `COOLDOWN`)
   - `SETTINGS_DEFAULTS` - Default values for settings
+  - `COOLDOWN_BOUNDS` - Min/max bounds for cooldown input validation
   - `HN_SELECTORS` - DOM selectors for HN page structure
   - `HN_CLASSES` - HN CSS class names for building test fixtures
 
@@ -102,6 +104,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 
 - `SortVariant`: 'default' | 'points' | 'time' | 'comments'
 - `ParsedRow`: Contains DOM elements (title, info, spacer) and parsed numeric values for a single post
+- `PostTimestamps`: `Record<string, number>` — post ID → discovery timestamp (`Date.now()`), or `-1` for known/never-new posts (exported from `app/utils/newPosts.ts`)
 - `Settings`: Shape for extension settings (`hns-show-new` boolean, `hns-last-active-sort` SortVariant)
 
 ## Path Aliases

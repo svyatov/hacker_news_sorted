@@ -126,6 +126,24 @@ h1 {
   text-decoration: underline;
 }
 
+.hns-number-input {
+  width: 60px;
+  padding: 3px 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1;
+  text-align: right;
+  margin-left: 12px;
+}
+
+.hns-number-input:focus {
+  outline: 2px solid #ff6600;
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
 /* Suppress toggle animation on load while useStorage settles (see popup.tsx) */
 .hns-no-transition .hns-toggle-slider,
 .hns-no-transition .hns-toggle-slider::before {

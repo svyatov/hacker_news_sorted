@@ -73,6 +73,7 @@
   color: #ff6600;
   margin-right: 4px;
   font-weight: bold;
+  opacity: var(--hns-fade, 1);
 }
 
 /* Review toast (speech bubble below sort menu) */
@@ -154,5 +155,9 @@
 @media (prefers-reduced-motion: reduce) {
   .hns-review-link {
     transition: none;
+  }
+
+  .hns-show-new tr.hns-new-post .titleline::before {
+    opacity: 1;
   }
 }
