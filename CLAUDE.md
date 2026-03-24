@@ -41,7 +41,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 
 - `popup.tsx` - Settings popup UI with toggle switch for new-post indicators and cooldown number input; shows a warning banner when layout detection fails
 - `popup.css` - Popup styles (toggle switches, layout, warning banner)
-- Uses `@plasmohq/storage` `useStorage` hook for reactive persistence to `chrome.storage.sync`
+- Uses `useSettingsStorage` helper — a typed wrapper around `useStorage` that auto-resolves defaults from `SETTINGS_DEFAULTS`
 
 ### Component Structure
 
@@ -58,9 +58,9 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 ### Key Utils
 
 - `app/utils/selectors.ts` - DOM selectors for HN's table structure (title rows at 3n+1, info rows at 3n+2, spacer rows at 3n+3)
-- `app/utils/parsers.ts` - Extract numeric values (points, time, comments) from info rows
+- `app/utils/parsers.ts` - Extract numeric values (points, time, comments) from info rows; `getTime` parses the Unix timestamp (second part) from the `.age` title attribute (`"ISO_DATETIME UNIX_TIMESTAMP"`)
 - `app/utils/sorters.ts` - Sort functions for each sort variant
-- `app/utils/presenters.ts` - DOM manipulation to update table and highlight active sort column
+- `app/utils/presenters.ts` - DOM manipulation to update table, highlight active sort column, and correct age text (`formatAge`, `correctAgeTexts`, `restoreAgeTexts`)
 - `app/utils/newPosts.ts` - New post detection and fade: exports `PostTimestamps` type, `migratePostIds`, `markNewPosts` (with cooldown-aware opacity), `updateFadeOpacities`, `clearNewPostMarkers`, `isFirstPage`
 
 ### Keyboard Shortcuts
@@ -76,8 +76,15 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
   - Post timestamps — stores `Record<string, number>` (post ID → discovery timestamp, `-1` for known) per page; migrates old `string[]` format automatically
   - Show-new toggle — applies/removes `hns-show-new` CSS class on table body
   - Fade interval — drives `--hns-fade` CSS custom property on new-post rows, with cooldown/showNew-aware lifecycle and memory leak guards (`mountedRef`, `intervalRef`, `showNewRef`)
+  - True time ago toggle (`showTrueTimeAgo`) — exposes reactive boolean for age text correction
 - All settings sync across devices via `chrome.storage.sync`
 - New-post detection only runs on first pages (skips paginated pages with `?p=...` or `?next=...`)
+
+### True Time Ago
+
+- HN "second chance" posts show misleading age text (e.g., "7 hours ago" for a 3-day-old resubmission) because the server resets the display text while the title attribute retains the original submission timestamp
+- `formatAge` in `app/utils/presenters.ts` computes correct age from Unix timestamp; `correctAgeTexts`/`restoreAgeTexts` swap the `<a>` text inside `.age` spans, preserving originals via `data-original-age`
+- Toggle in popup (default: on), wired through `useSettings` → `ControlPanel` useEffect
 
 ### Review Prompt
 
@@ -94,7 +101,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
   - `CSS_CLASSES` - Extension CSS class names (highlight, buttons, labels, `SHOW_NEW`, `NEW_POST`)
   - `CSS_SELECTORS` - Derived CSS selectors from class names
   - `SORT_OPTIONS` - Sort option configuration array (sort variant, display text, keyboard shortcut)
-  - `SETTINGS_KEYS` - Storage key names for chrome.storage.sync (`SHOW_NEW`, `LAST_ACTIVE_SORT`, `POST_IDS_PREFIX`, `COOLDOWN`)
+  - `SETTINGS_KEYS` - Storage key names for chrome.storage.sync (`SHOW_NEW`, `LAST_ACTIVE_SORT`, `POST_IDS_PREFIX`, `COOLDOWN`, `TRUE_TIME_AGO`)
   - `SETTINGS_DEFAULTS` - Default values for settings
   - `COOLDOWN_BOUNDS` - Min/max bounds for cooldown input validation
   - `HN_SELECTORS` - DOM selectors for HN page structure
