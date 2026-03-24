@@ -1,6 +1,8 @@
 import { stringToNumber } from '~app/utils/converters';
 import { getCommentsElement, getPointsElement, getTimeElement } from '~app/utils/selectors';
 
+const TITLE_UNIX_TS_INDEX = 1;
+
 export const getPoints = (infoRow: HTMLElement): number => {
   const pointsElement = getPointsElement(infoRow);
 
@@ -13,24 +15,13 @@ export const getPoints = (infoRow: HTMLElement): number => {
 
 export const getTime = (infoRow: HTMLElement): number => {
   const timeElement = getTimeElement(infoRow);
-
-  if (!timeElement) {
-    return Infinity;
-  }
+  if (!timeElement) return 0;
 
   const title = timeElement.getAttribute('title');
+  if (!title) return 0;
 
-  if (!title) {
-    return Infinity;
-  }
-
-  const time = new Date(title.split(' ')[0]).getTime();
-
-  if (isNaN(time)) {
-    return Infinity;
-  }
-
-  return time;
+  const unixTs = parseInt(title.split(' ')[TITLE_UNIX_TS_INDEX]);
+  return isNaN(unixTs) ? 0 : unixTs;
 };
 
 export const getComments = (infoRow: HTMLElement): number => {

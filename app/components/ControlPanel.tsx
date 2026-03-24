@@ -7,13 +7,13 @@ import { useParsedRows } from '~app/hooks/useParsedRows';
 import { useReviewPrompt } from '~app/hooks/useReviewPrompt';
 import { useSettings } from '~app/hooks/useSettings';
 import type { SortVariant } from '~app/types';
-import { updateTable } from '~app/utils/presenters';
+import { correctAgeTexts, restoreAgeTexts, updateTable } from '~app/utils/presenters';
 import { sortRows } from '~app/utils/sorters';
 
 const sortOptionsCount = SORT_OPTIONS.length - 1;
 
 const ControlPanel = (): ReactElement => {
-  const { activeSort, setActiveSort } = useSettings();
+  const { activeSort, setActiveSort, showTrueTimeAgo } = useSettings();
   const { parsedRows, footerRows } = useParsedRows();
   const { showPrompt, dismissPrompt, incrementSortCount } = useReviewPrompt();
 
@@ -21,7 +21,12 @@ const ControlPanel = (): ReactElement => {
 
   useEffect(() => {
     updateTable(sortedRows, footerRows, activeSort);
-  }, [sortedRows, footerRows, activeSort]);
+    if (showTrueTimeAgo) {
+      correctAgeTexts(sortedRows);
+    } else {
+      restoreAgeTexts(sortedRows);
+    }
+  }, [sortedRows, footerRows, activeSort, showTrueTimeAgo]);
 
   const handleSort = useCallback(
     (sortBy: SortVariant) => {

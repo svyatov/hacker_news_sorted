@@ -169,6 +169,22 @@ describe('useSettings', () => {
     });
   });
 
+  describe('TRUE_TIME_AGO watcher', () => {
+    it('should update showTrueTimeAgo from watcher', async () => {
+      setupTableBody([]);
+      const { result } = renderHook(() => useSettings());
+      await act(() => Promise.resolve());
+
+      expect(result.current.showTrueTimeAgo).toBe(true);
+
+      act(() => {
+        watcherCallbacks[SETTINGS_KEYS.TRUE_TIME_AGO]?.({ newValue: false });
+      });
+
+      expect(result.current.showTrueTimeAgo).toBe(false);
+    });
+  });
+
   describe('fade interval', () => {
     it('should update opacity on interval tick', async () => {
       setupTableBody(['post-1']);

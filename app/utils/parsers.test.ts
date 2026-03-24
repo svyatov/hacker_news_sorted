@@ -46,53 +46,30 @@ describe('parsers', () => {
   });
 
   describe('getTime', () => {
-    it('should extract timestamp from title attribute (regular post)', () => {
-      // Real HN format: "2026-01-11T18:49:32 1768157372" (ISO datetime + unix timestamp)
-      const isoDate = '2024-01-15T10:30:00';
-      const unixTimestamp = Math.floor(new Date(isoDate).getTime() / 1000);
-      infoRow.innerHTML = `
-        <td class="${HN_CLASSES.SUBTEXT}">
-          <span><span class="${HN_CLASSES.AGE}" title="${isoDate} ${unixTimestamp}">3 hours ago</span></span>
-        </td>
-      `;
-      const result = getTime(infoRow);
-      // Parser splits by space and takes first part (ISO date)
-      expect(result).toBe(new Date(isoDate).getTime());
+    it('should extract unix timestamp from title attribute', () => {
+      // HN title format: "ISO_DATETIME UNIX_TIMESTAMP"
+      infoRow.innerHTML = `<td class="${HN_CLASSES.SUBTEXT}"><span><span class="${HN_CLASSES.AGE}" title="2026-01-11T18:49:32 1768157372">3 hours ago</span></span></td>`;
+      expect(getTime(infoRow)).toBe(1768157372);
     });
 
-    it('should return Infinity when no time element exists', () => {
+    it('should return 0 when no time element exists', () => {
       infoRow.innerHTML = `<td class="${HN_CLASSES.SUBTEXT}"></td>`;
-      expect(getTime(infoRow)).toBe(Infinity);
+      expect(getTime(infoRow)).toBe(0);
     });
 
-    it('should return Infinity when title attribute is missing', () => {
-      infoRow.innerHTML = `
-        <td class="${HN_CLASSES.SUBTEXT}">
-          <span><span class="${HN_CLASSES.AGE}">3 hours ago</span></span>
-        </td>
-      `;
-      expect(getTime(infoRow)).toBe(Infinity);
+    it('should return 0 when title attribute is missing', () => {
+      infoRow.innerHTML = `<td class="${HN_CLASSES.SUBTEXT}"><span><span class="${HN_CLASSES.AGE}">3 hours ago</span></span></td>`;
+      expect(getTime(infoRow)).toBe(0);
     });
 
-    it('should return Infinity for invalid date', () => {
-      infoRow.innerHTML = `
-        <td class="${HN_CLASSES.SUBTEXT}">
-          <span><span class="${HN_CLASSES.AGE}" title="invalid-date">3 hours ago</span></span>
-        </td>
-      `;
-      expect(getTime(infoRow)).toBe(Infinity);
+    it('should return 0 for invalid title format', () => {
+      infoRow.innerHTML = `<td class="${HN_CLASSES.SUBTEXT}"><span><span class="${HN_CLASSES.AGE}" title="invalid-date">3 hours ago</span></span></td>`;
+      expect(getTime(infoRow)).toBe(0);
     });
 
     it('should handle promo posts with different structure', () => {
-      const isoDate = '2024-01-15T10:30:00';
-      const unixTimestamp = Math.floor(new Date(isoDate).getTime() / 1000);
-      infoRow.innerHTML = `
-        <td class="${HN_CLASSES.SUBTEXT}">
-          <span class="${HN_CLASSES.AGE}" title="${isoDate} ${unixTimestamp}">3 hours ago</span>
-        </td>
-      `;
-      const result = getTime(infoRow);
-      expect(result).toBe(new Date(isoDate).getTime());
+      infoRow.innerHTML = `<td class="${HN_CLASSES.SUBTEXT}"><span class="${HN_CLASSES.AGE}" title="2026-01-11T18:49:32 1768157372">3 hours ago</span></td>`;
+      expect(getTime(infoRow)).toBe(1768157372);
     });
   });
 

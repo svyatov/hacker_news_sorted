@@ -6,10 +6,14 @@ import { COOLDOWN_BOUNDS, CWS_REVIEW_URL, SETTINGS_DEFAULTS, SETTINGS_KEYS } fro
 
 import './popup.css';
 
+type SettingsKey = keyof typeof SETTINGS_DEFAULTS;
+const useSettingsStorage = <K extends SettingsKey>(key: K) => useStorage(key, SETTINGS_DEFAULTS[key]);
+
 const Popup = () => {
-  const [showNew, setShowNew] = useStorage(SETTINGS_KEYS.SHOW_NEW, SETTINGS_DEFAULTS[SETTINGS_KEYS.SHOW_NEW]);
-  const [cooldown, setCooldown] = useStorage(SETTINGS_KEYS.COOLDOWN, SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN]);
-  const [layoutOk] = useStorage(SETTINGS_KEYS.LAYOUT_OK, SETTINGS_DEFAULTS[SETTINGS_KEYS.LAYOUT_OK]);
+  const [showNew, setShowNew] = useSettingsStorage(SETTINGS_KEYS.SHOW_NEW);
+  const [cooldown, setCooldown] = useSettingsStorage(SETTINGS_KEYS.COOLDOWN);
+  const [trueTimeAgo, setTrueTimeAgo] = useSettingsStorage(SETTINGS_KEYS.TRUE_TIME_AGO);
+  const [layoutOk] = useSettingsStorage(SETTINGS_KEYS.LAYOUT_OK);
   // useStorage renders with the default value first, then async-loads the stored value.
   // When stored !== default, the CSS transition animates the toggle visibly (on→off flash).
   // Suppress transitions for 50ms to let storage settle, then re-enable for user interactions.
@@ -71,6 +75,20 @@ const Popup = () => {
           />
         </div>
       )}
+
+      <div className="hns-setting">
+        <span>Show true time ago</span>
+        <label className="hns-toggle">
+          <input
+            type="checkbox"
+            name="true-time-ago"
+            aria-label="Show true time ago"
+            checked={trueTimeAgo}
+            onChange={(e) => setTrueTimeAgo(e.target.checked)}
+          />
+          <span className="hns-toggle-slider" />
+        </label>
+      </div>
 
       <div className="hns-review-link">
         Enjoying HN Sorted?{' '}
