@@ -8,8 +8,13 @@ import { CONTROL_PANEL_ROOT_ID, CSS_CLASSES, HN_SELECTORS } from '~app/constants
 import { injectChromeStoragePolyfill } from './screenshots/chromePolyfill';
 import { CSS_PATH, JS_PATH, SCREENSHOTS_DIR } from './screenshots/paths';
 
-const VIEWPORT = { width: 1280, height: 720 };
+// Viewport calculated so crop = exactly 3840×2160 (4K 16:9):
+// HN uses <table width="85%">, so 3840 / 0.85 ≈ 4518
+const VIEWPORT = { width: 4518, height: 2160 };
+const ZOOM = 4;
 const OVERLAY_ID = 'hns-demo-overlay';
+// CSS px from viewport edge to crop edge (right side)
+const CROP_MARGIN_CSS = Math.ceil((VIEWPORT.width - 3840) / 2 / ZOOM);
 
 async function setupBrowserWithVideo(): Promise<{ browser: Browser; context: BrowserContext; page: Page }> {
   const browser = await chromium.launch();
@@ -27,6 +32,12 @@ async function injectExtension(page: Page): Promise<void> {
   await page.addStyleTag({ path: CSS_PATH });
   await page.addScriptTag({ path: JS_PATH });
   await page.waitForSelector(`#${CONTROL_PANEL_ROOT_ID}`, { timeout: 5000 });
+  await page.evaluate((zoom) => {
+    document.body.style.margin = '0';
+    document.documentElement.style.zoom = String(zoom);
+  }, ZOOM);
+  // Force full button labels (media query doesn't fire at zoomed layout width)
+  await page.addStyleTag({ content: '.hns-btn-text { display: inline !important; }' });
 }
 
 async function showNewPostIndicators(page: Page): Promise<void> {
@@ -53,16 +64,15 @@ async function showNewPostIndicators(page: Page): Promise<void> {
 
 async function injectLabel(page: Page, text: string): Promise<void> {
   await page.evaluate(
-    ({ id, text }) => {
+    ({ id, text, margin }) => {
       document.querySelector(`#${id}`)?.remove();
 
       const label = document.createElement('div');
       label.id = id;
       Object.assign(label.style, {
         position: 'fixed',
-        bottom: '32px',
-        left: '50%',
-        transform: 'translateX(-50%)',
+        top: '40px',
+        right: `${margin + 16}px`,
         background: 'rgba(0, 0, 0, 0.8)',
         color: '#fff',
         padding: '14px 36px',
@@ -77,7 +87,7 @@ async function injectLabel(page: Page, text: string): Promise<void> {
 
       document.body.appendChild(label);
     },
-    { id: OVERLAY_ID, text },
+    { id: OVERLAY_ID, text, margin: CROP_MARGIN_CSS },
   );
 }
 
@@ -92,12 +102,11 @@ type DemoStep = {
 };
 
 const STEPS: DemoStep[] = [
-  { label: 'Hacker News Sorted', pause: 1500 },
+  { label: 'New Post Indicators', pause: 2000 },
   { sort: 'points', label: 'Sort by Points', pause: 2000 },
   { sort: 'time', label: 'Sort by Time', pause: 2000 },
   { sort: 'comments', label: 'Sort by Comments', pause: 2000 },
-  { sort: 'default', label: 'Default Order', pause: 1500 },
-  { label: 'New Post Indicators', pause: 2000 },
+  { sort: 'default', label: 'Default Order', pause: 2000 },
 ];
 
 async function recordDemo(page: Page): Promise<void> {
@@ -119,25 +128,19 @@ async function recordDemo(page: Page): Promise<void> {
 }
 
 async function getContentBounds(page: Page): Promise<{ x: number; y: number; w: number; h: number }> {
-  const rect = await page.evaluate(
-    (viewport) => {
-      const el = document.querySelector('#hnmain');
-      if (!el) return null;
-      const r = el.getBoundingClientRect();
-      return {
-        x: Math.floor(r.x),
-        y: 0,
-        w: Math.min(Math.ceil(r.width), viewport.width - Math.floor(r.x)),
-        h: viewport.height,
-      };
-    },
-    { width: VIEWPORT.width, height: VIEWPORT.height },
-  );
-  if (!rect) throw new Error('#hnmain not found for crop measurement');
-  // Ensure even dimensions (required by h264)
-  rect.w = rect.w % 2 === 0 ? rect.w : rect.w - 1;
-  rect.h = rect.h % 2 === 0 ? rect.h : rect.h - 1;
-  return rect;
+  // getBoundingClientRect() with CSS zoom already returns physical pixel coordinates
+  const x = await page.evaluate(() => {
+    const el = document.querySelector('#hnmain');
+    if (!el) return null;
+    return Math.floor(el.getBoundingClientRect().x);
+  });
+  if (x === null) throw new Error('#hnmain not found for crop measurement');
+  const w = 3840;
+  const h = 2160;
+  if (x + w > VIEWPORT.width || h > VIEWPORT.height) {
+    throw new Error(`Crop ${w}x${h} at x=${x} exceeds viewport ${VIEWPORT.width}x${VIEWPORT.height}`);
+  }
+  return { x, y: 0, w, h };
 }
 
 async function main() {
@@ -146,6 +149,9 @@ async function main() {
 
   const recordingStart = Date.now();
   await injectExtension(page);
+  // Extension defaults to 'points' sort — reset to default order before recording
+  await page.click(`#${CONTROL_PANEL_ROOT_ID} [data-sort="default"]`);
+  await page.waitForTimeout(150);
   await showNewPostIndicators(page);
   const loadSeconds = ((Date.now() - recordingStart) / 1000).toFixed(2);
   console.log(`Page loaded in ${loadSeconds}s — trimming that from the video.`);
@@ -177,6 +183,8 @@ async function main() {
     cropFilter,
     '-c:v',
     'libx264',
+    '-preset',
+    'slow',
     '-pix_fmt',
     'yuv420p',
     '-crf',
@@ -184,7 +192,7 @@ async function main() {
     mp4Path,
   ]);
 
-  console.log('Converting to GIF (full resolution for Retina)...');
+  console.log('Converting to GIF (960px wide for Retina)...');
   execFileSync('ffmpeg', [
     '-y',
     '-ss',
@@ -192,7 +200,7 @@ async function main() {
     '-i',
     videoPath,
     '-vf',
-    `${cropFilter},fps=12,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse`,
+    `${cropFilter},fps=12,scale=960:-2,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse`,
     gifPath,
   ]);
 
