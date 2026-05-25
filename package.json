@@ -31,8 +31,8 @@
   "dependencies": {
     "@plasmohq/storage": "^1.15.0",
     "plasmo": "0.90.5",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -41,24 +41,24 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
-    "@types/chrome": "^0.1.38",
-    "@types/node": "^25.5.0",
-    "@types/react": "^19.2.14",
+    "@types/chrome": "^0.1.42",
+    "@types/node": "^25.9.1",
+    "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.1",
-    "@vitest/coverage-v8": "^4.1.1",
-    "eslint": "^10.1.0",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "jiti": "^2.6.1",
-    "jsdom": "^29.0.1",
-    "lint-staged": "^16.4.0",
-    "playwright": "^1.58.2",
-    "prettier": "^3.8.1",
+    "@vitejs/plugin-react": "^6.0.2",
+    "@vitest/coverage-v8": "^4.1.7",
+    "eslint": "^10.4.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "jiti": "^2.7.0",
+    "jsdom": "^29.1.1",
+    "lint-staged": "^17.0.5",
+    "playwright": "^1.60.0",
+    "prettier": "^3.8.3",
     "simple-git-hooks": "^2.13.1",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.57.2",
-    "vite": "^8.0.2",
-    "vitest": "^4.1.1"
+    "typescript-eslint": "^8.59.4",
+    "vite": "^8.0.14",
+    "vitest": "^4.1.7"
   },
   "manifest": {
     "host_permissions": [
