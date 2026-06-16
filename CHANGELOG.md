@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Update dependencies to latest in-range versions (React, ESLint, typescript-eslint, Vite, Vitest, Playwright, Prettier, lint-staged, and type definitions)
+
 ## [2.5.0] - 2026-03-24
 
 ### Added
