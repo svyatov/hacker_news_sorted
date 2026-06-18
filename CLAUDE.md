@@ -40,7 +40,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 ### Popup Entry Point
 
 - `popup.tsx` - Settings popup UI with grouped layout: dependent settings (new-post toggle + highlight duration) share a `fieldset.hns-group`, independent settings get separate groups; each setting has a `hns-hint` description; shows a warning banner when layout detection fails
-- `popup.css` - Popup styles (toggle switches, setting groups, hints, warning banner)
+- `popup.css` - Popup styles (toggle switches, setting groups, hints, warning banner); follows system light/dark via `color-scheme: light dark` + semantic CSS custom properties overridden in a `@media (prefers-color-scheme: dark)` block (brand `#ff6600` unchanged across schemes)
 - Uses `useSettingsStorage` helper — a typed wrapper around `useStorage` that auto-resolves defaults from `SETTINGS_DEFAULTS`
 
 ### Component Structure

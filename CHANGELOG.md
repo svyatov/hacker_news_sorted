@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Settings popup now follows the system light/dark color scheme
+
 ### Changed
 
 - Update dependencies to latest in-range versions (React, ESLint, typescript-eslint, Vite, Vitest, Playwright, Prettier, lint-staged, and type definitions)

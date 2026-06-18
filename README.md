@@ -30,6 +30,7 @@ Sort [Hacker News](https://news.ycombinator.com) your way — by points, time, o
 - **Visual Highlighting** — Active sort column is highlighted for clarity
 - **Layout Change Detection** — Warning badge and popup banner if HN changes break sorting
 - **Vimium Compatible** — Shortcuts auto-disable if Vimium or similar extensions are detected
+- **Dark Mode** — Settings popup follows your system light/dark color scheme
 
 **Compatibility:** Works on any HN page with a post list (front page, Newest, Ask, Show, etc.)
 
