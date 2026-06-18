@@ -6,6 +6,8 @@
       "name": "hacked_news_sorted",
       "dependencies": {
         "@plasmohq/storage": "^1.15.0",
+        "baseline-browser-mapping": "^2.10.37",
+        "caniuse-lite": "^1.0.30001799",
         "plasmo": "0.90.5",
         "react": "^19.2.7",
         "react-dom": "^19.2.7",
@@ -39,6 +41,7 @@
     },
   },
   "overrides": {
+    "caniuse-lite": "^1.0.30001799",
     "content-security-policy-parser": "^0.6.0",
     "lmdb": "^3.4.4",
     "msgpackr": "^1.11.2",
@@ -733,7 +736,7 @@
 
     "base64-js": ["base64-js@1.5.1", "", {}, "sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA=="],
 
-    "baseline-browser-mapping": ["baseline-browser-mapping@2.9.14", "", { "bin": { "baseline-browser-mapping": "dist/cli.js" } }, "sha512-B0xUquLkiGLgHhpPBqvl7GWegWBUNuujQ6kXd/r1U38ElPT6Ok8KZ8e+FpUGEc2ZoRQUzq/aUnaKFc/svWUGSg=="],
+    "baseline-browser-mapping": ["baseline-browser-mapping@2.10.37", "", { "bin": { "baseline-browser-mapping": "dist/cli.cjs" } }, "sha512-girxaJ7WZssDOFhzCGZTDKoTa1gk6A1TbflaYTpykLJ4UU9Fz9kx1aREM8JCuoVHbL8X8T/mJg7w2oYSq72Oig=="],
 
     "bidi-js": ["bidi-js@1.0.3", "", { "dependencies": { "require-from-string": "^2.0.2" } }, "sha512-RKshQI1R3YQ+n9YJz2QQ147P66ELpa1FQEg20Dk8oW9t2KgLbpDLLp9aGZ7y8WHSshDknG0bknqGw5/tyCs5tw=="],
 
@@ -763,7 +766,7 @@
 
     "camelcase": ["camelcase@6.3.0", "", {}, "sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA=="],
 
-    "caniuse-lite": ["caniuse-lite@1.0.30001764", "", {}, "sha512-9JGuzl2M+vPL+pz70gtMF9sHdMFbY9FJaQBi186cHKH3pSzDvzoUJUPV6fqiKIMyXbud9ZLg4F3Yza1vJ1+93g=="],
+    "caniuse-lite": ["caniuse-lite@1.0.30001799", "", {}, "sha512-hG1bReV+OUU+MOqK4t/ZWI0tZOyz3rqS9XuhOUz1cIcbwBKjOyJEJuw9ER5JuNyqxNk8u/JUVbGibBOL1yrjFw=="],
 
     "chai": ["chai@6.2.2", "", {}, "sha512-NUPRluOfOiTKBKvWPtSD4PhFvWCqOi0BGStNWs57X9js7XGTprSmFoz5F0tWhR4WPjNeR9jXqdC7/UpSJTnlRg=="],
 
@@ -1558,6 +1561,8 @@
     "ast-v8-to-istanbul/estree-walker": ["estree-walker@3.0.3", "", { "dependencies": { "@types/estree": "^1.0.0" } }, "sha512-7RUKfXgSMMkzt6ZuXmqapOurLGPPfgj6l9uRZ7lRGolvk0y2yocc35LdcxKC5PQZdn2DMqioAQ2NoWcrTKmm6g=="],
 
     "ast-v8-to-istanbul/js-tokens": ["js-tokens@10.0.0", "", {}, "sha512-lM/UBzQmfJRo9ABXbPWemivdCW8V2G8FHaHdypQaIy523snUjog0W71ayWXTjiR+ixeMyVHN2XcpnTd/liPg/Q=="],
+
+    "browserslist/baseline-browser-mapping": ["baseline-browser-mapping@2.9.14", "", { "bin": { "baseline-browser-mapping": "dist/cli.js" } }, "sha512-B0xUquLkiGLgHhpPBqvl7GWegWBUNuujQ6kXd/r1U38ElPT6Ok8KZ8e+FpUGEc2ZoRQUzq/aUnaKFc/svWUGSg=="],
 
     "code-red/acorn": ["acorn@8.15.0", "", { "bin": { "acorn": "bin/acorn" } }, "sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg=="],
 
