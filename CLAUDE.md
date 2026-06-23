@@ -14,6 +14,7 @@ bun run build      # Production build
 bun run package    # Package extension for distribution
 bun run release    # Build and package
 bun run test       # Run tests (uses Vitest)
+bun run test:integration # Run selector integration tests against the HN fixture
 bun run test:watch # Run tests in watch mode
 bun run test:coverage # Run tests with coverage report
 bun run lint       # Run ESLint and Prettier checks
@@ -151,6 +152,7 @@ Use `~` prefix for imports from project root (e.g., `~app/components/ControlPane
 Tests are co-located with source files using `.test.ts` / `.test.tsx` suffix:
 
 - `app/utils/*.test.ts` - Unit tests for utility functions
+- `app/utils/selectors.integration.test.ts` - Selectors run against the real HN fixture (breaks if HN markup changes)
 - `app/components/*.test.tsx` - Component tests
 - `app/hooks/*.test.ts` - Hook tests
 
