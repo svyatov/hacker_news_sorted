@@ -9,7 +9,7 @@ const COOLDOWN = SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN];
 const COOLDOWN_MS = COOLDOWN * 1000;
 
 // --- Storage mock ---
-const { store, mockSet, mockUnwatch, watcherCallbacks, reset, StorageClass } = createStorageMock();
+const { store, mockSet, mockGet, mockUnwatch, watcherCallbacks, reset, StorageClass } = createStorageMock();
 vi.mock('@plasmohq/storage', () => ({ Storage: StorageClass }));
 
 // --- Stubs ---
@@ -472,6 +472,54 @@ describe('useSettings', () => {
 
       await act(() => Promise.resolve());
       expect(result.current.settled).toBe(true);
+    });
+
+    it('still settles (with defaults) if a storage read rejects, so the panel never vanishes', async () => {
+      setupTableBody([]);
+      mockGet.mockRejectedValueOnce(new Error('extension context invalidated'));
+      const { result } = renderHook(() => useSettings());
+
+      await act(() => Promise.resolve());
+
+      expect(result.current.settled).toBe(true);
+    });
+
+    it('ignores toggle changes that arrive before init completes, then settles from the init read', async () => {
+      setupTableBody([]);
+      store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'velocity';
+      const { result } = renderHook(() => useSettings());
+
+      // Watchers are live before init resolves; initializedRef is still false → guarded out.
+      act(() => {
+        watcherCallbacks[SETTINGS_KEYS.VELOCITY_ENABLED]?.({ newValue: false });
+        watcherCallbacks[SETTINGS_KEYS.HEAT_ENABLED]?.({ newValue: false });
+      });
+
+      await act(() => Promise.resolve());
+
+      // init's own read wins over the ignored pre-init changes.
+      expect(result.current.settled).toBe(true);
+      expect(result.current.activeSort).toBe('velocity');
+      expect(result.current.enabledSortOptions.map((o) => o.sortBy)).toContain('velocity');
+    });
+
+    it('falls back to the default when a toggle watcher receives an undefined value', async () => {
+      setupTableBody([]);
+      store[SETTINGS_KEYS.VELOCITY_ENABLED] = false;
+      store[SETTINGS_KEYS.HEAT_ENABLED] = false;
+      const { result } = renderHook(() => useSettings());
+      await act(() => Promise.resolve());
+      expect(result.current.enabledSortOptions).toHaveLength(4);
+
+      // A cleared key (undefined newValue) resets to the default (enabled).
+      act(() => {
+        watcherCallbacks[SETTINGS_KEYS.VELOCITY_ENABLED]?.({ newValue: undefined });
+        watcherCallbacks[SETTINGS_KEYS.HEAT_ENABLED]?.({ newValue: undefined });
+      });
+
+      const enabled = result.current.enabledSortOptions.map((o) => o.sortBy);
+      expect(enabled).toContain('velocity');
+      expect(enabled).toContain('heat');
     });
   });
 
