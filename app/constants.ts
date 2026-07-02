@@ -2,6 +2,9 @@ import type { SortOption } from '~app/types';
 
 // Extension constants
 export const CONTROL_PANEL_ROOT_ID = 'hns-control-panel';
+// Enabled-option count (4–6) published on the panel root so count-aware CSS breakpoints
+// can pick the right word↔letter switch point (CSS can't read React state).
+export const SORT_COUNT_ATTR = 'data-sort-count';
 
 // Settings keys and defaults (chrome.storage.sync)
 export const SETTINGS_KEYS = {
@@ -14,6 +17,8 @@ export const SETTINGS_KEYS = {
   SORT_COUNT: 'hns-sort-count',
   COOLDOWN: 'hns-cooldown',
   TRUE_TIME_AGO: 'hns-true-time-ago',
+  VELOCITY_ENABLED: 'hns-velocity-enabled',
+  HEAT_ENABLED: 'hns-heat-enabled',
 } as const;
 
 export const SETTINGS_DEFAULTS = {
@@ -25,6 +30,8 @@ export const SETTINGS_DEFAULTS = {
   [SETTINGS_KEYS.SORT_COUNT]: 0 as number,
   [SETTINGS_KEYS.COOLDOWN]: 3600 as number,
   [SETTINGS_KEYS.TRUE_TIME_AGO]: true as boolean,
+  [SETTINGS_KEYS.VELOCITY_ENABLED]: true as boolean,
+  [SETTINGS_KEYS.HEAT_ENABLED]: true as boolean,
 } as const;
 
 // Time conversions
@@ -56,6 +63,11 @@ export const CSS_CLASSES = {
   DIVIDER: 'hns-divider',
   SHOW_NEW: 'hns-show-new',
   NEW_POST: 'hns-new-post',
+  CONFLICT_NOTE: 'hns-conflict-note',
+  BUTTONS_TIER: 'hns-buttons-tier',
+  DROPDOWN_TIER: 'hns-dropdown-tier',
+  DROPDOWN_LABEL: 'hns-dropdown-label',
+  DROPDOWN: 'hns-dropdown',
   REVIEW_TOAST: 'hns-review-toast',
   REVIEW_LINK: 'hns-review-link',
   REVIEW_SUB: 'hns-review-sub',
@@ -71,6 +83,8 @@ export const SORT_OPTIONS: SortOption[] = [
   { sortBy: 'points', text: 'points', shortcut: 'P' },
   { sortBy: 'time', text: 'time', shortcut: 'T' },
   { sortBy: 'comments', text: 'comments', shortcut: 'C' },
+  { sortBy: 'velocity', text: 'velocity', shortcut: 'V' },
+  { sortBy: 'heat', text: 'heat', shortcut: 'H' },
   { sortBy: 'default', text: 'default', shortcut: 'D' },
 ];
 

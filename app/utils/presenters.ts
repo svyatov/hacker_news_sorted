@@ -1,5 +1,5 @@
 import { CSS_CLASSES, CSS_SELECTORS, SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_MINUTE } from '~app/constants';
-import type { NonDefaultSortVariant, ParsedRow, SortVariant } from '~app/types';
+import type { ParsedRow, SortVariant } from '~app/types';
 import { nowInSeconds } from '~app/utils/converters';
 import { getCommentsElement, getPointsElement, getTableBody, getTimeElement } from '~app/utils/selectors';
 
@@ -26,7 +26,10 @@ export const updateTable = (parsedRows: ParsedRow[], footerRows: HTMLElement[], 
   tableBody.replaceChildren(fragment);
 };
 
-const SORT_TO_ELEMENT_GETTER: Record<NonDefaultSortVariant, (row: HTMLElement) => HTMLElement | null> = {
+// Only single-column sorts have a highlight target. Variants without an entry here
+// (default, velocity/heat which span two columns, or an unknown value arriving via
+// cross-device sync from a newer version) take the early return below and never crash.
+const SORT_TO_ELEMENT_GETTER: Partial<Record<SortVariant, (row: HTMLElement) => HTMLElement | null>> = {
   points: getPointsElement,
   time: getTimeElement,
   comments: getCommentsElement,
@@ -39,11 +42,11 @@ export const highlightActiveSort = (infoRow: HTMLElement, activeSort: SortVarian
     previousHighlight.classList.remove(CSS_CLASSES.HIGHLIGHT);
   }
 
-  if (activeSort === 'default') {
+  const elementGetter = SORT_TO_ELEMENT_GETTER[activeSort];
+  if (!elementGetter) {
     return infoRow;
   }
 
-  const elementGetter = SORT_TO_ELEMENT_GETTER[activeSort];
   const elementToHighlight = elementGetter(infoRow);
 
   if (elementToHighlight) {

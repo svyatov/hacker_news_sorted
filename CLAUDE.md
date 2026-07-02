@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Hacker News Sorted is a Chrome extension that adds sorting capabilities to Hacker News (news.ycombinator.com). Users can sort posts by points, time, comments, or restore the default order. Built with Plasmo framework and React.
+Hacker News Sorted is a Chrome extension that adds sorting capabilities to Hacker News (news.ycombinator.com). Users can sort posts by points, time, comments, velocity, heat, or restore the default order. Built with Plasmo framework and React.
 
 ## Commands
 
@@ -28,7 +28,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 ### Content Script Entry Point
 
 - `content.tsx` - Main entry point, injects the ControlPanel into HN's header using Plasmo's content script UI lifecycle
-- `content.css` - Styles for the control panel, sort highlighting, and new-post indicators
+- `content.css` - Styles for the control panel, sort highlighting, and new-post indicators. Three-tier responsive menu: full names on wide screens, single-letter labels on medium, and a native `<select>` dropdown tier on tiny/mobile screens. The word↔letter switch is count-aware — one `@media` block per enabled-option count (4/5/6) keyed on the `#hns-control-panel[data-sort-count='N']` attribute (1280/1360/1440px, calibrated against HN's header); the dropdown tier is a fixed `max-width: 600px` breakpoint that hides `.hns-buttons-tier` and shows `.hns-dropdown-tier`
 - Detects layout breakage: writes `hns-layout-ok` to `chrome.storage.sync` based on whether expected DOM elements are found (with a 3-second timeout)
 - **Dev gotcha**: Plasmo hot-reload often doesn't pick up content script CSS or `useState` initial value changes — reload the HN page (or the extension itself) to see updates
 
@@ -40,36 +40,37 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 
 ### Popup Entry Point
 
-- `popup.tsx` - Settings popup UI with grouped layout: dependent settings (new-post toggle + highlight duration) share a `fieldset.hns-group`, independent settings get separate groups; each setting has a `hns-hint` description; shows a warning banner when layout detection fails
+- `popup.tsx` - Settings popup UI with grouped layout: dependent settings (new-post toggle + highlight duration) share a `fieldset.hns-group`, independent settings get separate groups; each setting has a `hns-hint` description; shows a warning banner when layout detection fails. Includes per-sort toggles for Velocity and Heat (both default on)
 - `popup.css` - Popup styles (toggle switches, setting groups, hints, warning banner); follows system light/dark via `color-scheme: light dark` + semantic CSS custom properties overridden in a `@media (prefers-color-scheme: dark)` block (brand `#ff6600` unchanged across schemes)
 - Uses `useSettingsStorage` helper — a typed wrapper around `useStorage` that auto-resolves defaults from `SETTINGS_DEFAULTS`
 
 ### Component Structure
 
-- `app/components/ControlPanel.tsx` - Main UI component with sort buttons, consumes sort state from `useSettings` hook
-- `app/components/SortButton.tsx` - Individual sort option buttons (points/time/comments/default)
+- `app/components/ControlPanel.tsx` - Main UI component, consumes sort state + `enabledSortOptions` + `settled` from `useSettings`. Maps over the enabled options (buttons + separators, plus a native `<select>` for the mobile dropdown tier), gates first paint on `settled` (KTD-8), publishes the enabled-option count on the panel root via the `data-sort-count` attribute for count-aware CSS breakpoints (KTD-3), and renders a `role="status"` conflict note listing intercepted hotkeys when `useKeyboardShortcuts` reports any (KTD-5)
+- `app/components/SortButton.tsx` - Individual sort option buttons (points/time/comments/velocity/heat/default)
 
 ### Data Flow
 
-1. `useSettings` hook reads sort preference and post IDs from `chrome.storage.sync`, marks new posts, exposes reactive `activeSort`
+1. `useSettings` hook reads sort preference and post IDs from `chrome.storage.sync`, marks new posts, exposes reactive `activeSort`, the derived `enabledSortOptions` list, and a `settled` first-paint flag; validates `activeSort` against the enabled set (unknown/disabled → `default`, R6)
 2. `useParsedRows` hook extracts post data from HN's DOM on mount (title, info, spacer rows per post)
-3. `sortRows` creates a new sorted array based on active sort option
-4. `updateTable` replaces the table body with reordered rows and highlights the active sort column
+3. `sortRows` creates a new sorted array based on active sort option (velocity/heat are computed at sort time, not stored)
+4. `updateTable` replaces the table body with reordered rows and highlights the active sort column (velocity/heat span two columns, so they highlight nothing — KTD-2)
 
 ### Key Utils
 
 - `app/utils/selectors.ts` - DOM selectors for HN's table structure (title rows at 3n+1, info rows at 3n+2, spacer rows at 3n+3)
 - `app/utils/parsers.ts` - Extract numeric values (points, time, comments) from info rows; `getTime` parses the Unix timestamp (second part) from the `.age` title attribute (`"ISO_DATETIME UNIX_TIMESTAMP"`)
 - `app/utils/converters.ts` - `stringToNumber` (parseInt wrapper), `nowInSeconds` (current epoch in seconds — use instead of inline `Math.floor(Date.now() / 1000)`)
-- `app/utils/sorters.ts` - Sort functions for each sort variant
-- `app/utils/presenters.ts` - DOM manipulation to update table, highlight active sort column, and correct age text (`formatAge`, `correctAgeTexts`, `restoreAgeTexts`)
+- `app/utils/sorters.ts` - Sort functions for each sort variant; velocity = `points / (ageHours + 2)` (damped), heat = `comments / points` with a below-zero sentinel for 0-points rows so job posts sink without `Infinity`/`NaN`
+- `app/utils/presenters.ts` - DOM manipulation to update table, highlight active sort column, and correct age text (`formatAge`, `correctAgeTexts`, `restoreAgeTexts`); `highlightActiveSort` early-returns for any variant without a column getter (default/velocity/heat/unknown), which also removes the cross-version crash from an unmapped variant arriving via sync
 - `app/utils/newPosts.ts` - New post detection and fade: exports `PostTimestamps` type, `migratePostIds`, `markNewPosts` (with cooldown-aware opacity), `updateFadeOpacities`, `clearNewPostMarkers`, `isFirstPage`
 
 ### Keyboard Shortcuts
 
 - `app/hooks/useKeyboardShortcuts.ts` - Keyboard event handler with Vimium conflict detection
-- Keys: P (points), T (time), C (comments), D (default)
-- Auto-disables if another extension (e.g., Vimium) handles any of the keys
+- Keys: P (points), T (time), C (comments), V (velocity), H (heat), D (default)
+- Takes `enabledSortOptions` and derives the live key set — a disabled sort's key is inert (skipped before conflict detection, so it neither sorts nor flags a conflict)
+- Auto-disables ALL shortcuts if another extension (e.g., Vimium) handles any of the keys; returns the accumulated set of conflicting keys (React state) so `ControlPanel` can name them in the conflict note (KTD-5)
 
 ### Settings & New Post Detection
 
@@ -79,6 +80,8 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
   - Show-new toggle — applies/removes `hns-show-new` CSS class on table body
   - Fade interval — drives `--hns-fade` CSS custom property on new-post rows, with cooldown/showNew-aware lifecycle and memory leak guards (`mountedRef`, `intervalRef`, `showNewRef`)
   - True time ago toggle (`showTrueTimeAgo`) — exposes reactive boolean for age text correction
+  - Velocity/Heat enabled toggles — derive `enabledSortOptions` (the SORT_OPTIONS subset the panel, dropdown, and hotkeys all consume); validated in the init read and both watchers (last-active-sort + toggle changes) via `resolveActiveSort`, which resolves unknown/disabled sorts to `default` locally without writing back (KTD-6, no ping-pong). Ref mirrors (`velocityEnabledRef`/`heatEnabledRef`) keep watchers validating against current state
+  - `settled` flag — flips after the async init read so the panel doesn't flash a six-option layout before reflowing (KTD-8)
 - All settings sync across devices via `chrome.storage.sync`
 - New-post detection only runs on first pages (skips paginated pages with `?p=...` or `?next=...`)
 
@@ -99,11 +102,11 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 ### Constants
 
 - `app/constants.ts` - Centralized constants including:
-  - Extension constants (`CONTROL_PANEL_ROOT_ID`)
-  - `CSS_CLASSES` - Extension CSS class names (highlight, buttons, labels, `SHOW_NEW`, `NEW_POST`)
+  - Extension constants (`CONTROL_PANEL_ROOT_ID`, `SORT_COUNT_ATTR` — the `data-sort-count` attribute driving count-aware CSS breakpoints)
+  - `CSS_CLASSES` - Extension CSS class names (highlight, buttons, labels, `SHOW_NEW`, `NEW_POST`, `CONFLICT_NOTE`, `BUTTONS_TIER`, `DROPDOWN_TIER`, `DROPDOWN_LABEL`, `DROPDOWN`)
   - `CSS_SELECTORS` - Derived CSS selectors from class names
-  - `SORT_OPTIONS` - Sort option configuration array (sort variant, display text, keyboard shortcut)
-  - `SETTINGS_KEYS` - Storage key names for chrome.storage.sync (`SHOW_NEW`, `LAST_ACTIVE_SORT`, `POST_IDS_PREFIX`, `COOLDOWN`, `TRUE_TIME_AGO`)
+  - `SORT_OPTIONS` - Sort option configuration array (sort variant, display text, keyboard shortcut); order: points, time, comments, velocity, heat, default
+  - `SETTINGS_KEYS` - Storage key names for chrome.storage.sync (`SHOW_NEW`, `LAST_ACTIVE_SORT`, `POST_IDS_PREFIX`, `COOLDOWN`, `TRUE_TIME_AGO`, `VELOCITY_ENABLED`, `HEAT_ENABLED`)
   - `SETTINGS_DEFAULTS` - Default values for settings
   - `COOLDOWN_BOUNDS` - Min/max bounds for cooldown input validation
   - `SECONDS_PER_MINUTE`, `SECONDS_PER_HOUR`, `SECONDS_PER_DAY` - Time unit constants (used in presenters and tests)
@@ -112,7 +115,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 
 ### Types
 
-- `SortVariant`: 'default' | 'points' | 'time' | 'comments'
+- `SortVariant`: 'default' | 'points' | 'time' | 'comments' | 'velocity' | 'heat'
 - `ParsedRow`: Contains DOM elements (title, info, spacer) and parsed numeric values for a single post
 - `PostTimestamps`: `Record<string, number>` — post ID → discovery timestamp (`Date.now()`), or `-1` for known/never-new posts (exported from `app/utils/newPosts.ts`)
 - `Settings`: Shape for extension settings (`hns-show-new` boolean, `hns-last-active-sort` SortVariant)

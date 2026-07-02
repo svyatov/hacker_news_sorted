@@ -57,13 +57,71 @@
   font-weight: bold;
 }
 
+.hns-conflict-note {
+  margin-left: 10px;
+  font-size: 11px;
+  color: #828282;
+}
+
+/* Mobile dropdown tier — hidden until the small-screen breakpoint below */
+.hns-dropdown-tier {
+  display: none;
+}
+
+.hns-dropdown-label {
+  margin-right: 5px;
+  color: #000;
+}
+
+.hns-dropdown {
+  font: inherit;
+  color: #000;
+}
+
+/*
+ * Tier 1↔2 (full names ↔ letters). The switch point is count-aware: more options
+ * need more width before full names fit, so each enabled-option count (4–6) gets its
+ * own breakpoint keyed off the data-sort-count attribute on the panel root (KTD-3).
+ * Values calibrated against HN's header; 1280px is the original 4-option baseline.
+ */
 @media screen and (min-width: 1280px) {
-  .hns-btn-text {
+  #hns-control-panel[data-sort-count='4'] .hns-btn-text {
     display: inline;
   }
 
-  .hns-btn-shortcut {
+  #hns-control-panel[data-sort-count='4'] .hns-btn-shortcut {
     display: none;
+  }
+}
+
+@media screen and (min-width: 1360px) {
+  #hns-control-panel[data-sort-count='5'] .hns-btn-text {
+    display: inline;
+  }
+
+  #hns-control-panel[data-sort-count='5'] .hns-btn-shortcut {
+    display: none;
+  }
+}
+
+@media screen and (min-width: 1440px) {
+  #hns-control-panel[data-sort-count='6'] .hns-btn-text {
+    display: inline;
+  }
+
+  #hns-control-panel[data-sort-count='6'] .hns-btn-shortcut {
+    display: none;
+  }
+}
+
+/* Tier 3 (dropdown) — fixed small-screen breakpoint, independent of option count */
+@media screen and (max-width: 600px) {
+  .hns-buttons-tier {
+    display: none;
+  }
+
+  .hns-dropdown-tier {
+    display: inline-block;
   }
 }
 

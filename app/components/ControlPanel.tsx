@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, type ReactElement } from 'react';
 
 import SortButton from '~app/components/SortButton';
-import { CSS_CLASSES, CWS_REVIEW_URL, SORT_OPTIONS } from '~app/constants';
+import { CONTROL_PANEL_ROOT_ID, CSS_CLASSES, CWS_REVIEW_URL, SORT_COUNT_ATTR } from '~app/constants';
 import { useKeyboardShortcuts } from '~app/hooks/useKeyboardShortcuts';
 import { useParsedRows } from '~app/hooks/useParsedRows';
 import { useReviewPrompt } from '~app/hooks/useReviewPrompt';
@@ -10,10 +10,8 @@ import type { SortVariant } from '~app/types';
 import { correctAgeTexts, restoreAgeTexts, updateTable } from '~app/utils/presenters';
 import { sortRows } from '~app/utils/sorters';
 
-const sortOptionsCount = SORT_OPTIONS.length - 1;
-
-const ControlPanel = (): ReactElement => {
-  const { activeSort, setActiveSort, showTrueTimeAgo } = useSettings();
+const ControlPanel = (): ReactElement | null => {
+  const { activeSort, setActiveSort, showTrueTimeAgo, enabledSortOptions, settled } = useSettings();
   const { parsedRows, footerRows } = useParsedRows();
   const { showPrompt, dismissPrompt, incrementSortCount } = useReviewPrompt();
 
@@ -28,6 +26,12 @@ const ControlPanel = (): ReactElement => {
     }
   }, [sortedRows, footerRows, activeSort, showTrueTimeAgo]);
 
+  // Publish the enabled-option count on the imperatively-created panel root (outside
+  // React's tree) so count-aware CSS breakpoints can key off it (KTD-3).
+  useEffect(() => {
+    document.getElementById(CONTROL_PANEL_ROOT_ID)?.setAttribute(SORT_COUNT_ATTR, String(enabledSortOptions.length));
+  }, [enabledSortOptions.length]);
+
   const handleSort = useCallback(
     (sortBy: SortVariant) => {
       if (sortBy === activeSort) return;
@@ -37,32 +41,61 @@ const ControlPanel = (): ReactElement => {
     [activeSort, setActiveSort, incrementSortCount],
   );
 
-  useKeyboardShortcuts({ onSort: handleSort });
+  const conflictKeys = useKeyboardShortcuts({ onSort: handleSort, enabledSortOptions });
+
+  // Wait for the settled settings read before painting so the panel doesn't flash a
+  // six-option layout that reflows to four/five for users who disabled a sort (KTD-8).
+  if (!settled) return null;
+
+  const lastIndex = enabledSortOptions.length - 1;
 
   return (
     <>
-      <span className={CSS_CLASSES.SORT_BY_LABEL}>sort by:</span>
+      <span className={CSS_CLASSES.BUTTONS_TIER}>
+        <span className={CSS_CLASSES.SORT_BY_LABEL}>sort by:</span>
 
-      {SORT_OPTIONS.map((option, index) => (
-        <Fragment key={option.sortBy}>
-          <SortButton sortOption={option} activeSort={activeSort} setActiveSort={handleSort} />
-          {index < sortOptionsCount && ' · '}
-        </Fragment>
-      ))}
+        {enabledSortOptions.map((option, index) => (
+          <Fragment key={option.sortBy}>
+            <SortButton sortOption={option} activeSort={activeSort} setActiveSort={handleSort} />
+            {index < lastIndex && ' · '}
+          </Fragment>
+        ))}
 
-      <span className={CSS_CLASSES.DIVIDER}>|</span>
+        <span className={CSS_CLASSES.DIVIDER}>|</span>
 
-      {showPrompt && (
-        <span className={CSS_CLASSES.REVIEW_TOAST}>
-          <a href={CWS_REVIEW_URL} target="_blank" rel="noopener" className={CSS_CLASSES.REVIEW_LINK}>
-            <span>{'Enjoying HN Sorted? Leave a review \u2764\ufe0f'}</span>
-            <span className={CSS_CLASSES.REVIEW_SUB}>Support the extension, help others discover it</span>
-          </a>
-          <button type="button" className={CSS_CLASSES.REVIEW_CLOSE} onClick={dismissPrompt} aria-label="Dismiss">
-            {'\u00d7'}
-          </button>
-        </span>
-      )}
+        {conflictKeys.size > 0 && (
+          <span className={CSS_CLASSES.CONFLICT_NOTE} role="status">
+            {`hotkeys off: ${[...conflictKeys].map((key) => key.toUpperCase()).join(', ')} taken by another extension`}
+          </span>
+        )}
+
+        {showPrompt && (
+          <span className={CSS_CLASSES.REVIEW_TOAST}>
+            <a href={CWS_REVIEW_URL} target="_blank" rel="noopener" className={CSS_CLASSES.REVIEW_LINK}>
+              <span>{'Enjoying HN Sorted? Leave a review \u2764\ufe0f'}</span>
+              <span className={CSS_CLASSES.REVIEW_SUB}>Support the extension, help others discover it</span>
+            </a>
+            <button type="button" className={CSS_CLASSES.REVIEW_CLOSE} onClick={dismissPrompt} aria-label="Dismiss">
+              {'\u00d7'}
+            </button>
+          </span>
+        )}
+      </span>
+
+      <span className={CSS_CLASSES.DROPDOWN_TIER}>
+        <span className={CSS_CLASSES.DROPDOWN_LABEL}>Sort by</span>
+        <select
+          className={CSS_CLASSES.DROPDOWN}
+          aria-label="Sort by"
+          value={activeSort}
+          onChange={(event) => handleSort(event.target.value as SortVariant)}>
+          {enabledSortOptions.map((option) => (
+            <option key={option.sortBy} value={option.sortBy}>
+              {option.text}
+            </option>
+          ))}
+        </select>
+      </span>
     </>
   );
 };

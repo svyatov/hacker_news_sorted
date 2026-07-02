@@ -1,17 +1,22 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { SortVariant } from '~app/types';
+import { SORT_OPTIONS } from '~app/constants';
+import type { SortOption, SortVariant } from '~app/types';
 
 type KeyboardShortcutsConfig = {
   onSort: (sortBy: SortVariant) => void;
+  enabledSortOptions?: SortOption[];
 };
 
-const TARGET_KEYS = ['p', 't', 'c', 'd'] as const;
+const TARGET_KEYS = ['p', 't', 'c', 'v', 'h', 'd'] as const;
+type TargetKey = (typeof TARGET_KEYS)[number];
 
-const KEY_TO_SORT: Record<(typeof TARGET_KEYS)[number], SortVariant> = {
+const KEY_TO_SORT: Record<TargetKey, SortVariant> = {
   p: 'points',
   t: 'time',
   c: 'comments',
+  v: 'velocity',
+  h: 'heat',
   d: 'default',
 };
 
@@ -30,16 +35,27 @@ const isTypingInInput = (target: EventTarget | null): boolean => {
   return target.isContentEditable || target.contentEditable === 'true';
 };
 
-export const useKeyboardShortcuts = ({ onSort }: KeyboardShortcutsConfig): void => {
-  const conflictDetected = useRef(false);
+export const useKeyboardShortcuts = ({
+  onSort,
+  enabledSortOptions = SORT_OPTIONS,
+}: KeyboardShortcutsConfig): Set<string> => {
+  const [conflictKeys, setConflictKeys] = useState<Set<string>>(new Set());
+  const conflictKeysRef = useRef<Set<string>>(new Set());
   const checkedKeys = useRef(new Set<string>());
+
+  // Only keys whose sort is currently enabled are live; a disabled sort's key is inert
+  // (skipped before conflict detection, so pressing it neither sorts nor flags a conflict).
+  const activeKeys = useMemo(() => {
+    const enabled = new Set(enabledSortOptions.map((option) => option.sortBy));
+    return new Set<string>(TARGET_KEYS.filter((key) => enabled.has(KEY_TO_SORT[key])));
+  }, [enabledSortOptions]);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       const key = event.key.toLowerCase();
 
-      // Only care about our target keys
-      if (!TARGET_KEYS.includes(key as (typeof TARGET_KEYS)[number])) {
+      // Only care about our target keys, and only while their sort is enabled
+      if (!activeKeys.has(key)) {
         return;
       }
 
@@ -53,25 +69,25 @@ export const useKeyboardShortcuts = ({ onSort }: KeyboardShortcutsConfig): void 
         return;
       }
 
-      // Conflict detection: check each key once
+      // Conflict detection: check each key once, accumulating the keys another
+      // extension has claimed. Any conflict disables ALL our shortcuts (unchanged).
       if (!checkedKeys.current.has(key)) {
         checkedKeys.current.add(key);
         if (event.defaultPrevented) {
-          // Another extension handles this key - disable ALL our shortcuts
-          conflictDetected.current = true;
+          conflictKeysRef.current = new Set(conflictKeysRef.current).add(key);
+          setConflictKeys(conflictKeysRef.current);
         }
       }
 
-      // If conflict detected, don't handle any shortcuts
-      if (conflictDetected.current) {
+      if (conflictKeysRef.current.size > 0 || event.defaultPrevented) {
         return;
       }
 
       // Handle the sort
       event.preventDefault();
-      onSort(KEY_TO_SORT[key as (typeof TARGET_KEYS)[number]]);
+      onSort(KEY_TO_SORT[key as TargetKey]);
     },
-    [onSort],
+    [onSort, activeKeys],
   );
 
   useEffect(() => {
@@ -80,4 +96,6 @@ export const useKeyboardShortcuts = ({ onSort }: KeyboardShortcutsConfig): void 
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [handleKeyDown]);
+
+  return conflictKeys;
 };

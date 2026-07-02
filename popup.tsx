@@ -13,6 +13,8 @@ const Popup = () => {
   const [showNew, setShowNew] = useSettingsStorage(SETTINGS_KEYS.SHOW_NEW);
   const [cooldown, setCooldown] = useSettingsStorage(SETTINGS_KEYS.COOLDOWN);
   const [trueTimeAgo, setTrueTimeAgo] = useSettingsStorage(SETTINGS_KEYS.TRUE_TIME_AGO);
+  const [velocityEnabled, setVelocityEnabled] = useSettingsStorage(SETTINGS_KEYS.VELOCITY_ENABLED);
+  const [heatEnabled, setHeatEnabled] = useSettingsStorage(SETTINGS_KEYS.HEAT_ENABLED);
   const [layoutOk] = useSettingsStorage(SETTINGS_KEYS.LAYOUT_OK);
   // useStorage renders with the default value first, then async-loads the stored value.
   // When stored !== default, the CSS transition animates the toggle visibly (on→off flash).
@@ -97,6 +99,42 @@ const Popup = () => {
               aria-label="Show true time ago setting"
               checked={trueTimeAgo}
               onChange={(e) => setTrueTimeAgo(e.target.checked)}
+            />
+            <span className="hns-toggle-slider" />
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset className="hns-group">
+        <div className="hns-setting">
+          <div className="hns-setting-label">
+            <span>Velocity sort</span>
+            <span className="hns-hint">Adds a sort for the fastest-rising posts (points per hour)</span>
+          </div>
+          <label className="hns-toggle">
+            <input
+              type="checkbox"
+              name="velocity-enabled"
+              aria-label="Velocity sort"
+              checked={velocityEnabled}
+              onChange={(e) => setVelocityEnabled(e.target.checked)}
+            />
+            <span className="hns-toggle-slider" />
+          </label>
+        </div>
+
+        <div className="hns-setting">
+          <div className="hns-setting-label">
+            <span>Heat sort</span>
+            <span className="hns-hint">Adds a sort for the most-discussed posts (comments per point)</span>
+          </div>
+          <label className="hns-toggle">
+            <input
+              type="checkbox"
+              name="heat-enabled"
+              aria-label="Heat sort"
+              checked={heatEnabled}
+              onChange={(e) => setHeatEnabled(e.target.checked)}
             />
             <span className="hns-toggle-slider" />
           </label>
