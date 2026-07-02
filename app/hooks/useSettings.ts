@@ -19,15 +19,21 @@ const storage = new Storage();
 
 const getPostIdsKey = (): string => `${SETTINGS_KEYS.POST_IDS_PREFIX}${window.location.pathname}`;
 
-// A stored/synced sort value that is unknown (newer version) or currently disabled
-// resolves to HN's default order (R6). This is the single convergence point for all
-// sort-value entry points: init read, last-active-sort watcher, and toggle watchers.
-const resolveActiveSort = (stored: SortVariant, velocityEnabled: boolean, heatEnabled: boolean): SortVariant => {
-  if (!SORT_OPTIONS.some((option) => option.sortBy === stored)) return 'default';
-  if (stored === 'velocity' && !velocityEnabled) return 'default';
-  if (stored === 'heat' && !heatEnabled) return 'default';
-  return stored;
-};
+// The set of currently-selectable sorts: every SORT_OPTIONS variant minus any whose disable
+// toggle is off. Single source of truth that BOTH revert-on-disable (resolveActiveSort) and the
+// rendered option list (enabledSortOptions) read from, so the two can't drift. To add a toggle,
+// extend the filter here plus SETTINGS_KEYS/DEFAULTS and the init read + watcher below.
+const enabledSortSet = (velocityEnabled: boolean, heatEnabled: boolean): Set<SortVariant> =>
+  new Set(
+    SORT_OPTIONS.map((option) => option.sortBy).filter(
+      (sort) => (sort !== 'velocity' || velocityEnabled) && (sort !== 'heat' || heatEnabled),
+    ),
+  );
+
+// A stored/synced sort value that is unknown (newer version) or currently disabled resolves to
+// HN's default order (R6). Convergence point for every entry: init read + all watchers.
+const resolveActiveSort = (stored: SortVariant, velocityEnabled: boolean, heatEnabled: boolean): SortVariant =>
+  enabledSortSet(velocityEnabled, heatEnabled).has(stored) ? stored : 'default';
 
 type UseSettingsReturn = {
   activeSort: SortVariant;
@@ -140,7 +146,11 @@ export const useSettings = (): UseSettingsReturn => {
       initializedRef.current = true;
     };
 
-    init();
+    // Never let a rejected storage read block first paint forever (e.g. "extension context
+    // invalidated" during a mid-session update): degrade to defaults instead of a vanished panel.
+    init().catch(() => {
+      if (mountedRef.current) setSettled(true);
+    });
 
     // --- Watchers ---
     const watcherMap: StorageCallbackMap = {
@@ -173,12 +183,14 @@ export const useSettings = (): UseSettingsReturn => {
         setActiveSortState(resolveActiveSort(incoming, velocityEnabledRef.current, heatEnabledRef.current));
       },
       [SETTINGS_KEYS.VELOCITY_ENABLED]: (change) => {
+        if (!initializedRef.current) return; // defer to init's own read (matches LAST_ACTIVE_SORT)
         const enabled = (change.newValue as boolean | undefined) ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.VELOCITY_ENABLED];
         velocityEnabledRef.current = enabled;
         setVelocityEnabledState(enabled);
         setActiveSortState((prev) => resolveActiveSort(prev, enabled, heatEnabledRef.current));
       },
       [SETTINGS_KEYS.HEAT_ENABLED]: (change) => {
+        if (!initializedRef.current) return; // defer to init's own read (matches LAST_ACTIVE_SORT)
         const enabled = (change.newValue as boolean | undefined) ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.HEAT_ENABLED];
         heatEnabledRef.current = enabled;
         setHeatEnabledState(enabled);
@@ -227,13 +239,10 @@ export const useSettings = (): UseSettingsReturn => {
     };
   }, []);
 
-  const enabledSortOptions = useMemo(
-    () =>
-      SORT_OPTIONS.filter(
-        (option) => (option.sortBy !== 'velocity' || velocityEnabled) && (option.sortBy !== 'heat' || heatEnabled),
-      ),
-    [velocityEnabled, heatEnabled],
-  );
+  const enabledSortOptions = useMemo(() => {
+    const enabled = enabledSortSet(velocityEnabled, heatEnabled);
+    return SORT_OPTIONS.filter((option) => enabled.has(option.sortBy));
+  }, [velocityEnabled, heatEnabled]);
 
   return { activeSort, setActiveSort, showTrueTimeAgo, enabledSortOptions, settled };
 };

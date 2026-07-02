@@ -10,6 +10,9 @@ import type { SortVariant } from '~app/types';
 import { correctAgeTexts, restoreAgeTexts, updateTable } from '~app/utils/presenters';
 import { sortRows } from '~app/utils/sorters';
 
+// Shared so the dropdown's visible label and its aria-label can't drift apart.
+const SORT_BY_TEXT = 'Sort by';
+
 const ControlPanel = (): ReactElement | null => {
   const { activeSort, setActiveSort, showTrueTimeAgo, enabledSortOptions, settled } = useSettings();
   const { parsedRows, footerRows } = useParsedRows();
@@ -18,13 +21,16 @@ const ControlPanel = (): ReactElement | null => {
   const sortedRows = useMemo(() => sortRows(parsedRows, activeSort), [parsedRows, activeSort]);
 
   useEffect(() => {
+    // Wait for the settled read so the table sorts once with the resolved sort, instead of
+    // reordering from the default first and then again once settings load (PE2).
+    if (!settled) return;
     updateTable(sortedRows, footerRows, activeSort);
     if (showTrueTimeAgo) {
       correctAgeTexts(sortedRows);
     } else {
       restoreAgeTexts(sortedRows);
     }
-  }, [sortedRows, footerRows, activeSort, showTrueTimeAgo]);
+  }, [sortedRows, footerRows, activeSort, showTrueTimeAgo, settled]);
 
   // Publish the enabled-option count on the imperatively-created panel root (outside
   // React's tree) so count-aware CSS breakpoints can key off it (KTD-3).
@@ -83,10 +89,10 @@ const ControlPanel = (): ReactElement | null => {
       </span>
 
       <span className={CSS_CLASSES.DROPDOWN_TIER}>
-        <span className={CSS_CLASSES.DROPDOWN_LABEL}>Sort by</span>
+        <span className={CSS_CLASSES.DROPDOWN_LABEL}>{SORT_BY_TEXT}</span>
         <select
           className={CSS_CLASSES.DROPDOWN}
-          aria-label="Sort by"
+          aria-label={SORT_BY_TEXT}
           value={activeSort}
           onChange={(event) => handleSort(event.target.value as SortVariant)}>
           {enabledSortOptions.map((option) => (

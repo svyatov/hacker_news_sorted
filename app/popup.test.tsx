@@ -1,14 +1,16 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { COOLDOWN_BOUNDS, SETTINGS_KEYS } from '~app/constants';
 
 let storageValues: Record<string, unknown> = {};
+const setters: Record<string, ReturnType<typeof vi.fn>> = {};
 
 vi.mock('@plasmohq/storage/hook', () => ({
   useStorage: (key: string, defaultValue: unknown) => {
     const value = key in storageValues ? storageValues[key] : defaultValue;
-    return [value, vi.fn()];
+    setters[key] = setters[key] ?? vi.fn();
+    return [value, setters[key]];
   },
 }));
 
@@ -79,5 +81,23 @@ describe('Popup', () => {
 
     const input = screen.getByLabelText('Highlight duration in seconds') as HTMLInputElement;
     expect(input.value).toBe('300');
+  });
+
+  it('should render Velocity and Heat toggles reflecting stored state', () => {
+    storageValues = { [SETTINGS_KEYS.VELOCITY_ENABLED]: true, [SETTINGS_KEYS.HEAT_ENABLED]: false };
+    render(<Popup />);
+
+    expect((screen.getByLabelText('Velocity sort') as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByLabelText('Heat sort') as HTMLInputElement).checked).toBe(false);
+  });
+
+  it('should write the new value when a derived-sort toggle is clicked', () => {
+    storageValues = { [SETTINGS_KEYS.VELOCITY_ENABLED]: true };
+    render(<Popup />);
+
+    const setVelocity = setters[SETTINGS_KEYS.VELOCITY_ENABLED];
+    setVelocity.mockClear();
+    fireEvent.click(screen.getByLabelText('Velocity sort'));
+    expect(setVelocity).toHaveBeenCalledWith(false);
   });
 });

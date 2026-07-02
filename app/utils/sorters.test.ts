@@ -106,6 +106,17 @@ describe('sorters', () => {
       // huge age → tiny finite velocity → ranks last, never NaN/Infinity
       expect(sorted.map((r) => r.originalIndex)).toEqual([0, 1]);
     });
+
+    it('clamps a future-dated post (clock skew) so velocity stays finite and positive', () => {
+      // Client clock 5h behind this post's server timestamp → raw age is negative.
+      const future = createMockRow({ originalIndex: 0, points: 100, time: NOW_SEC + 5 * SECONDS_PER_HOUR });
+      const normal = createMockRow({ originalIndex: 1, points: 100, time: NOW_SEC - SECONDS_PER_HOUR });
+      let sorted: ParsedRow[] = [];
+      expect(() => (sorted = sortRows([future, normal], 'velocity'))).not.toThrow();
+      // age clamps to 0 → 100/2 = 50 (finite, positive), above normal's 100/3 ≈ 33.3;
+      // without the clamp the denominator would go negative and wrongly sink it last.
+      expect(sorted.map((r) => r.originalIndex)).toEqual([0, 1]);
+    });
   });
 
   describe('heat', () => {

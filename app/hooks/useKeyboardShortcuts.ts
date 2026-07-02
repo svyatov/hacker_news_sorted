@@ -8,17 +8,12 @@ type KeyboardShortcutsConfig = {
   enabledSortOptions?: SortOption[];
 };
 
-const TARGET_KEYS = ['p', 't', 'c', 'v', 'h', 'd'] as const;
-type TargetKey = (typeof TARGET_KEYS)[number];
-
-const KEY_TO_SORT: Record<TargetKey, SortVariant> = {
-  p: 'points',
-  t: 'time',
-  c: 'comments',
-  v: 'velocity',
-  h: 'heat',
-  d: 'default',
-};
+// Hotkeys derive from SORT_OPTIONS so a shortcut change there can't silently diverge from the
+// handler (single source of truth). Letters are lower-cased for case-insensitive matching.
+const KEY_TO_SORT: Record<string, SortVariant> = Object.fromEntries(
+  SORT_OPTIONS.map((option) => [option.shortcut.toLowerCase(), option.sortBy]),
+);
+const TARGET_KEYS = Object.keys(KEY_TO_SORT);
 
 const isTypingInInput = (target: EventTarget | null): boolean => {
   if (!target || !(target instanceof HTMLElement)) {
@@ -50,6 +45,19 @@ export const useKeyboardShortcuts = ({
     return new Set<string>(TARGET_KEYS.filter((key) => enabled.has(KEY_TO_SORT[key])));
   }, [enabledSortOptions]);
 
+  // Reconcile recorded conflicts with the live key set: when a sort is disabled its key is no
+  // longer our shortcut, so drop it from the note (R11) and stop it gating the rest; prune
+  // checkedKeys too so a key that is later re-enabled gets conflict-checked afresh.
+  useEffect(() => {
+    const keep = (set: Set<string>) => new Set([...set].filter((key) => activeKeys.has(key)));
+    checkedKeys.current = keep(checkedKeys.current);
+    const prunedConflicts = keep(conflictKeysRef.current);
+    if (prunedConflicts.size !== conflictKeysRef.current.size) {
+      conflictKeysRef.current = prunedConflicts;
+      setConflictKeys(prunedConflicts);
+    }
+  }, [activeKeys]);
+
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       const key = event.key.toLowerCase();
@@ -79,13 +87,16 @@ export const useKeyboardShortcuts = ({
         }
       }
 
+      // Bail if any prior conflict was recorded (all-or-nothing), or if THIS press is being
+      // prevented by another extension — the latter also covers a key intercepted only on a
+      // later press, which the check-once block above skips.
       if (conflictKeysRef.current.size > 0 || event.defaultPrevented) {
         return;
       }
 
       // Handle the sort
       event.preventDefault();
-      onSort(KEY_TO_SORT[key as TargetKey]);
+      onSort(KEY_TO_SORT[key]);
     },
     [onSort, activeKeys],
   );

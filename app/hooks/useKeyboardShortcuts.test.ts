@@ -274,5 +274,29 @@ describe('useKeyboardShortcuts', () => {
       simulateKeyPress('p');
       expect(mockOnSort).toHaveBeenCalledWith('points');
     });
+
+    it('drops a conflicting key from the note once its sort is disabled, re-enabling the rest (R11)', () => {
+      const { result, rerender } = renderHook(
+        ({ opts }) => useKeyboardShortcuts({ onSort: mockOnSort, enabledSortOptions: opts }),
+        { initialProps: { opts: SORT_OPTIONS } },
+      );
+
+      // Another extension intercepts V → recorded, and all-or-nothing disables every shortcut
+      act(() => {
+        const event = new KeyboardEvent('keydown', { key: 'v', bubbles: true });
+        Object.defineProperty(event, 'defaultPrevented', { value: true });
+        document.dispatchEvent(event);
+      });
+      expect(result.current.has('v')).toBe(true);
+      simulateKeyPress('p');
+      expect(mockOnSort).not.toHaveBeenCalled();
+
+      // User disables Velocity: V is no longer our shortcut, so it leaves the conflict set
+      // and the remaining hotkeys come back.
+      rerender({ opts: withoutSort('velocity') });
+      expect(result.current.has('v')).toBe(false);
+      simulateKeyPress('p');
+      expect(mockOnSort).toHaveBeenCalledWith('points');
+    });
   });
 });

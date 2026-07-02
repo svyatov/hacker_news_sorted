@@ -12,7 +12,9 @@ const VELOCITY_DAMPING_HOURS = 2;
 const HEAT_ZERO_POINTS_SENTINEL = -1;
 
 const velocity = (row: ParsedRow): number => {
-  const ageHours = (nowInSeconds() - row.time) / SECONDS_PER_HOUR;
+  // Clamp age at 0 so a client clock running behind a post's server timestamp can't drive the
+  // denominator to zero/negative (Infinity/NaN/negative rank); keeps the no-Infinity/NaN guarantee.
+  const ageHours = Math.max(0, (nowInSeconds() - row.time) / SECONDS_PER_HOUR);
   return row.points / (ageHours + VELOCITY_DAMPING_HOURS);
 };
 

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import React, { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -42,8 +42,12 @@ vi.mock('~app/hooks/useSettings', () => ({
 }));
 
 let mockConflictKeys = new Set<string>();
+let capturedKbConfig: { onSort: (sort: SortVariant) => void; enabledSortOptions?: unknown } | undefined;
 vi.mock('~app/hooks/useKeyboardShortcuts', () => ({
-  useKeyboardShortcuts: () => mockConflictKeys,
+  useKeyboardShortcuts: (config: { onSort: (sort: SortVariant) => void; enabledSortOptions?: unknown }) => {
+    capturedKbConfig = config;
+    return mockConflictKeys;
+  },
 }));
 
 vi.mock('~app/utils/sorters', () => ({
@@ -72,6 +76,25 @@ describe('ControlPanel', () => {
     mockEnabledSortOptions = ALL_OPTIONS;
     mockSettled = true;
     mockConflictKeys = new Set();
+    capturedKbConfig = undefined;
+  });
+
+  it('passes the live enabled options through to the keyboard shortcuts hook (AE3 wiring)', () => {
+    const { rerender } = render(<ControlPanel />);
+    expect(capturedKbConfig?.enabledSortOptions).toBe(ALL_OPTIONS);
+
+    mockEnabledSortOptions = NO_DERIVED;
+    rerender(<ControlPanel />);
+    expect(capturedKbConfig?.enabledSortOptions).toBe(NO_DERIVED);
+  });
+
+  it('ignores a sort request for the already-active sort (no-op guard)', () => {
+    render(<ControlPanel />); // active sort starts at 'points'
+    act(() => capturedKbConfig!.onSort('points'));
+    expect(mockIncrementSortCount).not.toHaveBeenCalled();
+
+    act(() => capturedKbConfig!.onSort('time'));
+    expect(mockIncrementSortCount).toHaveBeenCalledOnce();
   });
 
   it('renders a button per enabled option: 6 / 4 / 5', () => {
