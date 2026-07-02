@@ -28,7 +28,7 @@ Sort [Hacker News](https://news.ycombinator.com) your way — by points, time, c
 - **New Post Indicators** — Orange dot marks posts that appeared since your last visit, fading out over a configurable period
 - **True Time Ago** — Corrects misleading ages on resurfaced "second chance" posts
 - **Keyboard Shortcuts** — Press `P`, `T`, `C`, `V`, `H`, or `D` to sort instantly
-- **Responsive Menu** — Full sort names on wide screens, single-letter labels on medium screens, and a compact "Sort by" dropdown on mobile
+- **Responsive Menu** — Full sort names on wide screens, single-letter labels on medium screens, and a compact dropdown on narrow screens — always collapsing before it would crowd Hacker News's own header links
 - **Persistent Preference** — Your last sort choice is remembered across sessions
 - **Visual Highlighting** — Active sort column is highlighted for clarity
 - **Layout Change Detection** — Warning badge and popup banner if HN changes break sorting

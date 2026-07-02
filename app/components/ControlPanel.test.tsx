@@ -121,9 +121,10 @@ describe('ControlPanel', () => {
   });
 
   it('renders the sort by label and divider', () => {
-    render(<ControlPanel />);
-    expect(screen.getByText('sort by:')).toBeInTheDocument();
-    expect(screen.getByText('|')).toBeInTheDocument();
+    const { container } = render(<ControlPanel />);
+    const tier = within(getButtonsTier(container));
+    expect(tier.getByText('sort by:')).toBeInTheDocument();
+    expect(tier.getByText('|')).toBeInTheDocument();
   });
 
   it('renders a separator between each enabled button', () => {
@@ -201,6 +202,12 @@ describe('ControlPanel', () => {
       fireEvent.change(select, { target: { value: 'heat' } });
       expect(select.value).toBe('heat');
       expect(mockIncrementSortCount).toHaveBeenCalledOnce();
+    });
+
+    it('renders a divider after the select so it reads separately from HN header links', () => {
+      const { container } = render(<ControlPanel />);
+      const tier = container.querySelector(`.${CSS_CLASSES.DROPDOWN_TIER}`) as HTMLElement;
+      expect(within(tier).getByText('|')).toBeInTheDocument();
     });
   });
 

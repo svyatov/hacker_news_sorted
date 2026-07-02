@@ -66,7 +66,6 @@ export const CSS_CLASSES = {
   CONFLICT_NOTE: 'hns-conflict-note',
   BUTTONS_TIER: 'hns-buttons-tier',
   DROPDOWN_TIER: 'hns-dropdown-tier',
-  DROPDOWN_LABEL: 'hns-dropdown-label',
   DROPDOWN: 'hns-dropdown',
   REVIEW_TOAST: 'hns-review-toast',
   REVIEW_LINK: 'hns-review-link',
@@ -80,9 +79,10 @@ export const CSS_SELECTORS = {
 
 // Sort options configuration. Order matters — the menu and dropdown render in this order.
 // Two couplings to keep in sync when editing this list:
-//   1. content.css has one word<->letter @media block per possible enabled-option count
-//      (data-sort-count). Adding an option — or another disable toggle — changes that range and
-//      needs a matching block, or the panel silently stays in single-letter mode at all widths.
+//   1. content.css has count-aware @media blocks keyed on data-sort-count — one word<->letter block
+//      AND one letter<->dropdown block per possible enabled-option count (4/5/6). Adding an option —
+//      or another disable toggle — changes those widths and needs matching blocks, or the panel
+//      stays in single-letter mode at all widths / collapses at the wrong width and wraps HN's nav.
 //   2. useKeyboardShortcuts derives its hotkeys from `shortcut` below — keep the letters unique.
 export const SORT_OPTIONS: SortOption[] = [
   { sortBy: 'points', text: 'points', shortcut: 'P' },

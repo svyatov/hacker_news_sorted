@@ -10,7 +10,8 @@ import type { SortVariant } from '~app/types';
 import { correctAgeTexts, restoreAgeTexts, updateTable } from '~app/utils/presenters';
 import { sortRows } from '~app/utils/sorters';
 
-// Shared so the dropdown's visible label and its aria-label can't drift apart.
+// Accessible name for the mobile sort <select> (it has no visible label — a visible one is wide
+// enough to push HN's own nav onto a second line on narrow screens).
 const SORT_BY_TEXT = 'Sort by';
 
 const ControlPanel = (): ReactElement | null => {
@@ -89,7 +90,6 @@ const ControlPanel = (): ReactElement | null => {
       </span>
 
       <span className={CSS_CLASSES.DROPDOWN_TIER}>
-        <span className={CSS_CLASSES.DROPDOWN_LABEL}>{SORT_BY_TEXT}</span>
         <select
           className={CSS_CLASSES.DROPDOWN}
           aria-label={SORT_BY_TEXT}
@@ -101,6 +101,7 @@ const ControlPanel = (): ReactElement | null => {
             </option>
           ))}
         </select>
+        <span className={CSS_CLASSES.DIVIDER}>|</span>
       </span>
     </>
   );

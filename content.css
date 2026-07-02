@@ -63,19 +63,18 @@
   color: #828282;
 }
 
-/* Mobile dropdown tier — hidden until the small-screen breakpoint below */
+/* Dropdown tier — hidden until the count-aware collapse breakpoints below */
 .hns-dropdown-tier {
   display: none;
-}
-
-.hns-dropdown-label {
-  margin-right: 5px;
-  color: #000;
 }
 
 .hns-dropdown {
   font: inherit;
   color: #000;
+  /* A native <select> sizes to its widest option ("comments"/"velocity" ~92px), leaving a loose
+   * gap after short values like "points". Cap it so short values sit snug; the two long words clip
+   * by a hair — Chrome keeps the arrow and clips the text, and it's still clear what the control is. */
+  max-width: 84px;
 }
 
 /*
@@ -114,14 +113,52 @@
   }
 }
 
-/* Tier 3 (dropdown) — fixed small-screen breakpoint, independent of option count */
-@media screen and (max-width: 600px) {
-  .hns-buttons-tier {
+/*
+ * Tier 2↔3 (letters ↔ dropdown). Also count-aware: the single-letter buttons row is still wide
+ * enough to push HN's own nav onto a second line once the viewport is narrow, so we collapse to a
+ * compact native <select> *before* that happens. Each breakpoint sits just above the width at which
+ * the letters row starts wrapping HN's nav for that option count (measured against HN's header:
+ * ~1044/1084/1124px for 4/5/6 options — +margin below). The label-less dropdown is then as narrow as
+ * the header allows, so it never wraps the nav until HN's nav would wrap on its own (~750px).
+ */
+@media screen and (max-width: 1080px) {
+  #hns-control-panel[data-sort-count='4'] .hns-buttons-tier {
     display: none;
   }
 
-  .hns-dropdown-tier {
+  #hns-control-panel[data-sort-count='4'] .hns-dropdown-tier {
     display: inline-block;
+  }
+}
+
+@media screen and (max-width: 1120px) {
+  #hns-control-panel[data-sort-count='5'] .hns-buttons-tier {
+    display: none;
+  }
+
+  #hns-control-panel[data-sort-count='5'] .hns-dropdown-tier {
+    display: inline-block;
+  }
+}
+
+@media screen and (max-width: 1160px) {
+  #hns-control-panel[data-sort-count='6'] .hns-buttons-tier {
+    display: none;
+  }
+
+  #hns-control-panel[data-sort-count='6'] .hns-dropdown-tier {
+    display: inline-block;
+  }
+}
+
+/*
+ * Below ~750px HN's header wraps to multiple lines — the login/username drops to its own line
+ * beneath our <select>, which strands the trailing "|" at the end of a line with nothing after it.
+ * Drop the separator there (it's only meaningful while the select and the header links share a line).
+ */
+@media screen and (max-width: 750px) {
+  .hns-dropdown-tier .hns-divider {
+    display: none;
   }
 }
 
