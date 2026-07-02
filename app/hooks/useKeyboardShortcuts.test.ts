@@ -1,7 +1,11 @@
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { SORT_OPTIONS } from '~app/constants';
+
 import { useKeyboardShortcuts } from './useKeyboardShortcuts';
+
+const withoutSort = (sortBy: string) => SORT_OPTIONS.filter((o) => o.sortBy !== sortBy);
 
 describe('useKeyboardShortcuts', () => {
   const mockOnSort = vi.fn();
@@ -60,6 +64,20 @@ describe('useKeyboardShortcuts', () => {
 
     simulateKeyPress('d');
     expect(mockOnSort).toHaveBeenCalledWith('default');
+  });
+
+  it('should call onSort with "velocity" when V is pressed', () => {
+    renderHook(() => useKeyboardShortcuts({ onSort: mockOnSort }));
+
+    simulateKeyPress('v');
+    expect(mockOnSort).toHaveBeenCalledWith('velocity');
+  });
+
+  it('should call onSort with "heat" when H is pressed', () => {
+    renderHook(() => useKeyboardShortcuts({ onSort: mockOnSort }));
+
+    simulateKeyPress('h');
+    expect(mockOnSort).toHaveBeenCalledWith('heat');
   });
 
   it('should handle uppercase keys', () => {
@@ -191,6 +209,92 @@ describe('useKeyboardShortcuts', () => {
       mockOnSort.mockClear();
 
       // Second press of same key - should still work (not re-checking)
+      simulateKeyPress('p');
+      expect(mockOnSort).toHaveBeenCalledWith('points');
+    });
+
+    it('lands an intercepted key in the returned conflict set and stops all shortcuts (AE4)', () => {
+      const { result } = renderHook(() => useKeyboardShortcuts({ onSort: mockOnSort }));
+
+      act(() => {
+        const event = new KeyboardEvent('keydown', { key: 't', bubbles: true });
+        Object.defineProperty(event, 'defaultPrevented', { value: true });
+        document.dispatchEvent(event);
+      });
+
+      expect(result.current.has('t')).toBe(true);
+
+      simulateKeyPress('p');
+      simulateKeyPress('c');
+      expect(mockOnSort).not.toHaveBeenCalled();
+    });
+
+    it('accumulates multiple intercepted keys in the conflict set', () => {
+      const { result } = renderHook(() => useKeyboardShortcuts({ onSort: mockOnSort }));
+
+      act(() => {
+        const tEvent = new KeyboardEvent('keydown', { key: 't', bubbles: true });
+        Object.defineProperty(tEvent, 'defaultPrevented', { value: true });
+        document.dispatchEvent(tEvent);
+        const cEvent = new KeyboardEvent('keydown', { key: 'c', bubbles: true });
+        Object.defineProperty(cEvent, 'defaultPrevented', { value: true });
+        document.dispatchEvent(cEvent);
+      });
+
+      expect(result.current.has('t')).toBe(true);
+      expect(result.current.has('c')).toBe(true);
+    });
+  });
+
+  describe('enabled gating', () => {
+    it('does nothing when a disabled sort key is pressed (AE3 hotkey half)', () => {
+      renderHook(() => useKeyboardShortcuts({ onSort: mockOnSort, enabledSortOptions: withoutSort('velocity') }));
+
+      simulateKeyPress('v');
+      expect(mockOnSort).not.toHaveBeenCalled();
+
+      // The other derived key still works
+      simulateKeyPress('h');
+      expect(mockOnSort).toHaveBeenCalledWith('heat');
+    });
+
+    it('does not flag a conflict for a disabled key', () => {
+      const { result } = renderHook(() =>
+        useKeyboardShortcuts({ onSort: mockOnSort, enabledSortOptions: withoutSort('velocity') }),
+      );
+
+      act(() => {
+        const event = new KeyboardEvent('keydown', { key: 'v', bubbles: true });
+        Object.defineProperty(event, 'defaultPrevented', { value: true });
+        document.dispatchEvent(event);
+      });
+
+      expect(result.current.size).toBe(0);
+      // Enabled shortcuts keep working
+      simulateKeyPress('p');
+      expect(mockOnSort).toHaveBeenCalledWith('points');
+    });
+
+    it('drops a conflicting key from the note once its sort is disabled, re-enabling the rest (R11)', () => {
+      const { result, rerender } = renderHook(
+        ({ opts }) => useKeyboardShortcuts({ onSort: mockOnSort, enabledSortOptions: opts }),
+        { initialProps: { opts: SORT_OPTIONS } },
+      );
+
+      // Another extension intercepts V → recorded, and all-or-nothing disables every shortcut
+      act(() => {
+        const event = new KeyboardEvent('keydown', { key: 'v', bubbles: true });
+        Object.defineProperty(event, 'defaultPrevented', { value: true });
+        document.dispatchEvent(event);
+      });
+      expect(result.current.has('v')).toBe(true);
+      simulateKeyPress('p');
+      expect(mockOnSort).not.toHaveBeenCalled();
+
+      // User disables Velocity: V is no longer our shortcut, so it leaves the conflict set
+      // and the remaining hotkeys come back.
+      rerender({ opts: withoutSort('velocity') });
+      expect(result.current.has('v')).toBe(false);
       simulateKeyPress('p');
       expect(mockOnSort).toHaveBeenCalledWith('points');
     });

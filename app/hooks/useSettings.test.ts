@@ -9,7 +9,7 @@ const COOLDOWN = SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN];
 const COOLDOWN_MS = COOLDOWN * 1000;
 
 // --- Storage mock ---
-const { store, mockSet, mockUnwatch, watcherCallbacks, reset, StorageClass } = createStorageMock();
+const { store, mockSet, mockGet, mockUnwatch, watcherCallbacks, reset, StorageClass } = createStorageMock();
 vi.mock('@plasmohq/storage', () => ({ Storage: StorageClass }));
 
 // --- Stubs ---
@@ -341,6 +341,185 @@ describe('useSettings', () => {
 
       // Should not throw, should handle gracefully
       expect(getRowById('post-1')).toBeDefined();
+    });
+  });
+
+  describe('derived sort toggles & validation', () => {
+    it('defaults both derived sorts to enabled', async () => {
+      setupTableBody([]);
+      const { result } = renderHook(() => useSettings());
+      await act(() => Promise.resolve());
+
+      const enabled = result.current.enabledSortOptions.map((o) => o.sortBy);
+      expect(enabled).toContain('velocity');
+      expect(enabled).toContain('heat');
+      expect(result.current.enabledSortOptions).toHaveLength(6);
+    });
+
+    it('reverts active velocity to default and shrinks the set when disabled (AE3)', async () => {
+      setupTableBody([]);
+      store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'velocity';
+      const { result } = renderHook(() => useSettings());
+      await act(() => Promise.resolve());
+      expect(result.current.activeSort).toBe('velocity');
+
+      act(() => {
+        watcherCallbacks[SETTINGS_KEYS.VELOCITY_ENABLED]?.({ newValue: false });
+      });
+
+      expect(result.current.activeSort).toBe('default');
+      expect(result.current.enabledSortOptions.map((o) => o.sortBy)).not.toContain('velocity');
+    });
+
+    it('resolves a synced derived sort value to default when that sort is disabled', async () => {
+      setupTableBody([]);
+      store[SETTINGS_KEYS.HEAT_ENABLED] = false;
+      const { result } = renderHook(() => useSettings());
+      await act(() => Promise.resolve());
+
+      // Another device syncs its active sort as 'heat', but heat is disabled here.
+      act(() => {
+        watcherCallbacks[SETTINGS_KEYS.LAST_ACTIVE_SORT]?.({ newValue: 'heat' });
+      });
+
+      expect(result.current.activeSort).toBe('default');
+    });
+
+    it('resolves stored velocity to default at page load when velocity is disabled', async () => {
+      setupTableBody([]);
+      store[SETTINGS_KEYS.VELOCITY_ENABLED] = false;
+      store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'velocity';
+      const { result } = renderHook(() => useSettings());
+      await act(() => Promise.resolve());
+
+      expect(result.current.activeSort).toBe('default');
+    });
+
+    it('resolves an unknown stored variant to default at page load', async () => {
+      setupTableBody([]);
+      store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'bogus';
+      const { result } = renderHook(() => useSettings());
+      await act(() => Promise.resolve());
+
+      expect(result.current.activeSort).toBe('default');
+    });
+
+    it('keeps stored velocity at page load when velocity is enabled', async () => {
+      setupTableBody([]);
+      store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'velocity';
+      const { result } = renderHook(() => useSettings());
+      await act(() => Promise.resolve());
+
+      expect(result.current.activeSort).toBe('velocity');
+    });
+
+    it('leaves the active sort untouched when disabling a non-active derived sort', async () => {
+      setupTableBody([]);
+      store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'points';
+      const { result } = renderHook(() => useSettings());
+      await act(() => Promise.resolve());
+
+      act(() => {
+        watcherCallbacks[SETTINGS_KEYS.VELOCITY_ENABLED]?.({ newValue: false });
+      });
+
+      expect(result.current.activeSort).toBe('points');
+    });
+
+    it('never writes the resolved value back to storage (no ping-pong)', async () => {
+      setupTableBody([]);
+      store[SETTINGS_KEYS.VELOCITY_ENABLED] = false;
+      store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'velocity';
+      const { result } = renderHook(() => useSettings());
+      await act(() => Promise.resolve());
+      expect(result.current.activeSort).toBe('default');
+
+      act(() => {
+        watcherCallbacks[SETTINGS_KEYS.HEAT_ENABLED]?.({ newValue: false });
+      });
+
+      expect(mockSet).not.toHaveBeenCalledWith(SETTINGS_KEYS.LAST_ACTIVE_SORT, expect.anything());
+    });
+
+    it('does not restore a stored derived sort on re-enable mid-session, but a reload does', async () => {
+      setupTableBody([]);
+      store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'velocity';
+      const { result, unmount } = renderHook(() => useSettings());
+      await act(() => Promise.resolve());
+
+      act(() => {
+        watcherCallbacks[SETTINGS_KEYS.VELOCITY_ENABLED]?.({ newValue: false });
+      });
+      expect(result.current.activeSort).toBe('default');
+
+      // Re-enable mid-session: stays default (stored value not restored)
+      act(() => {
+        watcherCallbacks[SETTINGS_KEYS.VELOCITY_ENABLED]?.({ newValue: true });
+      });
+      expect(result.current.activeSort).toBe('default');
+
+      // Stored value was never overwritten, so a fresh mount (reload) restores velocity
+      unmount();
+      const { result: reloaded } = renderHook(() => useSettings());
+      await act(() => Promise.resolve());
+      expect(reloaded.current.activeSort).toBe('velocity');
+    });
+
+    it('flips the settled flag only after the init read resolves', async () => {
+      setupTableBody([]);
+      const { result } = renderHook(() => useSettings());
+      expect(result.current.settled).toBe(false);
+
+      await act(() => Promise.resolve());
+      expect(result.current.settled).toBe(true);
+    });
+
+    it('still settles (with defaults) if a storage read rejects, so the panel never vanishes', async () => {
+      setupTableBody([]);
+      mockGet.mockRejectedValueOnce(new Error('extension context invalidated'));
+      const { result } = renderHook(() => useSettings());
+
+      await act(() => Promise.resolve());
+
+      expect(result.current.settled).toBe(true);
+    });
+
+    it('ignores toggle changes that arrive before init completes, then settles from the init read', async () => {
+      setupTableBody([]);
+      store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'velocity';
+      const { result } = renderHook(() => useSettings());
+
+      // Watchers are live before init resolves; initializedRef is still false → guarded out.
+      act(() => {
+        watcherCallbacks[SETTINGS_KEYS.VELOCITY_ENABLED]?.({ newValue: false });
+        watcherCallbacks[SETTINGS_KEYS.HEAT_ENABLED]?.({ newValue: false });
+      });
+
+      await act(() => Promise.resolve());
+
+      // init's own read wins over the ignored pre-init changes.
+      expect(result.current.settled).toBe(true);
+      expect(result.current.activeSort).toBe('velocity');
+      expect(result.current.enabledSortOptions.map((o) => o.sortBy)).toContain('velocity');
+    });
+
+    it('falls back to the default when a toggle watcher receives an undefined value', async () => {
+      setupTableBody([]);
+      store[SETTINGS_KEYS.VELOCITY_ENABLED] = false;
+      store[SETTINGS_KEYS.HEAT_ENABLED] = false;
+      const { result } = renderHook(() => useSettings());
+      await act(() => Promise.resolve());
+      expect(result.current.enabledSortOptions).toHaveLength(4);
+
+      // A cleared key (undefined newValue) resets to the default (enabled).
+      act(() => {
+        watcherCallbacks[SETTINGS_KEYS.VELOCITY_ENABLED]?.({ newValue: undefined });
+        watcherCallbacks[SETTINGS_KEYS.HEAT_ENABLED]?.({ newValue: undefined });
+      });
+
+      const enabled = result.current.enabledSortOptions.map((o) => o.sortBy);
+      expect(enabled).toContain('velocity');
+      expect(enabled).toContain('heat');
     });
   });
 

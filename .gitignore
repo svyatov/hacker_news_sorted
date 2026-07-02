@@ -33,4 +33,6 @@ dist/
 *.tsbuildinfo
 
 .plans/
+.compound-engineering/
 docs/
+CONCEPTS.md
