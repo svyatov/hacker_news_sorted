@@ -213,6 +213,27 @@ describe('useKeyboardShortcuts', () => {
       expect(mockOnSort).toHaveBeenCalledWith('points');
     });
 
+    it('bails on a later intercepted press of an already-checked key without recording a conflict', () => {
+      const { result } = renderHook(() => useKeyboardShortcuts({ onSort: mockOnSort }));
+
+      // First press, not intercepted: sorts and records the key as checked (no conflict yet).
+      simulateKeyPress('p');
+      expect(mockOnSort).toHaveBeenCalledWith('points');
+      expect(result.current.size).toBe(0);
+      mockOnSort.mockClear();
+
+      // Same key intercepted on a LATER press: the check-once block is skipped, but the
+      // defaultPrevented bail still stops the sort — and the key is not added to the conflict set.
+      act(() => {
+        const event = new KeyboardEvent('keydown', { key: 'p', bubbles: true });
+        Object.defineProperty(event, 'defaultPrevented', { value: true });
+        document.dispatchEvent(event);
+      });
+
+      expect(mockOnSort).not.toHaveBeenCalled();
+      expect(result.current.size).toBe(0);
+    });
+
     it('lands an intercepted key in the returned conflict set and stops all shortcuts (AE4)', () => {
       const { result } = renderHook(() => useKeyboardShortcuts({ onSort: mockOnSort }));
 

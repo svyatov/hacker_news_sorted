@@ -52,6 +52,10 @@ export const useSettings = (): UseSettingsReturn => {
   const velocityEnabledRef = useRef(SETTINGS_DEFAULTS[SETTINGS_KEYS.VELOCITY_ENABLED]);
   const heatEnabledRef = useRef(SETTINGS_DEFAULTS[SETTINGS_KEYS.HEAT_ENABLED]);
   const initializedRef = useRef(false);
+  // Sort/toggle watchers only need their own values read + the panel painted (setSettled) to go
+  // live — earlier than initializedRef, which stays gated until init's own postIds write lands so
+  // the postIds watcher doesn't react to it (KTD-6, no ping-pong).
+  const sortsReadyRef = useRef(false);
   const timestampsRef = useRef<PostTimestamps>({});
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const cooldownRef = useRef<number>(SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN]);
@@ -118,6 +122,7 @@ export const useSettings = (): UseSettingsReturn => {
         resolveActiveSort(sort ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.LAST_ACTIVE_SORT], velocityValue, heatValue),
       );
       setSettled(true);
+      sortsReadyRef.current = true;
 
       const cooldown = await storage.get<number>(SETTINGS_KEYS.COOLDOWN);
       cooldownRef.current = cooldown ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN];
@@ -176,21 +181,21 @@ export const useSettings = (): UseSettingsReturn => {
         }
       },
       [SETTINGS_KEYS.LAST_ACTIVE_SORT]: (change) => {
-        if (!initializedRef.current) return;
+        if (!sortsReadyRef.current) return;
         const incoming =
           (change.newValue as SortVariant | undefined) ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.LAST_ACTIVE_SORT];
         // Resolve locally (revert-on-disable); never write the resolved value back (no ping-pong).
         setActiveSortState(resolveActiveSort(incoming, velocityEnabledRef.current, heatEnabledRef.current));
       },
       [SETTINGS_KEYS.VELOCITY_ENABLED]: (change) => {
-        if (!initializedRef.current) return; // defer to init's own read (matches LAST_ACTIVE_SORT)
+        if (!sortsReadyRef.current) return; // live once sort/toggle reads + first paint are done
         const enabled = (change.newValue as boolean | undefined) ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.VELOCITY_ENABLED];
         velocityEnabledRef.current = enabled;
         setVelocityEnabledState(enabled);
         setActiveSortState((prev) => resolveActiveSort(prev, enabled, heatEnabledRef.current));
       },
       [SETTINGS_KEYS.HEAT_ENABLED]: (change) => {
-        if (!initializedRef.current) return; // defer to init's own read (matches LAST_ACTIVE_SORT)
+        if (!sortsReadyRef.current) return; // live once sort/toggle reads + first paint are done
         const enabled = (change.newValue as boolean | undefined) ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.HEAT_ENABLED];
         heatEnabledRef.current = enabled;
         setHeatEnabledState(enabled);

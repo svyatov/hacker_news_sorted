@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CONTROL_PANEL_ROOT_ID, CSS_CLASSES, SORT_COUNT_ATTR, SORT_OPTIONS } from '~app/constants';
 import type { SortVariant } from '~app/types';
-import { correctAgeTexts, restoreAgeTexts } from '~app/utils/presenters';
+import { correctAgeTexts, restoreAgeTexts, updateTable } from '~app/utils/presenters';
 
 import ControlPanel from './ControlPanel';
 
@@ -138,6 +138,11 @@ describe('ControlPanel', () => {
     const { container } = render(<ControlPanel />);
     expect(container).toBeEmptyDOMElement();
     expect(screen.queryByText('sort by:')).not.toBeInTheDocument();
+    // The table-update effect must also bail on the settled gate, not just the render, so rows
+    // aren't reordered against unresolved settings (KTD-8).
+    expect(updateTable).not.toHaveBeenCalled();
+    expect(correctAgeTexts).not.toHaveBeenCalled();
+    expect(restoreAgeTexts).not.toHaveBeenCalled();
   });
 
   it('publishes the enabled-option count on the panel root and updates it on toggle change', () => {

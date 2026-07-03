@@ -489,7 +489,7 @@ describe('useSettings', () => {
       store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'velocity';
       const { result } = renderHook(() => useSettings());
 
-      // Watchers are live before init resolves; initializedRef is still false → guarded out.
+      // Watchers are live before init resolves; sortsReadyRef is still false → guarded out.
       act(() => {
         watcherCallbacks[SETTINGS_KEYS.VELOCITY_ENABLED]?.({ newValue: false });
         watcherCallbacks[SETTINGS_KEYS.HEAT_ENABLED]?.({ newValue: false });

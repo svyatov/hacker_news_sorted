@@ -48,7 +48,12 @@ const ControlPanel = (): ReactElement | null => {
     [activeSort, setActiveSort, incrementSortCount],
   );
 
-  const conflictKeys = useKeyboardShortcuts({ onSort: handleSort, enabledSortOptions });
+  // Keep the keydown listener inert until the panel is settled/visible: before then the option
+  // list is still the default-on set, so an early V/H press would sort an invisible panel.
+  const conflictKeys = useKeyboardShortcuts({
+    onSort: handleSort,
+    enabledSortOptions: settled ? enabledSortOptions : [],
+  });
 
   // Wait for the settled settings read before painting so the panel doesn't flash a
   // six-option layout that reflows to four/five for users who disabled a sort (KTD-8).
@@ -69,12 +74,6 @@ const ControlPanel = (): ReactElement | null => {
         ))}
 
         <span className={CSS_CLASSES.DIVIDER}>|</span>
-
-        {conflictKeys.size > 0 && (
-          <span className={CSS_CLASSES.CONFLICT_NOTE} role="status">
-            {`hotkeys off: ${[...conflictKeys].map((key) => key.toUpperCase()).join(', ')} taken by another extension`}
-          </span>
-        )}
 
         {showPrompt && (
           <span className={CSS_CLASSES.REVIEW_TOAST}>
@@ -103,6 +102,14 @@ const ControlPanel = (): ReactElement | null => {
         </select>
         <span className={CSS_CLASSES.DIVIDER}>|</span>
       </span>
+
+      {/* Top-level (outside both tiers) so a responsive tier's display:none can't hide it — the
+          note explains why hotkeys stopped working and must survive on narrow screens too. */}
+      {conflictKeys.size > 0 && (
+        <span className={CSS_CLASSES.CONFLICT_NOTE} role="status">
+          {`hotkeys off: ${[...conflictKeys].map((key) => key.toUpperCase()).join(', ')} taken by another extension`}
+        </span>
+      )}
     </>
   );
 };
