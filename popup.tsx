@@ -109,7 +109,11 @@ const Popup = () => {
         <div className="hns-setting">
           <div className="hns-setting-label">
             <span>Velocity sort</span>
-            <span className="hns-hint">Adds a sort for the fastest-rising posts (points per hour)</span>
+            <span className="hns-hint">
+              Adds a sort for the fastest-rising posts
+              <br />
+              (points per hour)
+            </span>
           </div>
           <label className="hns-toggle">
             <input
@@ -126,7 +130,11 @@ const Popup = () => {
         <div className="hns-setting">
           <div className="hns-setting-label">
             <span>Heat sort</span>
-            <span className="hns-hint">Adds a sort for the most-discussed posts (comments per point)</span>
+            <span className="hns-hint">
+              Adds a sort for the most-discussed posts
+              <br />
+              (comments per point)
+            </span>
           </div>
           <label className="hns-toggle">
             <input
