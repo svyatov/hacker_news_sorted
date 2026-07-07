@@ -8,4 +8,7 @@ export type VariantConfig = {
   filename: string;
   showNewPosts?: boolean;
   hideArrow?: boolean;
+  // Item-page discriminator: presence routes the variant through the comment-highlighting branch.
+  commentThreadId?: string;
+  markUser?: string;
 };

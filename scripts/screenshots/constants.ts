@@ -33,6 +33,12 @@ export const ARROW_STYLES = {
   BASE_WIDTH: 24,
 } as const;
 
+// Curated item thread for the comment-highlighting shot (KTD1): story author `jaksa` has
+// commented (OP badge renders) and top-comment `Z4cki` is a distinct non-OP user to mark.
+// Item ids never expire; swap if it ever 404s.
+export const COMMENT_THREAD_ID = '48814822';
+export const COMMENT_MARK_USER = 'Z4cki';
+
 export const VARIANTS: VariantConfig[] = [
   { sort: 'points', title: 'Sort by Points', subtitle: 'Highest voted posts first', filename: 'screen_by_points.png' },
   { sort: 'time', title: 'Sort by Time', subtitle: 'Newest posts first', filename: 'screen_by_time.png' },
@@ -41,6 +47,18 @@ export const VARIANTS: VariantConfig[] = [
     title: 'Sort by Comments',
     subtitle: 'Most discussed first',
     filename: 'screen_by_comments.png',
+  },
+  {
+    sort: 'velocity',
+    title: 'Sort by Velocity',
+    subtitle: 'The fastest-rising posts (points per hour)',
+    filename: 'screen_by_velocity.png',
+  },
+  {
+    sort: 'heat',
+    title: 'Sort by Heat',
+    subtitle: 'Where the debate is (comments per point)',
+    filename: 'screen_by_heat.png',
   },
   {
     sort: 'default',
@@ -56,5 +74,16 @@ export const VARIANTS: VariantConfig[] = [
     filename: 'screen_new_posts.png',
     showNewPosts: true,
     hideArrow: true,
+  },
+  // Item-page variant — MUST stay last: once captureVariants navigates to the thread, the
+  // homepage sort panel is gone, so any homepage variant scheduled after this one would hang.
+  {
+    sort: 'default',
+    title: 'Comment Author Highlighting',
+    subtitle: 'Orange OP badge on the author; tint any user you mark',
+    filename: 'screen_comment_highlight.png',
+    hideArrow: true,
+    commentThreadId: COMMENT_THREAD_ID,
+    markUser: COMMENT_MARK_USER,
   },
 ];

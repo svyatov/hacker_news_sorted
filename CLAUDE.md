@@ -177,15 +177,18 @@ Chrome Web Store screenshots are auto-generated using Playwright:
 - `scripts/screenshots/browser.ts` - Browser launch, extension injection, variant capture loop
 - `scripts/screenshots/constants.ts` - Variant configs (sort type, title, subtitle, filename), overlay/arrow styles
 - `scripts/screenshots/overlays.ts` - Injects descriptive overlay cards and pointer arrows into the page
-- `scripts/screenshots/paths.ts` - Resolves build output and image directory paths
-- `scripts/screenshots/types.ts` - `VariantConfig` type
+- `scripts/screenshots/paths.ts` - Resolves build output and image directory paths (the `content.*` sort bundle **and** the `comments.*` comment bundle)
+- `scripts/screenshots/comments.ts` - Shared item-page helper used by both generators: `injectCommentsBundle` (inject the built `comments.*` JS/CSS onto an `item?id=` page, wait for a `.hns-mark-dot` to confirm it ran) and `markUser` (click a user's mark dot via its `data-hns-user` attribute)
+- `scripts/screenshots/types.ts` - `VariantConfig` type (a `commentThreadId`/`markUser` pair routes a variant through the item-page branch instead of the homepage sort path)
+
+Most variants sort HN's homepage, but the last one (`screen_comment_highlight.png`) navigates to a curated `item?id=` thread (`COMMENT_THREAD_ID` in `constants.ts`), injects the comment bundle, and marks a user to show the OP badge + marked-user tint. It stays **last** because once the loop leaves the homepage the sort panel is gone, so any homepage variant after it would hang.
 
 Workflow: `bun run build` then `bun run screenshots`. Output goes to `images/`.
 
 ### Demo Video/GIF
 
-- `scripts/generate-demo.ts` - Records a Playwright video of the extension in action, converts to `.mp4` (YouTube/CWS) and `.gif` (README) via ffmpeg
-- `scripts/screenshots/chromePolyfill.ts` - Minimal `chrome.storage` polyfill for running content scripts in Playwright (used by both screenshot and demo scripts). Required because content scripts call `chrome.storage.sync` which doesn't exist outside an extension context.
+- `scripts/generate-demo.ts` - Records a Playwright video of the extension in action, converts to `.mp4` (YouTube/CWS) and `.gif` (README) via ffmpeg. After the homepage sort sequence it navigates mid-recording to the curated `COMMENT_THREAD_ID` thread, injects the comment bundle (via the shared `scripts/screenshots/comments.ts` helper), and clicks a mark dot to demonstrate OP-badge + marked-user highlighting; the homepage-computed `#hnmain` crop is reused for the item page (asserted to share the x-bound — KTD3)
+- `scripts/screenshots/chromePolyfill.ts` - Minimal `chrome.storage` polyfill for running content scripts in Playwright (used by both screenshot and demo scripts, and by the comment bundle whose toggles default on). Required because content scripts call `chrome.storage.sync` which doesn't exist outside an extension context.
 
 Workflow: `bun run build` then `bun run demo`. Requires ffmpeg installed. Output goes to `images/`.
 
