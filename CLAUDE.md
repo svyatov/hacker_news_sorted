@@ -6,6 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Hacker News Sorted is a Chrome extension that adds sorting capabilities to Hacker News (news.ycombinator.com). Users can sort posts by points, time, comments, velocity, heat, or restore the default order. Built with Plasmo framework and React.
 
+## Knowledge Base
+
+- `docs/solutions/` — documented solutions to past problems (bugs, best practices, workflow patterns), organized by category with YAML frontmatter (`module`, `tags`, `problem_type`). Relevant when implementing or debugging in a documented area.
+- `CONCEPTS.md` — shared domain vocabulary (control panel, menu tiers, derived sorts like Velocity/Heat). Relevant when orienting to the codebase or discussing domain concepts.
+
 ## Commands
 
 ```bash
