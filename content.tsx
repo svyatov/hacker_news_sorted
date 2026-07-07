@@ -7,6 +7,9 @@ import { getControlPanelParentElement, getTableBody } from '~app/utils/selectors
 
 export const config: PlasmoCSConfig = {
   matches: ['*://news.ycombinator.com/*'],
+  // Item/comment pages have no list table; the panel would render nothing and falsely flag a broken
+  // layout (KTD-5). The comment-highlight script (contents/comments.ts) covers those pages instead.
+  exclude_matches: ['*://news.ycombinator.com/item*'],
   css: ['content.css'],
 };
 

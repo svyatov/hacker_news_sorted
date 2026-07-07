@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Comment author highlighting on thread (`item?id=`) pages: the story author's comments get a subtle orange tint and an "OP" badge, and a marker next to each other commenter's name lets you mark one user to highlight their comments for that thread (the mark persists across reloads and clears when the browser session ends). Two independent popup toggles, both on by default
 - Two new sort options: **Velocity** (fastest-rising posts — points per hour, damped so young posts earn their rank) and **Heat** (most-discussed — comments per point), with hotkeys V and H
 - Per-sort toggles in the popup to disable Velocity and/or Heat individually (both on by default, synced across devices)
 - Three-tier responsive sort menu: full names on wide screens, single-letter labels on medium screens, and a compact dropdown on narrow screens; every breakpoint adapts to how many sorts are enabled and is tuned so the menu always collapses to a smaller tier before it would push Hacker News's own header links onto a second line

@@ -100,4 +100,32 @@ describe('Popup', () => {
     fireEvent.click(screen.getByLabelText('Velocity sort'));
     expect(setVelocity).toHaveBeenCalledWith(false);
   });
+
+  it('should render OP and marked-user toggles checked by default', () => {
+    storageValues = {};
+    render(<Popup />);
+
+    expect((screen.getByLabelText('Highlight OP comments') as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByLabelText('Marked-user highlighting') as HTMLInputElement).checked).toBe(true);
+  });
+
+  it('should write false when the OP highlight toggle is clicked', () => {
+    storageValues = { [SETTINGS_KEYS.OP_HIGHLIGHT]: true };
+    render(<Popup />);
+
+    const setOp = setters[SETTINGS_KEYS.OP_HIGHLIGHT];
+    setOp.mockClear();
+    fireEvent.click(screen.getByLabelText('Highlight OP comments'));
+    expect(setOp).toHaveBeenCalledWith(false);
+  });
+
+  it('should write false when the marked-user highlight toggle is clicked', () => {
+    storageValues = { [SETTINGS_KEYS.MARK_USER_HIGHLIGHT]: true };
+    render(<Popup />);
+
+    const setMark = setters[SETTINGS_KEYS.MARK_USER_HIGHLIGHT];
+    setMark.mockClear();
+    fireEvent.click(screen.getByLabelText('Marked-user highlighting'));
+    expect(setMark).toHaveBeenCalledWith(false);
+  });
 });
