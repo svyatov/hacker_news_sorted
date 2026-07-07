@@ -7,7 +7,7 @@
 [![codecov](https://codecov.io/gh/svyatov/hacker_news_sorted/graph/badge.svg)](https://codecov.io/gh/svyatov/hacker_news_sorted)
 [![License](https://img.shields.io/github/license/svyatov/hacker_news_sorted)](https://github.com/svyatov/hacker_news_sorted/blob/main/LICENSE)
 
-Sort [Hacker News](https://news.ycombinator.com) your way — by points, time, or comments — instantly.
+Sort [Hacker News](https://news.ycombinator.com) your way — by points, time, comments, velocity, or heat — instantly.
 
 <img src="images/demo.gif" width="640" alt="Demo">
 
@@ -22,14 +22,17 @@ Sort [Hacker News](https://news.ycombinator.com) your way — by points, time, o
 - **Sort by Points** — Find the most upvoted stories
 - **Sort by Time** — See the newest posts first
 - **Sort by Comments** — Discover the most discussed topics
+- **Sort by Velocity** — Surface the fastest-rising posts (points per hour, damped so brand-new posts don't dominate) — toggle on/off in the popup
+- **Sort by Heat** — Find where the debate is (comments per point) — toggle on/off in the popup
 - **Restore Default** — Return to HN's original ranking
 - **New Post Indicators** — Orange dot marks posts that appeared since your last visit, fading out over a configurable period
 - **True Time Ago** — Corrects misleading ages on resurfaced "second chance" posts
-- **Keyboard Shortcuts** — Press `P`, `T`, `C`, or `D` to sort instantly
+- **Keyboard Shortcuts** — Press `P`, `T`, `C`, `V`, `H`, or `D` to sort instantly
+- **Responsive Menu** — Full sort names on wide screens, single-letter labels on medium screens, and a compact dropdown on narrow screens — always collapsing before it would crowd Hacker News's own header links
 - **Persistent Preference** — Your last sort choice is remembered across sessions
 - **Visual Highlighting** — Active sort column is highlighted for clarity
 - **Layout Change Detection** — Warning badge and popup banner if HN changes break sorting
-- **Vimium Compatible** — Shortcuts auto-disable if Vimium or similar extensions are detected
+- **Vimium Compatible** — Shortcuts auto-disable if Vimium or similar extensions are detected, with a note naming the conflicting keys
 - **Dark Mode** — Settings popup follows your system light/dark color scheme
 
 **Compatibility:** Works on any HN page with a post list (front page, Newest, Ask, Show, etc.)

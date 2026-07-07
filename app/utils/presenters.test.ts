@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CSS_CLASSES, HN_CLASSES, SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_MINUTE } from '~app/constants';
-import type { ParsedRow } from '~app/types';
+import type { ParsedRow, SortVariant } from '~app/types';
 import { nowInSeconds } from '~app/utils/converters';
 
 import { correctAgeTexts, formatAge, highlightActiveSort, restoreAgeTexts } from './presenters';
@@ -43,6 +43,17 @@ describe('presenters', () => {
 
     it('should not add highlight for default sort', () => {
       highlightActiveSort(infoRow, 'default');
+      expect(infoRow.querySelector(`.${CSS_CLASSES.HIGHLIGHT}`)).toBeNull();
+    });
+
+    it('should not highlight (or throw) for derived sorts velocity/heat', () => {
+      expect(() => highlightActiveSort(infoRow, 'velocity')).not.toThrow();
+      expect(() => highlightActiveSort(infoRow, 'heat')).not.toThrow();
+      expect(infoRow.querySelector(`.${CSS_CLASSES.HIGHLIGHT}`)).toBeNull();
+    });
+
+    it('should not throw for an unknown variant arriving via sync', () => {
+      expect(() => highlightActiveSort(infoRow, 'bogus' as SortVariant)).not.toThrow();
       expect(infoRow.querySelector(`.${CSS_CLASSES.HIGHLIGHT}`)).toBeNull();
     });
 
