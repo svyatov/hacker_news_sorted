@@ -27,6 +27,7 @@ Sort [Hacker News](https://news.ycombinator.com) your way — by points, time, c
 - **Restore Default** — Return to HN's original ranking
 - **New Post Indicators** — Orange dot marks posts that appeared since your last visit, fading out over a configurable period
 - **True Time Ago** — Corrects misleading ages on resurfaced "second chance" posts
+- **Comment Author Highlighting** — On thread pages, the story author's comments get a subtle tint and an "OP" badge; click the marker next to any other commenter's name to highlight that user's comments for the thread (persists across reloads). Two independent toggles in the popup
 - **Keyboard Shortcuts** — Press `P`, `T`, `C`, `V`, `H`, or `D` to sort instantly
 - **Responsive Menu** — Full sort names on wide screens, single-letter labels on medium screens, and a compact dropdown on narrow screens — always collapsing before it would crowd Hacker News's own header links
 - **Persistent Preference** — Your last sort choice is remembered across sessions
@@ -35,7 +36,7 @@ Sort [Hacker News](https://news.ycombinator.com) your way — by points, time, c
 - **Vimium Compatible** — Shortcuts auto-disable if Vimium or similar extensions are detected, with a note naming the conflicting keys
 - **Dark Mode** — Settings popup follows your system light/dark color scheme
 
-**Compatibility:** Works on any HN page with a post list (front page, Newest, Ask, Show, etc.)
+**Compatibility:** Sorting works on any HN page with a post list (front page, Newest, Ask, Show, etc.); comment author highlighting works on thread (`item?id=`) pages.
 
 ## Privacy
 

@@ -5,6 +5,10 @@ export const CONTROL_PANEL_ROOT_ID = 'hns-control-panel';
 // Enabled-option count (4–6) published on the panel root so count-aware CSS breakpoints
 // can pick the right word↔letter switch point (CSS can't read React state).
 export const SORT_COUNT_ATTR = 'data-sort-count';
+// Comment-page mark control: the attribute holding a star button's target username, and the
+// sessionStorage key prefix for the per-thread single mark (KTD-6).
+export const DOT_USER_ATTR = 'data-hns-user';
+export const MARK_STORAGE_PREFIX = 'hns-marked-user:';
 
 // Settings keys and defaults (chrome.storage.sync)
 export const SETTINGS_KEYS = {
@@ -19,6 +23,8 @@ export const SETTINGS_KEYS = {
   TRUE_TIME_AGO: 'hns-true-time-ago',
   VELOCITY_ENABLED: 'hns-velocity-enabled',
   HEAT_ENABLED: 'hns-heat-enabled',
+  OP_HIGHLIGHT: 'hns-op-highlight',
+  MARK_USER_HIGHLIGHT: 'hns-mark-user-highlight',
 } as const;
 
 export const SETTINGS_DEFAULTS = {
@@ -32,6 +38,8 @@ export const SETTINGS_DEFAULTS = {
   [SETTINGS_KEYS.TRUE_TIME_AGO]: true as boolean,
   [SETTINGS_KEYS.VELOCITY_ENABLED]: true as boolean,
   [SETTINGS_KEYS.HEAT_ENABLED]: true as boolean,
+  [SETTINGS_KEYS.OP_HIGHLIGHT]: true as boolean,
+  [SETTINGS_KEYS.MARK_USER_HIGHLIGHT]: true as boolean,
 } as const;
 
 // Time conversions
@@ -71,6 +79,12 @@ export const CSS_CLASSES = {
   REVIEW_LINK: 'hns-review-link',
   REVIEW_SUB: 'hns-review-sub',
   REVIEW_CLOSE: 'hns-review-close',
+  // Comment-page highlighting (contents/comments.ts + comments.css)
+  OP_COMMENT: 'hns-op-comment',
+  OP_BADGE: 'hns-op-badge',
+  MARK_DOT: 'hns-mark-dot',
+  MARK_DOT_ON: 'hns-mark-dot-on',
+  MARKED_COMMENT: 'hns-marked-comment',
 } as const;
 
 export const CSS_SELECTORS = {
@@ -109,6 +123,13 @@ export const HN_SELECTORS = {
   TIME_REGULAR: 'td.subtext > span > span.age',
   TIME_PROMO: 'td.subtext > span.age',
   COMMENTS: 'td.subtext > span > a[href^="item?id="]',
+
+  // Comment/item pages
+  STORY_AUTHOR: '.fatitem .hnuser',
+  STORY_LINK: '.fatitem .titleline',
+  COMMENT_ROWS: 'tr.athing.comtr[id]',
+  COMMENT_AUTHOR: '.hnuser',
+  COMMENT_HEAD: '.comhead',
 } as const;
 
 // HN CSS classes (for building test fixtures)
@@ -119,4 +140,9 @@ export const HN_CLASSES = {
   AGE: 'age',
   ATHING: 'athing',
   SPACER: 'spacer',
+  COMTR: 'comtr',
+  COMHEAD: 'comhead',
+  HNUSER: 'hnuser',
+  FATITEM: 'fatitem',
+  TITLELINE: 'titleline',
 } as const;

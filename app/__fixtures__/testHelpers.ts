@@ -39,6 +39,59 @@ export const clearBody = (): void => {
   document.body.replaceChildren();
 };
 
+// ── Comment-thread DOM builder (mirrors HN's item-page markup) ──
+
+export interface CommentSpec {
+  id: string;
+  author: string;
+  collapsed?: boolean;
+  indent?: number;
+}
+
+export interface CommentThreadOptions {
+  storyAuthor?: string | null; // submitter (story) or permalinked comment author; null → no author node
+  isStory?: boolean; // true → .fatitem carries a story titleline; false → comment-permalink page (KTD-8)
+  comments?: CommentSpec[];
+}
+
+const userLink = (author: string | null): string =>
+  author ? `<a href="user?id=${author}" class="${HN_CLASSES.HNUSER}">${author}</a>` : '';
+
+const commentRow = ({ id, author, collapsed = false, indent = 0 }: CommentSpec): string => `
+  <tr class="${HN_CLASSES.ATHING} ${HN_CLASSES.COMTR}${collapsed ? ' coll' : ''}" id="${id}">
+    <td><table><tr>
+      <td class="ind" indent="${indent}"></td>
+      <td class="default">
+        <div><span class="${HN_CLASSES.COMHEAD}">${userLink(author)}
+          <span class="${HN_CLASSES.AGE}" title="2026-07-06T18:00:00 1783363200"><a href="item?id=${id}">1 hour ago</a></span>
+        </span></div>
+        <div class="comment"><div class="commtext c00">comment ${id}</div></div>
+      </td>
+    </tr></table></td>
+  </tr>`;
+
+export const setupCommentThread = (options: CommentThreadOptions = {}): void => {
+  const { storyAuthor = 'story_author', isStory = true, comments = [] } = options;
+
+  const fatitem = isStory
+    ? `<table class="${HN_CLASSES.FATITEM}">
+        <tr class="${HN_CLASSES.ATHING} submission" id="story">
+          <td class="title"><span class="${HN_CLASSES.TITLELINE}"><a href="https://example.com">A Story Title</a></span></td>
+        </tr>
+        <tr><td class="subtext"><span class="subline">${userLink(storyAuthor)}
+          <span class="${HN_CLASSES.AGE}" title="2026-07-06T16:00:00 1783356000">3 hours ago</span></span></td></tr>
+      </table>`
+    : `<table class="${HN_CLASSES.FATITEM}">
+        <tr class="${HN_CLASSES.ATHING}" id="permalink">
+          <td class="default"><div><span class="${HN_CLASSES.COMHEAD}">${userLink(storyAuthor)}
+            <span class="${HN_CLASSES.AGE}" title="2026-07-06T16:00:00 1783356000">3 hours ago</span></span></div></td>
+        </tr>
+      </table>`;
+
+  const tree = `<table class="comment-tree">${comments.map(commentRow).join('')}</table>`;
+  document.body.innerHTML = `<center><table id="hnmain"><tr id="bigbox"><td>${fatitem}${tree}</td></tr></table></center>`;
+};
+
 export const getRowById = (id: string, root: ParentNode = document): HTMLElement =>
   root.querySelector(`[id="${id}"]`) as HTMLElement;
 

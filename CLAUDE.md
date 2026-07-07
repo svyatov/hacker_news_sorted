@@ -27,10 +27,17 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 
 ### Content Script Entry Point
 
-- `content.tsx` - Main entry point, injects the ControlPanel into HN's header using Plasmo's content script UI lifecycle
+- `content.tsx` - Main entry point, injects the ControlPanel into HN's header using Plasmo's content script UI lifecycle. Carries `exclude_matches: ['*://news.ycombinator.com/item*']` so the sort panel never loads on comment pages (which have no list table and would falsely flag a broken layout — KTD-5)
 - `content.css` - Styles for the control panel, sort highlighting, and new-post indicators. Three-tier responsive menu: full names on wide screens, single-letter labels on medium, and a native `<select>` dropdown tier on narrow screens. **Both** tier switches are count-aware — one `@media` block per enabled-option count (4/5/6) keyed on the `#hns-control-panel[data-sort-count='N']` attribute — because each tier's width, and thus the point at which it would push HN's own header nav onto a second line, grows with the option count. Word↔letter (`min-width` 1280/1360/1440px); letter↔dropdown (`max-width` 1080/1120/1160px) hides `.hns-buttons-tier` and shows `.hns-dropdown-tier`. All breakpoints are calibrated against HN's header so the menu always collapses to a more compact tier _before_ it would wrap HN's nav (measured letter-row wrap floors ~1044/1084/1124px; the dropdown has no visible label so it stays as narrow as HN's own ~750px nav-wrap floor)
 - Detects layout breakage: writes `hns-layout-ok` to `chrome.storage.sync` based on whether expected DOM elements are found (with a 3-second timeout)
 - **Dev gotcha**: Plasmo hot-reload often doesn't pick up content script CSS or `useState` initial value changes — reload the HN page (or the extension itself) to see updates
+
+### Comment-Page Content Script
+
+- `contents/comments.ts` - Separate Plasmo content script matching `*://news.ycombinator.com/item*` (comment/thread pages), independent of the sort panel. Lives under `contents/` because Plasmo only bundles content scripts from a root `content.*` file or the `contents/` directory (KTD-1). A thin shell: reads the two toggle keys via `@plasmohq/storage`, calls `applyCommentEnhancements`, wires a dot-activate callback (routes the click through `nextMark`: same user clears, else replaces), and `storage.watch`es both toggle keys to re-run the orchestrator on popup changes without reload
+- `contents/comments.css` - Palette-consistent styles (referenced via `PlasmoCSConfig.css`, resolved relative to the script): OP tint (`#ff6600` at ~7% over `#f6f6ef`) + filled-orange "OP" badge; lighter marked-user tint; the mark control is a native `<button>` (Enter/Space activate for free) kept inline (padding gives the hit area without inflating the header line), an outline diamond (`◇`) that becomes a filled orange diamond (`◆`) under `.hns-mark-dot-on`, and a `:focus-visible` ring
+- All logic is in `app/utils/comments.ts` (pure DOM, unit-tested in JSDOM — KTD-2): `getStoryAuthor`, `getCommentRows`, `getCommentAuthor` (exact, case-sensitive matching — KTD-4), `applyUserHighlight`/`clearHighlights`, `injectMarkDots` (skips the story author — OP is badged, not markable) / `removeMarkDots`, `getMarkedUser`/`setMarkedUser`/`nextMark` (single mark in `sessionStorage` keyed by thread id — KTD-6), and the idempotent `applyCommentEnhancements({ opEnabled, markEnabled, onMark })` orchestrator (clears then re-applies from settings + stored mark; computes the OP once via `isStoryPage()`/`getStoryAuthor()`, gates OP highlighting on it, and passes it to `injectMarkDots` as the skip user)
+- `app/utils/pages.ts` - `getItemId()` (reads `?id=` from the query string) and `isStoryPage()` (true when `.fatitem` carries a `.titleline`). `item?id=` also serves comment-permalink pages where the `.fatitem` is a linked comment, not the story; `isStoryPage()` gates OP highlighting off there so it never badges the wrong author, while marker dots keep working (KTD-8, AE6)
 
 ### Background Service Worker
 
@@ -40,7 +47,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 
 ### Popup Entry Point
 
-- `popup.tsx` - Settings popup UI with grouped layout: dependent settings (new-post toggle + highlight duration) share a `fieldset.hns-group`, independent settings get separate groups; each setting has a `hns-hint` description; shows a warning banner when layout detection fails. Includes per-sort toggles for Velocity and Heat (both default on)
+- `popup.tsx` - Settings popup UI with grouped layout: dependent settings (new-post toggle + highlight duration) share a `fieldset.hns-group`, independent settings get separate groups; each setting has a `hns-hint` description; shows a warning banner when layout detection fails. Includes per-sort toggles for Velocity and Heat, plus the two comment-highlighting toggles (OP highlighting, marked-user highlighting) in their own fieldset (all default on)
 - `popup.css` - Popup styles (toggle switches, setting groups, hints, warning banner); follows system light/dark via `color-scheme: light dark` + semantic CSS custom properties overridden in a `@media (prefers-color-scheme: dark)` block (brand `#ff6600` unchanged across schemes)
 - Uses `useSettingsStorage` helper — a typed wrapper around `useStorage` that auto-resolves defaults from `SETTINGS_DEFAULTS`
 
@@ -106,12 +113,13 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
   - `CSS_CLASSES` - Extension CSS class names (highlight, buttons, labels, `SHOW_NEW`, `NEW_POST`, `CONFLICT_NOTE`, `BUTTONS_TIER`, `DROPDOWN_TIER`, `DROPDOWN`)
   - `CSS_SELECTORS` - Derived CSS selectors from class names
   - `SORT_OPTIONS` - Sort option configuration array (sort variant, display text, keyboard shortcut); order: points, time, comments, velocity, heat, default
-  - `SETTINGS_KEYS` - Storage key names for chrome.storage.sync (`SHOW_NEW`, `LAST_ACTIVE_SORT`, `POST_IDS_PREFIX`, `COOLDOWN`, `TRUE_TIME_AGO`, `VELOCITY_ENABLED`, `HEAT_ENABLED`)
+  - `SETTINGS_KEYS` - Storage key names for chrome.storage.sync (`SHOW_NEW`, `LAST_ACTIVE_SORT`, `POST_IDS_PREFIX`, `COOLDOWN`, `TRUE_TIME_AGO`, `VELOCITY_ENABLED`, `HEAT_ENABLED`, `OP_HIGHLIGHT`, `MARK_USER_HIGHLIGHT`)
   - `SETTINGS_DEFAULTS` - Default values for settings
   - `COOLDOWN_BOUNDS` - Min/max bounds for cooldown input validation
   - `SECONDS_PER_MINUTE`, `SECONDS_PER_HOUR`, `SECONDS_PER_DAY` - Time unit constants (used in presenters and tests)
-  - `HN_SELECTORS` - DOM selectors for HN page structure
-  - `HN_CLASSES` - HN CSS class names for building test fixtures
+  - `HN_SELECTORS` - DOM selectors for HN page structure (incl. comment-page selectors: `STORY_AUTHOR`, `STORY_LINK`, `COMMENT_ROWS`, `COMMENT_AUTHOR`, `COMMENT_HEAD`)
+  - `HN_CLASSES` - HN CSS class names for building test fixtures (incl. `COMTR`, `COMHEAD`, `HNUSER`, `FATITEM`, `TITLELINE`)
+  - `CSS_CLASSES` also includes the comment-highlight classes: `OP_COMMENT`, `OP_BADGE`, `MARK_DOT`, `MARK_DOT_ON`, `MARKED_COMMENT`
 
 ### Types
 
@@ -144,10 +152,11 @@ Use `~` prefix for imports from project root (e.g., `~app/components/ControlPane
 
 ### Fixtures
 
-- `app/__fixtures__/hn-homepage.html` - Real HN HTML snapshot for DOM testing
+- `app/__fixtures__/hn-homepage.html` - Real HN homepage snapshot for DOM testing
+- `app/__fixtures__/hn-item.html` - Real HN thread (`item?id=`) snapshot for comment-selector drift testing
 - `app/__fixtures__/loadFixture.ts` - Helper functions to load fixtures
-- `app/__fixtures__/updateFixture.ts` - Script to refresh fixtures from live HN
-- `app/__fixtures__/testHelpers.ts` - Shared test helpers: `setupTableBody` (HN DOM builder), `clearBody`, `getRowById`, `FAKE_NOW` constant, `createStorageMock` factory (for `@plasmohq/storage` mocks)
+- `app/__fixtures__/updateFixture.ts` - Script to refresh both fixtures from live HN
+- `app/__fixtures__/testHelpers.ts` - Shared test helpers: `setupTableBody` (HN list DOM builder), `setupCommentThread` (HN item-page DOM builder), `clearBody`, `getRowById`, `FAKE_NOW` constant, `createStorageMock` factory (for `@plasmohq/storage` mocks)
 - Run `bun run fixture:update` to refresh when HN markup changes
 
 ### Test Files
@@ -155,7 +164,8 @@ Use `~` prefix for imports from project root (e.g., `~app/components/ControlPane
 Tests are co-located with source files using `.test.ts` / `.test.tsx` suffix:
 
 - `app/utils/*.test.ts` - Unit tests for utility functions
-- `app/utils/selectors.integration.test.ts` - Selectors run against the real HN fixture (breaks if HN markup changes)
+- `app/utils/selectors.integration.test.ts` - List-page selectors run against `hn-homepage.html` (breaks if HN markup changes)
+- `app/utils/comments.integration.test.ts` - Comment-page selectors run against `hn-item.html` (breaks if HN item markup changes); `bun run test:integration` runs both integration suites
 - `app/components/*.test.tsx` - Component tests
 - `app/hooks/*.test.ts` - Hook tests
 
