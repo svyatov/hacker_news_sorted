@@ -50,7 +50,10 @@ async function showNewPostIndicators(page: Page): Promise<void> {
 }
 
 export async function captureVariants(page: Page): Promise<void> {
-  for (const variant of VARIANTS) {
+  // Item-page variants must run after every homepage variant: navigating to a thread drops the sort
+  // panel that homepage variants click. A stable sort enforces it so VARIANTS declaration order can't.
+  const ordered = [...VARIANTS].sort((a, b) => Number(Boolean(a.commentThreadId)) - Number(Boolean(b.commentThreadId)));
+  for (const variant of ordered) {
     await removeOverlays(page);
     await removeNewPostIndicators(page);
 
@@ -80,7 +83,12 @@ export async function captureVariants(page: Page): Promise<void> {
 }
 
 async function captureCommentVariant(page: Page, variant: VariantConfig): Promise<void> {
-  await page.goto(`https://news.ycombinator.com/item?id=${variant.commentThreadId}`, { waitUntil: 'networkidle' });
+  const response = await page.goto(`https://news.ycombinator.com/item?id=${variant.commentThreadId}`, {
+    waitUntil: 'networkidle',
+  });
+  if (!response?.ok()) {
+    throw new Error(`Failed to load thread ${variant.commentThreadId}: HTTP ${response?.status() ?? 'no response'}`);
+  }
   await injectCommentsBundle(page);
   if (variant.markUser) await markUser(page, variant.markUser);
 

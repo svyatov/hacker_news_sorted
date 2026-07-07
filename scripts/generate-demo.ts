@@ -134,7 +134,12 @@ async function recordDemo(page: Page): Promise<void> {
 // Mid-recording jump to the curated thread: shows the auto OP badge, then a user becoming marked.
 // Reuses the homepage-computed crop (KTD3) after asserting the item page shares the #hnmain x-bound.
 async function recordCommentSegment(page: Page, cropX: number): Promise<void> {
-  await page.goto(`https://news.ycombinator.com/item?id=${COMMENT_THREAD_ID}`, { waitUntil: 'networkidle' });
+  const response = await page.goto(`https://news.ycombinator.com/item?id=${COMMENT_THREAD_ID}`, {
+    waitUntil: 'networkidle',
+  });
+  if (!response?.ok()) {
+    throw new Error(`Failed to load thread ${COMMENT_THREAD_ID}: HTTP ${response?.status() ?? 'no response'}`);
+  }
   await page.evaluate((zoom) => {
     document.body.style.margin = '0';
     document.documentElement.style.zoom = String(zoom);

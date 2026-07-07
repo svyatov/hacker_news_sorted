@@ -75,8 +75,8 @@ export const VARIANTS: VariantConfig[] = [
     showNewPosts: true,
     hideArrow: true,
   },
-  // Item-page variant — MUST stay last: once captureVariants navigates to the thread, the
-  // homepage sort panel is gone, so any homepage variant scheduled after this one would hang.
+  // Item-page variant (carries commentThreadId). captureVariants sorts these to run after every
+  // homepage variant, so declaration order here is free — the sort, not this position, is the guard.
   {
     sort: 'default',
     title: 'Comment Author Highlighting',
