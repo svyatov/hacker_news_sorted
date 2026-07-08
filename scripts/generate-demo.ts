@@ -6,6 +6,8 @@ import { chromium } from 'playwright';
 import { CONTROL_PANEL_ROOT_ID, CSS_CLASSES, HN_SELECTORS } from '~app/constants';
 
 import { injectChromeStoragePolyfill } from './screenshots/chromePolyfill';
+import { injectCommentsBundle, markUser } from './screenshots/comments';
+import { COMMENT_MARK_USER, COMMENT_THREAD_ID } from './screenshots/constants';
 import { CSS_PATH, JS_PATH, SCREENSHOTS_DIR } from './screenshots/paths';
 
 // Viewport calculated so crop = exactly 3840×2160 (4K 16:9):
@@ -106,6 +108,8 @@ const STEPS: DemoStep[] = [
   { sort: 'points', label: 'Sort by Points', pause: 2000 },
   { sort: 'time', label: 'Sort by Time', pause: 2000 },
   { sort: 'comments', label: 'Sort by Comments', pause: 2000 },
+  { sort: 'velocity', label: 'Sort by Velocity', pause: 2000 },
+  { sort: 'heat', label: 'Sort by Heat', pause: 2000 },
   { sort: 'default', label: 'Default Order', pause: 2000 },
 ];
 
@@ -122,6 +126,49 @@ async function recordDemo(page: Page): Promise<void> {
     await injectLabel(page, step.label);
     await page.waitForTimeout(step.pause);
   }
+
+  await removeLabel(page);
+  await page.waitForTimeout(500);
+}
+
+// Mid-recording jump to the curated thread: shows the auto OP badge, then a user becoming marked.
+// Reuses the homepage-computed crop (KTD3) after asserting the item page shares the #hnmain x-bound.
+async function recordCommentSegment(page: Page, cropX: number): Promise<void> {
+  const response = await page.goto(`https://news.ycombinator.com/item?id=${COMMENT_THREAD_ID}`, {
+    waitUntil: 'networkidle',
+  });
+  if (!response?.ok()) {
+    throw new Error(`Failed to load thread ${COMMENT_THREAD_ID}: HTTP ${response?.status() ?? 'no response'}`);
+  }
+  await page.evaluate((zoom) => {
+    document.body.style.margin = '0';
+    document.documentElement.style.zoom = String(zoom);
+  }, ZOOM);
+  await injectCommentsBundle(page);
+
+  const itemX = await page.evaluate(() => {
+    const el = document.querySelector('#hnmain');
+    return el ? Math.floor(el.getBoundingClientRect().x) : null;
+  });
+  if (itemX === null) throw new Error('#hnmain not found on item page');
+  if (Math.abs(itemX - cropX) > 40) {
+    throw new Error(`Item-page #hnmain x=${itemX} diverges from homepage crop x=${cropX}; crop cannot be reused`);
+  }
+
+  // Scroll the marked user's comment to the top so it and the OP comment below it fall in the crop band.
+  await page.evaluate((user) => {
+    const row = Array.from(document.querySelectorAll('tr.athing.comtr[id]')).find(
+      (r) => r.querySelector('.comhead .hnuser')?.textContent?.trim() === user,
+    );
+    row?.scrollIntoView({ block: 'start' });
+    window.scrollBy(0, -30);
+  }, COMMENT_MARK_USER);
+  await page.waitForTimeout(200);
+
+  await injectLabel(page, 'Comment Author Highlighting');
+  await page.waitForTimeout(2200); // hold on the auto OP badge + mark dots
+  await markUser(page, COMMENT_MARK_USER); // demonstrate marking a user
+  await page.waitForTimeout(2200); // hold on the marked-user tint
 
   await removeLabel(page);
   await page.waitForTimeout(500);
@@ -161,6 +208,7 @@ async function main() {
   const cropFilter = `crop=${crop.w}:${crop.h}:${crop.x}:${crop.y}`;
 
   await recordDemo(page);
+  await recordCommentSegment(page, crop.x);
 
   await page.close();
   const videoPath = await page.video()?.path();

@@ -5,9 +5,11 @@ import { chromium } from 'playwright';
 import { CONTROL_PANEL_ROOT_ID, CSS_CLASSES, HN_SELECTORS } from '~app/constants';
 
 import { injectChromeStoragePolyfill } from './chromePolyfill';
+import { injectCommentsBundle, markUser } from './comments';
 import { VARIANTS } from './constants';
 import { injectArrow, injectOverlayCard, removeOverlays } from './overlays';
 import { CSS_PATH, JS_PATH, SCREENSHOTS_DIR } from './paths';
+import type { VariantConfig } from './types';
 
 export async function setupBrowser(): Promise<{ browser: Browser; page: Page }> {
   const browser = await chromium.launch();
@@ -48,9 +50,17 @@ async function showNewPostIndicators(page: Page): Promise<void> {
 }
 
 export async function captureVariants(page: Page): Promise<void> {
-  for (const variant of VARIANTS) {
+  // Item-page variants must run after every homepage variant: navigating to a thread drops the sort
+  // panel that homepage variants click. A stable sort enforces it so VARIANTS declaration order can't.
+  const ordered = [...VARIANTS].sort((a, b) => Number(Boolean(a.commentThreadId)) - Number(Boolean(b.commentThreadId)));
+  for (const variant of ordered) {
     await removeOverlays(page);
     await removeNewPostIndicators(page);
+
+    if (variant.commentThreadId) {
+      await captureCommentVariant(page, variant);
+      continue;
+    }
 
     if (variant.showNewPosts) {
       await showNewPostIndicators(page);
@@ -70,6 +80,23 @@ export async function captureVariants(page: Page): Promise<void> {
     await page.screenshot({ path: screenshotPath });
     console.log(`Saved: ${variant.filename}`);
   }
+}
+
+async function captureCommentVariant(page: Page, variant: VariantConfig): Promise<void> {
+  const response = await page.goto(`https://news.ycombinator.com/item?id=${variant.commentThreadId}`, {
+    waitUntil: 'networkidle',
+  });
+  if (!response?.ok()) {
+    throw new Error(`Failed to load thread ${variant.commentThreadId}: HTTP ${response?.status() ?? 'no response'}`);
+  }
+  await injectCommentsBundle(page);
+  if (variant.markUser) await markUser(page, variant.markUser);
+
+  await injectOverlayCard(page, variant.title, variant.subtitle, variant.titleNote);
+
+  const screenshotPath = path.join(SCREENSHOTS_DIR, variant.filename);
+  await page.screenshot({ path: screenshotPath });
+  console.log(`Saved: ${variant.filename}`);
 }
 
 async function removeNewPostIndicators(page: Page): Promise<void> {
