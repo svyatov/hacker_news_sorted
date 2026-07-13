@@ -8,11 +8,19 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
 
-// A canonical story thread — its .fatitem carries a titleline and the tree has real comments.
-const TARGETS: Array<{ url: string; file: string }> = [
-  { url: 'https://news.ycombinator.com', file: 'hn-homepage.html' },
-  { url: 'https://news.ycombinator.com/item?id=48814952', file: 'hn-item.html' },
-];
+const HOMEPAGE_URL = 'https://news.ycombinator.com';
+
+/**
+ * Pick the item id of the most-commented story on the homepage.
+ * Self-healing: never pins to a single thread that HN can later 429 (a nuked/flagged
+ * thread serves 429 forever — the old hardcoded id did). Most comments => guaranteed a
+ * real, deep comment tree for the comment-selector tests, and never a job post ("discuss").
+ */
+export function pickTopCommentedItemId(homepageHtml: string): string {
+  const matches = [...homepageHtml.matchAll(/item\?id=(\d+)">(\d+)&nbsp;comments/g)];
+  if (matches.length === 0) throw new Error('No commented stories found on homepage');
+  return matches.reduce((best, m) => (Number(m[2]) > Number(best[2]) ? m : best))[1];
+}
 
 // HN 429s blank/bot user agents and concurrent bursts, so send a browser UA and back off on 429.
 const USER_AGENT =
@@ -47,14 +55,21 @@ async function fetchAndSave({ url, file }: { url: string; file: string }): Promi
 }
 
 async function main(): Promise<void> {
-  // Sequential + spaced so HN doesn't rate-limit the burst.
-  for (const target of TARGETS) {
-    await fetchAndSave(target);
-    if (target !== TARGETS[TARGETS.length - 1]) await sleep(2000);
-  }
+  console.log(`Fetching ${HOMEPAGE_URL}...`);
+  const homepageHtml = await (await fetchWithRetry(HOMEPAGE_URL)).text();
+  writeFileSync(join(__dirname, 'hn-homepage.html'), homepageHtml, 'utf-8');
+  console.log(`Saved hn-homepage.html (${(homepageHtml.length / 1024).toFixed(2)} KB)`);
+
+  // Derive the item target from the homepage we just fetched, so it can never rot.
+  const itemId = pickTopCommentedItemId(homepageHtml);
+  await sleep(2000); // spaced so HN doesn't rate-limit the burst
+  await fetchAndSave({ url: `${HOMEPAGE_URL}/item?id=${itemId}`, file: 'hn-item.html' });
 }
 
-main().catch((error) => {
-  console.error('Error:', error);
-  process.exit(1);
-});
+// Skip network when imported (self-check/tests); only run as a script.
+if (import.meta.main) {
+  main().catch((error) => {
+    console.error('Error:', error);
+    process.exit(1);
+  });
+}
