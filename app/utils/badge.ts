@@ -4,7 +4,7 @@ import { SETTINGS_KEYS } from '~app/constants';
 // defineBackground shell that calls initBadge() — mirroring the app/utils + entrypoint split used
 // for the comment script (KTD-2). Behavior is identical to the pre-WXT root background.ts.
 
-export function updateBadge(ok: boolean): void {
+function updateBadge(ok: boolean): void {
   chrome.action.setBadgeText({ text: ok ? '' : ':(' });
   chrome.action.setBadgeBackgroundColor({ color: '#E05050' });
   chrome.action.setBadgeTextColor({ color: '#FFFFFF' });

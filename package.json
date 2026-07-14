@@ -59,11 +59,6 @@
     "vitest": "^4.1.10",
     "wxt": "^0.20.27"
   },
-  "manifest": {
-    "host_permissions": [
-      "https://news.ycombinator.com/*"
-    ]
-  },
   "overrides": {
     "caniuse-lite": "^1.0.30001799",
     "msgpackr": "^1.11.2",

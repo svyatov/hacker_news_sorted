@@ -25,7 +25,6 @@ vi.stubGlobal('chrome', {
 describe('background service worker', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.resetModules();
   });
 
   it('should set warning badge on startup when layout is broken', async () => {

@@ -20,8 +20,7 @@ export const getTime = (infoRow: HTMLElement): number => {
   const title = timeElement.getAttribute('title');
   if (!title) return 0;
 
-  const unixTs = parseInt(title.split(' ')[TITLE_UNIX_TS_INDEX], 10);
-  return Number.isNaN(unixTs) ? 0 : unixTs;
+  return stringToNumber(title.split(' ')[TITLE_UNIX_TS_INDEX]);
 };
 
 export const getComments = (infoRow: HTMLElement): number => {
