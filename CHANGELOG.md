@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.6.1] - 2026-07-14
+
+### Changed
+
+- Rewrite the extension's short description to cover all current features (Velocity and Heat sorts, new-post indicators, comment author highlighting) and drop em dashes; apply the same refresh to the README tagline/feature list and the GitHub repo description
+
 ## [2.6.0] - 2026-07-14
 
 ### Added

@@ -1,8 +1,8 @@
 {
   "name": "hacked_news_sorted",
   "displayName": "Hacker News Sorted",
-  "version": "2.6.0",
-  "description": "Sort Hacker News your way — by points, time, or comments — instantly.",
+  "version": "2.6.1",
+  "description": "Instantly sort Hacker News by points, time, comments, velocity, or heat, mark new posts, and highlight comment authors.",
   "author": "Leonid Svyatov <leonid@svyatov.com>",
   "license": "MIT",
   "type": "module",
