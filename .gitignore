@@ -32,6 +32,9 @@ dist/
 # typescript
 *.tsbuildinfo
 
+# cached HN HTML for screenshot/demo generators (refetched at most daily)
+scripts/screenshots/.hn-cache/
+
 .plans/
 .compound-engineering/
 docs/

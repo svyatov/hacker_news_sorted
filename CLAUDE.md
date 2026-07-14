@@ -175,7 +175,8 @@ Chrome Web Store screenshots are auto-generated using Playwright:
 
 - `scripts/generate-screenshots.ts` - Entry point, orchestrates browser setup and capture
 - `scripts/screenshots/browser.ts` - Browser launch, extension injection, variant capture loop
-- `scripts/screenshots/constants.ts` - Variant configs (sort type, title, subtitle, filename), overlay/arrow styles
+- `scripts/screenshots/constants.ts` - Variant configs (sort type, title, subtitle, filename), overlay/arrow styles, and the real-Chrome fingerprint both generators launch with (`channel: 'chrome'`, matching UA + `sec-ch-ua` client hints, `CHROME_MAJOR`) to avoid HN's automation 429s. Bump `CHROME_MAJOR` with the installed Chrome
+- `scripts/screenshots/htmlCache.ts` - `gotoCached` serves HN's top-level document from a local daily cache (`scripts/screenshots/.hn-cache/`, gitignored) so repeated generator runs don't trip HN's 429 rate-limiting on the `/item` endpoint; sub-resources still load live so pages stay styled. Shared by both generators
 - `scripts/screenshots/overlays.ts` - Injects descriptive overlay cards and pointer arrows into the page
 - `scripts/screenshots/paths.ts` - Resolves build output and image directory paths (the `content.*` sort bundle **and** the `comments.*` comment bundle)
 - `scripts/screenshots/comments.ts` - Shared item-page helper used by both generators: `injectCommentsBundle` (inject the built `comments.*` JS/CSS onto an `item?id=` page, wait for a `.hns-mark-dot` to confirm it ran) and `markUser` (click a user's mark dot via its `data-hns-user` attribute)

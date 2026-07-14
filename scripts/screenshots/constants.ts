@@ -5,6 +5,30 @@ export const SCREENSHOT_IDS = {
   ARROW: 'hns-screenshot-arrow',
 } as const;
 
+// HN throttles automation on its expensive /item endpoint (429) even when the homepage loads fine,
+// so the generators drive the *real* installed Google Chrome (chromium.launch({ channel: 'chrome' }))
+// and present a fully self-consistent desktop-Chrome fingerprint. `channel: 'chrome'` supplies the
+// genuine TLS/HTTP2 handshake and client hints; the values below strip the headless UA token and keep
+// the sec-ch-ua client hints in agreement with it (a UA/hint mismatch is a classic bot tell). Bump the
+// version together with the installed Chrome. Shared by both generators' launch() + newContext().
+export const CHROME_MAJOR = '149';
+
+export const REAL_BROWSER_LAUNCH = { channel: 'chrome' };
+
+export const USER_AGENT = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_MAJOR}.0.0.0 Safari/537.36`;
+
+export const REAL_BROWSER_CONTEXT = {
+  userAgent: USER_AGENT,
+  locale: 'en-US',
+  timezoneId: 'America/New_York',
+  extraHTTPHeaders: {
+    'Accept-Language': 'en-US,en;q=0.9',
+    'sec-ch-ua': `"Google Chrome";v="${CHROME_MAJOR}", "Chromium";v="${CHROME_MAJOR}", "Not?A_Brand";v="24"`,
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"macOS"',
+  },
+};
+
 export const OVERLAY_STYLES = {
   CARD: [
     'position: fixed',
