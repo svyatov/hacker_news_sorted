@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CONTROL_PANEL_ROOT_ID, CSS_CLASSES, SORT_COUNT_ATTR, SORT_OPTIONS } from '~app/constants';
@@ -90,10 +90,10 @@ describe('ControlPanel', () => {
 
   it('ignores a sort request for the already-active sort (no-op guard)', () => {
     render(<ControlPanel />); // active sort starts at 'points'
-    act(() => capturedKbConfig!.onSort('points'));
+    act(() => capturedKbConfig?.onSort('points'));
     expect(mockIncrementSortCount).not.toHaveBeenCalled();
 
-    act(() => capturedKbConfig!.onSort('time'));
+    act(() => capturedKbConfig?.onSort('time'));
     expect(mockIncrementSortCount).toHaveBeenCalledOnce();
   });
 
@@ -162,8 +162,8 @@ describe('ControlPanel', () => {
     const { container } = render(<ControlPanel />);
     fireEvent.click(container.querySelector('button[data-sort="velocity"]')!);
 
-    expect(container.querySelector('button[data-sort="velocity"]')!.classList.contains(CSS_CLASSES.ACTIVE)).toBe(true);
-    expect(container.querySelector('button[data-sort="points"]')!.classList.contains(CSS_CLASSES.ACTIVE)).toBe(false);
+    expect(container.querySelector('button[data-sort="velocity"]')?.classList.contains(CSS_CLASSES.ACTIVE)).toBe(true);
+    expect(container.querySelector('button[data-sort="points"]')?.classList.contains(CSS_CLASSES.ACTIVE)).toBe(false);
     expect(mockIncrementSortCount).toHaveBeenCalledOnce();
   });
 

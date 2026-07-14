@@ -29,6 +29,10 @@ dist/
 # plasmo
 .plasmo
 
+# wxt (spike/wxt branch)
+.output
+.wxt
+
 # typescript
 *.tsbuildinfo
 

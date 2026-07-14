@@ -1,0 +1,19 @@
+{
+  // Spike-only (branch spike/wxt): the tsc --noEmit half of gate A (U3, R1). Extends WXT's generated
+  // config (modern moduleResolution: Bundler — no deprecated node10/baseUrl, so it doesn't trip the
+  // TS 6.0 deprecation errors Plasmo's tsconfig base does) and scopes the typecheck to the sort-panel
+  // entrypoint + the app/ tree it imports. Kept separate from the Plasmo tsconfig.json so main stays green.
+  "extends": "./.wxt/tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    // Force the ambient chrome global (from the already-installed @types/chrome, as content.tsx uses).
+    "types": ["chrome", "node"],
+    "paths": {
+      "~app": ["./app"],
+      "~app/*": ["./app/*"]
+    }
+  },
+  "include": ["entrypoints/**/*", ".wxt/wxt.d.ts"],
+  "exclude": ["node_modules", ".output"]
+}

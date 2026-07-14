@@ -1,0 +1,70 @@
+/* Spike: minimal subset of content.css for the panel to render legibly inside the shadow root
+ * (U2, KTD-2). Full styling parity — the count-aware responsive tiers keyed on
+ * #hns-control-panel[data-sort-count] — is out of scope for the spike, so the button text is
+ * simply always shown and the single-letter shortcut hidden. */
+:host {
+  display: inline-block;
+  position: relative;
+  color: #222;
+  line-height: 12px;
+}
+
+.hns-sort-by-label {
+  display: inline-block;
+  margin-right: 5px;
+  color: #000;
+}
+
+.hns-btn {
+  all: unset;
+  cursor: pointer;
+  display: inline-block;
+  margin: 0 5px;
+}
+
+.hns-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Spike: always show full words (production gates this on count-aware media queries). */
+.hns-btn-text {
+  display: inline;
+}
+
+.hns-btn-shortcut {
+  display: none;
+}
+
+.hns-active {
+  color: #fff;
+}
+
+.hns-btn:hover {
+  opacity: 0.7;
+}
+
+.hns-active.hns-btn {
+  cursor: default;
+}
+
+.hns-active.hns-btn:hover {
+  opacity: 1;
+}
+
+.hns-divider {
+  display: inline-block;
+  margin: 0 10px;
+}
+
+.hns-conflict-note {
+  margin-left: 10px;
+  font-size: 11px;
+  color: #828282;
+}
+
+/* Mobile dropdown tier stays hidden in the spike (no count-aware collapse ported). */
+.hns-dropdown-tier {
+  display: none;
+}

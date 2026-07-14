@@ -43,6 +43,6 @@ const sortByKey = (parsedRows: ParsedRow[], key: SortableKey, order: SortOrder =
   });
 };
 
-const sortByValue = (parsedRows: ParsedRow[], valueOf: (row: ParsedRow) => number): ParsedRow[] => {
-  return [...parsedRows].sort((rowA, rowB) => valueOf(rowB) - valueOf(rowA));
+const sortByValue = (parsedRows: ParsedRow[], getValue: (row: ParsedRow) => number): ParsedRow[] => {
+  return [...parsedRows].sort((rowA, rowB) => getValue(rowB) - getValue(rowA));
 };

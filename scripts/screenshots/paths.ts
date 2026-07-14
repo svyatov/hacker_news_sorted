@@ -1,5 +1,5 @@
-import { readdirSync } from 'fs';
-import path from 'path';
+import { readdirSync } from 'node:fs';
+import path from 'node:path';
 
 // @ts-expect-error Bun-specific API
 const ROOT_DIR = path.resolve(import.meta.dir, '../..');
