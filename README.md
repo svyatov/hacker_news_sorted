@@ -44,7 +44,7 @@ No data collection, no external requests. It works entirely in your browser.
 
 ## Tech Stack
 
-Plasmo · React 19 · TypeScript · Vitest · Bun
+WXT · React 19 · TypeScript · Vitest · Bun
 
 ## Development
 
@@ -55,13 +55,13 @@ bun install
 bun dev
 ```
 
-Then load the extension in Chrome: go to `chrome://extensions`, enable "Developer mode", click "Load unpacked", and select the `build/chrome-mv3-dev` folder.
+Then load the extension in Chrome: go to `chrome://extensions`, enable "Developer mode", click "Load unpacked", and select the `.output/chrome-mv3-dev` folder.
 
 ```bash
 bun run test           # Run tests
 bun run test:watch     # Run tests in watch mode
 bun run test:coverage  # Run tests with coverage report
-bun run lint           # Run ESLint and Prettier checks
+bun run lint           # Run Biome and Prettier checks
 bun run fixture:update # Fetch fresh HN HTML for test fixtures
 bun run screenshots    # Generate Chrome Web Store screenshots (requires build first)
 ```

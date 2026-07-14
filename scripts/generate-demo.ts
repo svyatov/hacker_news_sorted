@@ -1,5 +1,5 @@
-import { execFileSync } from 'child_process';
-import path from 'path';
+import { execFileSync } from 'node:child_process';
+import path from 'node:path';
 import type { Browser, BrowserContext, Page } from 'playwright';
 import { chromium } from 'playwright';
 

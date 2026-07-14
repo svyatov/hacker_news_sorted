@@ -1,12 +1,21 @@
 {
-  "extends": "plasmo/templates/tsconfig.base",
-  "exclude": ["node_modules"],
-  "include": [".plasmo/index.d.ts", "./**/*.ts", "./**/*.tsx"],
+  // Extends WXT's generated config (moduleResolution: Bundler — no deprecated node10/baseUrl, so it
+  // typechecks cleanly under TypeScript 7, unlike the old Plasmo tsconfig base).
+  "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
     "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    // Force the ambient chrome global (@types/chrome) that the entrypoints use, plus node for scripts.
+    "types": ["chrome", "node"],
     "paths": {
-      "~*": ["./*"]
-    },
-    "baseUrl": "."
-  }
+      "~app": ["./app"],
+      "~app/*": ["./app/*"],
+      "~": ["./"],
+      "~/*": ["./*"]
+    }
+  },
+  // Cover entrypoints, the framework-agnostic app/ tree (incl. *.test.tsx), and the generator scripts.
+  // vitest.setup.ts carries the jest-dom matcher augmentation the test files rely on.
+  "include": ["entrypoints/**/*", "app/**/*", "scripts/**/*", "vitest.setup.ts", ".wxt/wxt.d.ts"],
+  "exclude": ["node_modules", ".output"]
 }

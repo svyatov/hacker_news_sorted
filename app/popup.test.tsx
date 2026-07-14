@@ -15,7 +15,7 @@ vi.mock('@plasmohq/storage/hook', () => ({
 }));
 
 // Lazy import so mock is in place
-const { default: Popup } = await import('~/popup');
+const { default: Popup } = await import('~/entrypoints/popup/App');
 
 describe('Popup', () => {
   it('should not show warning when layout is ok', () => {

@@ -56,7 +56,7 @@ export const highlightActiveSort = (infoRow: HTMLElement, activeSort: SortVarian
   return infoRow;
 };
 
-const pluralize = (count: number, singular: string): string => `${count} ${count === 1 ? singular : singular + 's'}`;
+const pluralize = (count: number, singular: string): string => `${count} ${count === 1 ? singular : `${singular}s`}`;
 
 export const formatAge = (unixTimestamp: number): string => {
   const secondsAgo = nowInSeconds() - unixTimestamp;

@@ -1,22 +1,25 @@
-import { readdirSync } from 'fs';
-import path from 'path';
+import { readdirSync } from 'node:fs';
+import path from 'node:path';
 
 // @ts-expect-error Bun-specific API
 const ROOT_DIR = path.resolve(import.meta.dir, '../..');
-const BUILD_DIR = path.join(ROOT_DIR, 'build/chrome-mv3-prod');
+const BUILD_DIR = path.join(ROOT_DIR, '.output/chrome-mv3');
+// WXT emits content scripts under content-scripts/<entrypoint>.{js,css} (verified from a real build, KTD-8).
+const CONTENT_SCRIPTS_DIR = path.join(BUILD_DIR, 'content-scripts');
 
 export const SCREENSHOTS_DIR = path.join(ROOT_DIR, 'images');
 
-const buildFiles = readdirSync(BUILD_DIR);
-const cssFile = buildFiles.find((f) => f.startsWith('content.') && f.endsWith('.css'));
-const jsFile = buildFiles.find((f) => f.startsWith('content.') && f.endsWith('.js'));
-const commentsCssFile = buildFiles.find((f) => f.startsWith('comments.') && f.endsWith('.css'));
-const commentsJsFile = buildFiles.find((f) => f.startsWith('comments.') && f.endsWith('.js'));
+// Glob by entrypoint-name prefix and fail loud if missing, rather than hardcoding (WXT may add hashes).
+const csFiles = readdirSync(CONTENT_SCRIPTS_DIR);
+const jsFile = csFiles.find((f) => f.startsWith('hn-sort.') && f.endsWith('.js'));
+const cssFile = csFiles.find((f) => f.startsWith('hn-sort.') && f.endsWith('.css'));
+const commentsJsFile = csFiles.find((f) => f.startsWith('comments.') && f.endsWith('.js'));
+const commentsCssFile = csFiles.find((f) => f.startsWith('comments.') && f.endsWith('.css'));
 if (!cssFile || !jsFile || !commentsCssFile || !commentsJsFile) {
-  throw new Error('Built assets not found. Run `bun run build` first.');
+  throw new Error('Built content-script assets not found in .output/chrome-mv3. Run `bun run build` first.');
 }
 
-export const CSS_PATH = path.join(BUILD_DIR, cssFile);
-export const JS_PATH = path.join(BUILD_DIR, jsFile);
-export const COMMENTS_CSS_PATH = path.join(BUILD_DIR, commentsCssFile);
-export const COMMENTS_JS_PATH = path.join(BUILD_DIR, commentsJsFile);
+export const CSS_PATH = path.join(CONTENT_SCRIPTS_DIR, cssFile);
+export const JS_PATH = path.join(CONTENT_SCRIPTS_DIR, jsFile);
+export const COMMENTS_CSS_PATH = path.join(CONTENT_SCRIPTS_DIR, commentsCssFile);
+export const COMMENTS_JS_PATH = path.join(CONTENT_SCRIPTS_DIR, commentsJsFile);

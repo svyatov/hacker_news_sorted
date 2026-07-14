@@ -1,0 +1,212 @@
+:root {
+  color-scheme: light dark;
+
+  --hns-bg: #fff;
+  --hns-text: #222;
+  --hns-text-muted: #999;
+  --hns-border: #e0e0e0;
+  --hns-toggle-off: #ccc;
+  --hns-toggle-off-hover: #bbb;
+  --hns-knob: #fff;
+  --hns-input-bg: #fff;
+  --hns-input-border: #ccc;
+  --hns-warning-bg: #fff3e0;
+  --hns-warning-text: #555;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --hns-bg: #1e1e1e;
+    --hns-text: #e6e6e6;
+    --hns-text-muted: #9a9a9a;
+    --hns-border: #3a3a3a;
+    --hns-toggle-off: #555;
+    --hns-toggle-off-hover: #6a6a6a;
+    --hns-knob: #e0e0e0;
+    --hns-input-bg: #2a2a2a;
+    --hns-input-border: #555;
+    --hns-warning-bg: #3a2e17;
+    --hns-warning-text: #cfcfcf;
+  }
+}
+
+body {
+  font-family: Verdana, Geneva, sans-serif;
+  font-size: 12px;
+  color: var(--hns-text);
+  background-color: var(--hns-bg);
+  margin: 0;
+  padding: 12px 16px;
+  min-width: 300px;
+}
+
+h1 {
+  font-size: 13px;
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--hns-border);
+}
+
+.hns-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+/* Setting groups */
+.hns-group {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.hns-group + .hns-group {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--hns-border);
+}
+
+.hns-setting-label {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.hns-hint {
+  font-size: 10px;
+  color: var(--hns-text-muted);
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+.hns-setting-child {
+  padding-left: 12px;
+}
+
+.hns-toggle {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.hns-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.hns-toggle-slider {
+  position: absolute;
+  inset: 0;
+  background-color: var(--hns-toggle-off);
+  border-radius: 18px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.hns-toggle-slider::before {
+  content: '';
+  position: absolute;
+  height: 14px;
+  width: 14px;
+  left: 2px;
+  bottom: 2px;
+  background-color: var(--hns-knob);
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.hns-toggle-slider:hover {
+  background-color: var(--hns-toggle-off-hover);
+}
+
+.hns-toggle input:checked + .hns-toggle-slider {
+  background-color: #ff6600;
+}
+
+.hns-toggle input:checked + .hns-toggle-slider:hover {
+  background-color: #e55c00;
+}
+
+.hns-toggle input:checked + .hns-toggle-slider::before {
+  transform: translateX(14px);
+}
+
+.hns-toggle input:focus-visible + .hns-toggle-slider {
+  outline: 2px solid #ff6600;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hns-toggle-slider,
+  .hns-toggle-slider::before {
+    transition: none;
+  }
+}
+
+.hns-warning {
+  background: var(--hns-warning-bg);
+  border-left: 3px solid #ff9800;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.hns-warning strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.hns-warning p {
+  margin: 0;
+  color: var(--hns-warning-text);
+}
+
+/* Persistent review link */
+.hns-review-link {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hns-border);
+  font-size: 10px;
+  color: var(--hns-text-muted);
+  text-align: center;
+}
+
+.hns-review-link a {
+  color: #ff6600;
+  text-decoration: none;
+}
+
+.hns-review-link a:hover {
+  text-decoration: underline;
+}
+
+.hns-number-input {
+  width: 60px;
+  padding: 3px 4px;
+  border: 1px solid var(--hns-input-border);
+  border-radius: 4px;
+  background-color: var(--hns-input-bg);
+  color: var(--hns-text);
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1;
+  text-align: right;
+  margin-left: 12px;
+}
+
+.hns-number-input:focus {
+  outline: 2px solid #ff6600;
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+/* Suppress toggle animation on load while useStorage settles (see popup.tsx) */
+.hns-no-transition .hns-toggle-slider,
+.hns-no-transition .hns-toggle-slider::before {
+  transition: none;
+}

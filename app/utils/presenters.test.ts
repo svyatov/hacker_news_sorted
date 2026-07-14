@@ -174,7 +174,7 @@ describe('presenters', () => {
       const nowSec = nowInSeconds();
       const row = makeRow('14 hours ago', nowSec - 3 * SECONDS_PER_DAY);
       correctAgeTexts([row]);
-      expect(row.info.querySelector('a')!.getAttribute('data-original-age')).toBe('14 hours ago');
+      expect(row.info.querySelector('a')?.getAttribute('data-original-age')).toBe('14 hours ago');
     });
 
     it('should restore original text', () => {
@@ -191,12 +191,12 @@ describe('presenters', () => {
       const row = makeRow('3 hours ago', 0);
       row.time = 0;
       correctAgeTexts([row]);
-      expect(row.info.querySelector('a')!.textContent).toBe('3 hours ago');
+      expect(row.info.querySelector('a')?.textContent).toBe('3 hours ago');
     });
 
     it('should skip rows without a link inside .age', () => {
       const row = makeRow('3 hours ago', nowInSeconds() - SECONDS_PER_DAY);
-      row.info.querySelector('a')!.remove();
+      row.info.querySelector('a')?.remove();
       expect(() => correctAgeTexts([row])).not.toThrow();
     });
 
@@ -205,13 +205,13 @@ describe('presenters', () => {
       const row = makeRow('14 hours ago', nowSec - 3 * SECONDS_PER_DAY);
       correctAgeTexts([row]);
       correctAgeTexts([row]);
-      expect(row.info.querySelector('a')!.getAttribute('data-original-age')).toBe('14 hours ago');
+      expect(row.info.querySelector('a')?.getAttribute('data-original-age')).toBe('14 hours ago');
     });
 
     it('restoreAgeTexts should be a no-op when no original was saved', () => {
       const row = makeRow('3 hours ago', nowInSeconds() - SECONDS_PER_HOUR);
       restoreAgeTexts([row]);
-      expect(row.info.querySelector('a')!.textContent).toBe('3 hours ago');
+      expect(row.info.querySelector('a')?.textContent).toBe('3 hours ago');
     });
   });
 });

@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import type { Page } from 'playwright';
 
 // Local HTML cache so the generators don't re-fetch live HN on every run. HN rate-limits its /item
@@ -7,6 +7,7 @@ import type { Page } from 'playwright';
 // daily. The first run of the day fetches live and caches the document; later runs replay it. Only the
 // top-level document is served from cache — sub-resources (news.css, images) still load live from HN
 // against the real page URL, so the page stays fully styled, and those static assets aren't throttled.
+// @ts-expect-error Bun-specific API
 const CACHE_DIR = path.join(import.meta.dir, '.hn-cache');
 const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 1 day
 

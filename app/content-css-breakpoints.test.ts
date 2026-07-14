@@ -11,7 +11,7 @@ import { SORT_OPTIONS } from '~app/constants';
 // stops collapsing at some option count and pushes HN's own header nav onto a second line.
 const TOGGLEABLE_SORTS = ['velocity', 'heat'];
 
-const css = readFileSync(join(__dirname, '..', 'content.css'), 'utf8');
+const css = readFileSync(join(__dirname, '..', 'entrypoints', 'hn-sort.content', 'content.css'), 'utf8');
 
 describe('content.css count-aware breakpoints', () => {
   const maxCount = SORT_OPTIONS.length;

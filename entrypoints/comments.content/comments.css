@@ -1,0 +1,72 @@
+/* Comment-page highlighting — stays inside HN's palette (beige surface, #ff6600 orange). */
+
+/* OP tint: ~7% orange over HN's #f6f6ef surface. Covers the whole comment cell so the header
+   line stays tinted even when the comment is collapsed. */
+.hns-op-comment td.default {
+  background-color: rgba(255, 102, 0, 0.07);
+}
+
+/* Marked-user tint: a shade lighter than OP so the two read as distinct within one hue. */
+.hns-marked-comment td.default {
+  background-color: rgba(255, 102, 0, 0.04);
+}
+
+/* Both at once (mark set while OP highlighting was off, then re-enabled): OP tint wins so a badged
+   author never looks less prominent than an unbadged one. Beats the equal-specificity source order. */
+.hns-op-comment.hns-marked-comment td.default {
+  background-color: rgba(255, 102, 0, 0.07);
+}
+
+/* "OP" badge — small filled orange pill beside the author name. */
+.hns-op-badge {
+  display: inline-block;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background-color: #ff6600;
+  color: #fff;
+  font-size: 7pt;
+  font-weight: bold;
+  line-height: 1;
+  vertical-align: middle;
+  /* left 4px gap from the name; top/bottom -1px cancel the vertical padding so the pill (line-height:1
+     keeps its box under the header text's) doesn't grow the comment-header line. */
+  margin: -1px 0 -1px 4px;
+}
+
+/* Mark control — a native button showing a small diamond sized to HN's grey header text: outline
+   (◇) when unmarked, filled orange (◆) once the user is marked. Kept inline (not a 24px box) so it
+   never inflates the header line; vertical padding gives a comfortable hit area without changing
+   layout (inline-box vertical padding doesn't grow the line). */
+.hns-mark-dot {
+  all: unset;
+  cursor: pointer;
+  color: #9a9a94;
+  font-size: 10.5px;
+  line-height: 1;
+  vertical-align: baseline;
+  padding: 4px 3px; /* click/tap target around the ~10px glyph */
+  /* left 4px balances HN's single inter-word space (which now sits only on the age side — the dot is
+     inserted right after the username); top/bottom -4px cancel the vertical padding so the padded hit
+     area doesn't grow the comment-header line. */
+  margin: -4px 0 -4px 4px;
+}
+
+.hns-mark-dot::before {
+  content: '\25C7'; /* ◇ outline diamond — click to mark this user */
+}
+
+.hns-mark-dot:hover,
+.hns-mark-dot-on {
+  color: #ff6600;
+}
+
+/* Active mark: filled orange diamond. */
+.hns-mark-dot-on::before {
+  content: '\25C6'; /* ◆ */
+}
+
+.hns-mark-dot:focus-visible {
+  outline: 2px solid #ff6600;
+  outline-offset: 1px;
+  border-radius: 3px;
+}
