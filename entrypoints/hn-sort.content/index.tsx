@@ -3,7 +3,8 @@ import { createRoot, type Root } from 'react-dom/client';
 
 import ControlPanel from '~app/components/ControlPanel';
 import { CONTROL_PANEL_ROOT_ID, SETTINGS_KEYS } from '~app/constants';
-import { getControlPanelParentElement, getTableBody } from '~app/utils/selectors';
+import { waitForPanelParent } from '~app/utils/layout';
+import { getTableBody } from '~app/utils/selectors';
 
 import './content.css';
 
@@ -11,41 +12,32 @@ import './content.css';
 // integrated UI + page-global CSS — not a shadow root — so content.css keeps styling both the
 // panel and HN's own list rows (sort-highlight, new-post fade), matching the current behavior.
 
-const LAYOUT_TIMEOUT_MS = 3000;
-
 const setLayoutStatus = (ok: boolean) => {
   chrome.storage.sync.set({ [SETTINGS_KEYS.LAYOUT_OK]: ok });
 };
 
-// Resolve HN's header cell (the panel parent), waiting via MutationObserver if it isn't in the DOM
-// yet. Mirrors content.tsx's getRootContainer; resolves null if it never appears within the timeout.
-const waitForPanelParent = (): Promise<HTMLElement | null> =>
-  new Promise((resolve) => {
-    const existing = getControlPanelParentElement();
-    if (existing) {
-      resolve(existing);
-      return;
-    }
-
-    const observer = new MutationObserver(() => {
-      const parent = getControlPanelParentElement();
-      if (!parent) return;
-      observer.disconnect();
-      resolve(parent);
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-
-    setTimeout(() => {
-      observer.disconnect();
-      resolve(null);
-    }, LAYOUT_TIMEOUT_MS);
-  });
-
 export default defineContentScript({
   matches: ['*://news.ycombinator.com/*'],
-  // Item/comment pages have no list table; the panel would render nothing and falsely flag a broken
-  // layout. The comment-highlight script (comments.content) covers those pages instead.
-  excludeMatches: ['*://news.ycombinator.com/item*'],
+  // Pages with HN's header but no story list would render nothing and falsely flag a broken layout, so
+  // the panel skips them: comment/thread views (item — also covered by comments.content — plus threads,
+  // newcomments, context) and form/profile pages (submit, reply, login, forgot, changepw, newpoll, user,
+  // and the x expired-link notice). Every excluded route is listless, so nothing sortable is lost — story
+  // lists (submitted/favorites/upvoted/front/ask/show/...) are intentionally NOT excluded. `submit` has no
+  // trailing `*` so it can't swallow the `submitted` story list.
+  excludeMatches: [
+    '*://news.ycombinator.com/item*',
+    '*://news.ycombinator.com/threads*',
+    '*://news.ycombinator.com/newcomments*',
+    '*://news.ycombinator.com/context*',
+    '*://news.ycombinator.com/submit',
+    '*://news.ycombinator.com/reply*',
+    '*://news.ycombinator.com/login*',
+    '*://news.ycombinator.com/forgot*',
+    '*://news.ycombinator.com/changepw*',
+    '*://news.ycombinator.com/newpoll*',
+    '*://news.ycombinator.com/user*',
+    '*://news.ycombinator.com/x*',
+  ],
   // Page-global stylesheet (like Plasmo's `css: ['content.css']`): content.css styles both the panel
   // and HN's own list rows, so it's injected page-wide via the manifest, not into a shadow root (KTD-1).
   cssInjectionMode: 'manifest',

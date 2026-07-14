@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The broken-layout warning badge no longer appears on Hacker News pages that have no story list (submit, reply, login, password, poll, user profiles, and comment/thread views) — it now only signals a genuinely broken layout on pages where sorting applies
+- Fixed a race where the broken-layout badge could switch on even after the sort menu mounted successfully on a slow-loading page
+
 ## [2.6.2] - 2026-07-14
 
 ### Changed
