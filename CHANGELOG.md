@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.6.0] - 2026-07-14
+
 ### Added
 
 - Comment author highlighting on thread (`item?id=`) pages: the story author's comments get a subtle orange tint and an "OP" badge, and a marker next to each other commenter's name lets you mark one user to highlight their comments for that thread (the mark persists across reloads and clears when the browser session ends). Two independent popup toggles, both on by default

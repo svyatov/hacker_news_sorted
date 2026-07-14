@@ -1,12 +1,16 @@
-Hacker News has one ranking algorithm. It's good, but sometimes you want a different view. This extension adds sort controls directly into the HN header bar - sort by points, time, comments, or switch back to the default order. One click, the page reorders instantly. No reload, no new tab.
+Hacker News has one ranking algorithm. It's good, but sometimes you want a different view. This extension adds sort controls directly into the HN header bar - sort by points, time, comments, velocity, heat, or switch back to the default order. One click, the page reorders instantly. No reload, no new tab.
 
 Sort by points to find the most upvoted stories. Sort by time to catch posts that just landed. Sort by comments to see what people are actually discussing. Hit "default" to go back to HN's original order. The active sort is highlighted so you always know which view you're in.
 
 It works on every Hacker News page that has a post list: the front page, Newest, Ask HN, Show HN, Jobs, past - all of them.
 
+VELOCITY AND HEAT
+
+Two more ways to sort, beyond the basics. Velocity surfaces the fastest-rising posts - points per hour, damped so a brand-new post with a handful of upvotes doesn't leapfrog everything. Heat surfaces the most-argued threads - comments per point, so the posts drawing debate rise to the top. Turn either one off in the extension settings if you don't use it.
+
 NEW POST INDICATORS
 
-An orange dot appears next to posts that showed up since your last visit. Instead of scanning the entire front page trying to remember what you've already seen, new posts are marked for you.
+An orange dot appears next to posts that showed up since your last visit. Instead of scanning the entire front page trying to remember what you've already seen, the extension marks them for you.
 
 The dots fade out gradually over time. The default fade duration is one hour, but you can set it anywhere from 10 seconds to 24 hours in the extension settings. When the highlight period ends, the dots disappear. New post detection only runs on the first page of each section - paginated pages are skipped.
 
@@ -14,15 +18,19 @@ Toggle new post indicators on or off from the extension popup.
 
 TRUE TIME AGO
 
-Hacker News has a "second chance" system that resurfaces older posts. When a post gets a second chance, HN resets the displayed age - so a post submitted three days ago might show "7 hours ago" on the front page. That's confusing.
+Hacker News has a "second chance" system that resurfaces older posts. When a post gets a second chance, HN resets the displayed age - so a post submitted three days ago might show "7 hours ago" on the front page.
 
 This extension reads the original submission timestamp and shows the real age. If a post is actually three days old, it says "3 days ago" regardless of when HN resurfaced it. On by default. Turn it off in settings if you prefer HN's original age text.
 
+COMMENT AUTHOR HIGHLIGHTING
+
+On comment threads, the story author's own replies get a subtle orange tint and an "OP" badge, so you can always tell the original poster apart from everyone else. Following one particular commenter through a long thread? Click the marker next to their name and all of their comments get highlighted too. The mark sticks across reloads and clears when you close the browser. Both are on by default, each with its own toggle in settings.
+
 KEYBOARD SHORTCUTS
 
-P sorts by points. T sorts by time. C sorts by comments. D restores the default order.
+P sorts by points. T sorts by time. C sorts by comments. V sorts by velocity. H sorts by heat. D restores the default order.
 
-The shortcuts only fire while you're browsing - they disable automatically when you're typing in a search box, text field, or any input. If you use Vimium or another extension that captures the same keys, the shortcuts step aside. No conflicts.
+The shortcuts only fire while you're browsing - they disable automatically when you're typing in a search box, text field, or any input. If you use Vimium or another extension that captures the same keys, the shortcuts step aside, so nothing double-fires.
 
 SYNCS ACROSS DEVICES
 
@@ -41,8 +49,8 @@ No data leaves your browser. No analytics, no tracking, no external API calls. T
 Source code: https://github.com/svyatov/hacker_news_sorted
 
 Recent changes:
+2026-07-14 - v2.6.0 - Velocity & Heat sorts, comment author highlighting, responsive menu, dark-mode settings
 2026-03-24 - v2.5.0 - True time ago, new post fade cooldown, review prompt, redesigned settings
 2026-03-13 - v2.4.0 - Layout change detection, more reliable selectors
 2026-03-11 - v2.3.1 - Fix selectors for HN layout update
 2026-01-29 - v2.3.0 - New post indicators, popup settings, cross-device sync
-2026-01-12 - v2.2.0 - Keyboard shortcuts, Vimium compatibility
