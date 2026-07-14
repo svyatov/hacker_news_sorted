@@ -4,20 +4,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Hacker News Sorted is a Chrome extension that adds sorting capabilities to Hacker News (news.ycombinator.com). Users can sort posts by points, time, comments, velocity, heat, or restore the default order. Built with Plasmo framework and React.
+Hacker News Sorted is a Chrome extension that adds sorting capabilities to Hacker News (news.ycombinator.com). Users can sort posts by points, time, comments, velocity, heat, or restore the default order. Built with the WXT framework and React.
 
 ## Commands
 
 ```bash
-bun dev            # Start development server (loads extension from build/chrome-mv3-dev)
-bun run build      # Production build
-bun run package    # Package extension for distribution
+bun dev            # Start WXT dev server (dev build at .output/chrome-mv3-dev)
+bun run build      # Production build (wxt build → .output/chrome-mv3)
+bun run package    # Package extension for distribution (wxt zip)
 bun run release    # Build and package
 bun run test       # Run tests (uses Vitest)
 bun run test:integration # Run selector integration tests against the HN fixture
 bun run test:watch # Run tests in watch mode
 bun run test:coverage # Run tests with coverage report
-bun run lint       # Run ESLint and Prettier checks
+bun run lint       # Run Biome and Prettier checks
 bun run fixture:update # Fetch fresh HN HTML for test fixtures
 bun run screenshots    # Generate Chrome Web Store screenshots (requires `bun run build` first)
 bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run build` first)
@@ -27,28 +27,28 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 
 ### Content Script Entry Point
 
-- `content.tsx` - Main entry point, injects the ControlPanel into HN's header using Plasmo's content script UI lifecycle. Carries `exclude_matches: ['*://news.ycombinator.com/item*']` so the sort panel never loads on comment pages (which have no list table and would falsely flag a broken layout — KTD-5)
-- `content.css` - Styles for the control panel, sort highlighting, and new-post indicators. Three-tier responsive menu: full names on wide screens, single-letter labels on medium, and a native `<select>` dropdown tier on narrow screens. **Both** tier switches are count-aware — one `@media` block per enabled-option count (4/5/6) keyed on the `#hns-control-panel[data-sort-count='N']` attribute — because each tier's width, and thus the point at which it would push HN's own header nav onto a second line, grows with the option count. Word↔letter (`min-width` 1280/1360/1440px); letter↔dropdown (`max-width` 1080/1120/1160px) hides `.hns-buttons-tier` and shows `.hns-dropdown-tier`. All breakpoints are calibrated against HN's header so the menu always collapses to a more compact tier _before_ it would wrap HN's nav (measured letter-row wrap floors ~1044/1084/1124px; the dropdown has no visible label so it stays as narrow as HN's own ~750px nav-wrap floor)
+- `entrypoints/hn-sort.content/index.tsx` - Main entry point, injects the ControlPanel into HN's header via WXT's `createIntegratedUi` — a light-DOM `<span id="hns-control-panel">` mount (`tag: 'span'`, `append: 'first'`) plus page-global `cssInjectionMode: 'manifest'`, not a shadow root, so `content.css` styles both the panel and HN's own list rows exactly as before. Carries `excludeMatches: ['*://news.ycombinator.com/item*']` so the sort panel never loads on comment pages (which have no list table and would falsely flag a broken layout — KTD-5)
+- `entrypoints/hn-sort.content/content.css` - Styles for the control panel, sort highlighting, and new-post indicators. Three-tier responsive menu: full names on wide screens, single-letter labels on medium, and a native `<select>` dropdown tier on narrow screens. **Both** tier switches are count-aware — one `@media` block per enabled-option count (4/5/6) keyed on the `#hns-control-panel[data-sort-count='N']` attribute — because each tier's width, and thus the point at which it would push HN's own header nav onto a second line, grows with the option count. Word↔letter (`min-width` 1280/1360/1440px); letter↔dropdown (`max-width` 1080/1120/1160px) hides `.hns-buttons-tier` and shows `.hns-dropdown-tier`. All breakpoints are calibrated against HN's header so the menu always collapses to a more compact tier _before_ it would wrap HN's nav (measured letter-row wrap floors ~1044/1084/1124px; the dropdown has no visible label so it stays as narrow as HN's own ~750px nav-wrap floor)
 - Detects layout breakage: writes `hns-layout-ok` to `chrome.storage.sync` based on whether expected DOM elements are found (with a 3-second timeout)
-- **Dev gotcha**: Plasmo hot-reload often doesn't pick up content script CSS or `useState` initial value changes — reload the HN page (or the extension itself) to see updates
+- **Dev gotcha**: WXT's dev server hot-reloads most edits, but content-script CSS or entrypoint-config changes may still need a page reload (or an extension reload) to appear
 
 ### Comment-Page Content Script
 
-- `contents/comments.ts` - Separate Plasmo content script matching `*://news.ycombinator.com/item*` (comment/thread pages), independent of the sort panel. Lives under `contents/` because Plasmo only bundles content scripts from a root `content.*` file or the `contents/` directory (KTD-1). A thin shell: reads the two toggle keys via `@plasmohq/storage`, calls `applyCommentEnhancements`, wires a dot-activate callback (routes the click through `nextMark`: same user clears, else replaces), and `storage.watch`es both toggle keys to re-run the orchestrator on popup changes without reload
-- `contents/comments.css` - Palette-consistent styles (referenced via `PlasmoCSConfig.css`, resolved relative to the script): OP tint (`#ff6600` at ~7% over `#f6f6ef`) + filled-orange "OP" badge; lighter marked-user tint; the mark control is a native `<button>` (Enter/Space activate for free) kept inline (padding gives the hit area without inflating the header line), an outline diamond (`◇`) that becomes a filled orange diamond (`◆`) under `.hns-mark-dot-on`, and a `:focus-visible` ring
+- `entrypoints/comments.content/index.ts` - Separate WXT content script (`defineContentScript`) matching `*://news.ycombinator.com/item*` (comment/thread pages), independent of the sort panel. A thin shell whose `main()` reads the two toggle keys via `@plasmohq/storage`, calls `applyCommentEnhancements`, wires a dot-activate callback (routes the click through `nextMark`: same user clears, else replaces), and `storage.watch`es both toggle keys to re-run the orchestrator on popup changes without reload
+- `entrypoints/comments.content/comments.css` - Palette-consistent styles (injected page-wide via `import './comments.css'` + `cssInjectionMode: 'manifest'`): OP tint (`#ff6600` at ~7% over `#f6f6ef`) + filled-orange "OP" badge; lighter marked-user tint; the mark control is a native `<button>` (Enter/Space activate for free) kept inline (padding gives the hit area without inflating the header line), an outline diamond (`◇`) that becomes a filled orange diamond (`◆`) under `.hns-mark-dot-on`, and a `:focus-visible` ring
 - All logic is in `app/utils/comments.ts` (pure DOM, unit-tested in JSDOM — KTD-2): `getStoryAuthor`, `getCommentRows`, `getCommentAuthor` (exact, case-sensitive matching — KTD-4), `applyUserHighlight`/`clearHighlights`, `injectMarkDots` (skips the story author — OP is badged, not markable) / `removeMarkDots`, `getMarkedUser`/`setMarkedUser`/`nextMark` (single mark in `sessionStorage` keyed by thread id — KTD-6), and the idempotent `applyCommentEnhancements({ opEnabled, markEnabled, onMark })` orchestrator (clears then re-applies from settings + stored mark; computes the OP once via `isStoryPage()`/`getStoryAuthor()`, gates OP highlighting on it, and passes it to `injectMarkDots` as the skip user)
 - `app/utils/pages.ts` - `getItemId()` (reads `?id=` from the query string) and `isStoryPage()` (true when `.fatitem` carries a `.titleline`). `item?id=` also serves comment-permalink pages where the `.fatitem` is a linked comment, not the story; `isStoryPage()` gates OP highlighting off there so it never badges the wrong author, while marker dots keep working (KTD-8, AE6)
 
 ### Background Service Worker
 
-- `background.ts` - Manages the extension badge based on layout health status
-- Shows a red "!" badge when `hns-layout-ok` is `false` in `chrome.storage.sync`
-- Listens for storage changes and restores badge state on service worker restart
+- `entrypoints/background.ts` - Thin `defineBackground` shell that calls `initBadge()` from `app/utils/badge.ts` (badge logic lives in `app/` so it stays unit-testable, mirroring the comment script's app/utils + entrypoint split)
+- `app/utils/badge.ts` - Manages the extension badge based on layout health status: shows a red `:(` badge when `hns-layout-ok` is `false` in `chrome.storage.sync`, listens for storage changes, and restores badge state on service worker restart
 
 ### Popup Entry Point
 
-- `popup.tsx` - Settings popup UI with grouped layout: dependent settings (new-post toggle + highlight duration) share a `fieldset.hns-group`, independent settings get separate groups; each setting has a `hns-hint` description; shows a warning banner when layout detection fails. Includes per-sort toggles for Velocity and Heat, plus the two comment-highlighting toggles (OP highlighting, marked-user highlighting) in their own fieldset (all default on)
-- `popup.css` - Popup styles (toggle switches, setting groups, hints, warning banner); follows system light/dark via `color-scheme: light dark` + semantic CSS custom properties overridden in a `@media (prefers-color-scheme: dark)` block (brand `#ff6600` unchanged across schemes)
+- `entrypoints/popup/` - WXT HTML entrypoint: `index.html` (mounts `#app`) + `main.tsx` (`createRoot(...).render(<App/>)`) + `App.tsx` (the popup component) + co-located `popup.css`
+- `entrypoints/popup/App.tsx` - Settings popup UI with grouped layout: dependent settings (new-post toggle + highlight duration) share a `fieldset.hns-group`, independent settings get separate groups; each setting has a `hns-hint` description; shows a warning banner when layout detection fails. Includes per-sort toggles for Velocity and Heat, plus the two comment-highlighting toggles (OP highlighting, marked-user highlighting) in their own fieldset (all default on)
+- `entrypoints/popup/popup.css` - Popup styles (toggle switches, setting groups, hints, warning banner); follows system light/dark via `color-scheme: light dark` + semantic CSS custom properties overridden in a `@media (prefers-color-scheme: dark)` block (brand `#ff6600` unchanged across schemes)
 - Uses `useSettingsStorage` helper — a typed wrapper around `useStorage` that auto-resolves defaults from `SETTINGS_DEFAULTS`
 
 ### Component Structure
@@ -104,7 +104,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
   - Tracks install timestamp and sort count in `chrome.storage.sync`
   - Shows a dismissible speech-bubble toast below the sort menu after 7 days of use OR 20 sorts
   - Dismissal persists to storage (shown at most once)
-  - Persistent review link always visible in extension popup (`popup.tsx`)
+  - Persistent review link always visible in extension popup (`entrypoints/popup/App.tsx`)
 
 ### Constants
 
@@ -134,15 +134,15 @@ Use `~` prefix for imports from project root (e.g., `~app/components/ControlPane
 
 ## Linting
 
-- **ESLint**: `eslint.config.ts` with TypeScript and React Hooks plugins
+- **Biome**: `biome.json` (recommended ruleset; `noNonNullAssertion` and `noCommaOperator` off)
 - **Prettier**: `.prettierrc.mjs` with single quotes, trailing commas, 120 char width
-- **Pre-commit hook**: `simple-git-hooks` + `lint-staged` runs ESLint on `*.{ts,tsx}` and Prettier on all files
+- **Pre-commit hook**: `simple-git-hooks` + `lint-staged` runs `biome lint` on `*.{ts,tsx}` and Prettier on all files
 - Run `bun run prepare` after cloning to install git hooks
 
 ## Code Style
 
 - Prettier configured with single quotes, trailing commas, 120 char width
-- Import order: builtins, third-party, @plasmo, @plasmohq, ~aliases, relative
+- Import order: builtins, third-party (incl. WXT's `#imports`), @plasmohq, ~aliases, relative
 
 ## Testing
 
@@ -178,8 +178,8 @@ Chrome Web Store screenshots are auto-generated using Playwright:
 - `scripts/screenshots/constants.ts` - Variant configs (sort type, title, subtitle, filename), overlay/arrow styles, and the real-Chrome fingerprint both generators launch with (`channel: 'chrome'`, matching UA + `sec-ch-ua` client hints, `CHROME_MAJOR`) to avoid HN's automation 429s. Bump `CHROME_MAJOR` with the installed Chrome
 - `scripts/screenshots/htmlCache.ts` - `gotoCached` serves HN's top-level document from a local daily cache (`scripts/screenshots/.hn-cache/`, gitignored) so repeated generator runs don't trip HN's 429 rate-limiting on the `/item` endpoint; sub-resources still load live so pages stay styled. Shared by both generators
 - `scripts/screenshots/overlays.ts` - Injects descriptive overlay cards and pointer arrows into the page
-- `scripts/screenshots/paths.ts` - Resolves build output and image directory paths (the `content.*` sort bundle **and** the `comments.*` comment bundle)
-- `scripts/screenshots/comments.ts` - Shared item-page helper used by both generators: `injectCommentsBundle` (inject the built `comments.*` JS/CSS onto an `item?id=` page, wait for a `.hns-mark-dot` to confirm it ran) and `markUser` (click a user's mark dot via its `data-hns-user` attribute)
+- `scripts/screenshots/paths.ts` - Resolves build output (`.output/chrome-mv3`) and image directory paths, globbing WXT's emitted `content-scripts/hn-sort.{js,css}` sort bundle **and** `content-scripts/comments.{js,css}` comment bundle (fail-loud if missing)
+- `scripts/screenshots/comments.ts` - Shared item-page helper used by both generators: `injectCommentsBundle` (inject the built `content-scripts/comments.{js,css}` onto an `item?id=` page, wait for a `.hns-mark-dot` to confirm it ran) and `markUser` (click a user's mark dot via its `data-hns-user` attribute)
 - `scripts/screenshots/types.ts` - `VariantConfig` type (a `commentThreadId`/`markUser` pair routes a variant through the item-page branch instead of the homepage sort path)
 
 Most variants sort HN's homepage, but the last one (`screen_comment_highlight.png`) navigates to a curated `item?id=` thread (`COMMENT_THREAD_ID` in `constants.ts`), injects the comment bundle, and marks a user to show the OP badge + marked-user tint. It stays **last** because once the loop leaves the homepage the sort panel is gone, so any homepage variant after it would hang.

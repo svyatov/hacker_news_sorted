@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.6.2] - 2026-07-14
+
+### Changed
+
+- Migrate the build tooling from Plasmo to WXT, upgrade to TypeScript 7, and switch linting from ESLint to Biome — an internal toolchain modernization with no change to any user-facing feature
+
 ## [2.6.1] - 2026-07-14
 
 ### Changed

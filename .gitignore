@@ -26,10 +26,7 @@ out/
 build/
 dist/
 
-# plasmo
-.plasmo
-
-# wxt (spike/wxt branch)
+# wxt
 .output
 .wxt
 

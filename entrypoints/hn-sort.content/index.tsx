@@ -1,17 +1,15 @@
-import { createShadowRootUi, defineContentScript } from '#imports';
+import { createIntegratedUi, defineContentScript } from '#imports';
 import { createRoot, type Root } from 'react-dom/client';
 
 import ControlPanel from '~app/components/ControlPanel';
 import { CONTROL_PANEL_ROOT_ID, SETTINGS_KEYS } from '~app/constants';
 import { getControlPanelParentElement, getTableBody } from '~app/utils/selectors';
 
-import { runStorageProbes } from './probes';
+import './content.css';
 
-import './style.css';
-
-// Port of content.tsx's Plasmo mount lifecycle to WXT's createShadowRootUi (U2, R2, KTD-2).
-// Functionally equivalent: wait for HN's header, verify the list table, set layout status,
-// then mount the real ControlPanel into a shadow root.
+// Port of content.tsx's Plasmo mount lifecycle to WXT (U2, R5/R6/R11, KTD-1). Light-DOM
+// integrated UI + page-global CSS — not a shadow root — so content.css keeps styling both the
+// panel and HN's own list rows (sort-highlight, new-post fade), matching the current behavior.
 
 const LAYOUT_TIMEOUT_MS = 3000;
 
@@ -20,7 +18,7 @@ const setLayoutStatus = (ok: boolean) => {
 };
 
 // Resolve HN's header cell (the panel parent), waiting via MutationObserver if it isn't in the DOM
-// yet. Mirrors content.tsx:40-67 (getRootContainer); resolves null if it never appears.
+// yet. Mirrors content.tsx's getRootContainer; resolves null if it never appears within the timeout.
 const waitForPanelParent = (): Promise<HTMLElement | null> =>
   new Promise((resolve) => {
     const existing = getControlPanelParentElement();
@@ -45,32 +43,16 @@ const waitForPanelParent = (): Promise<HTMLElement | null> =>
 
 export default defineContentScript({
   matches: ['*://news.ycombinator.com/*'],
-  // Item/comment pages have no list table (mirrors content.tsx:12).
+  // Item/comment pages have no list table; the panel would render nothing and falsely flag a broken
+  // layout. The comment-highlight script (comments.content) covers those pages instead.
   excludeMatches: ['*://news.ycombinator.com/item*'],
-  // Inject the bundled style.css into the shadow root, not the page.
-  cssInjectionMode: 'ui',
+  // Page-global stylesheet (like Plasmo's `css: ['content.css']`): content.css styles both the panel
+  // and HN's own list rows, so it's injected page-wide via the manifest, not into a shadow root (KTD-1).
+  cssInjectionMode: 'manifest',
   async main(ctx) {
-    document.documentElement.dataset.hnsSpikeRan = '1';
-    console.log('[HNS spike] content script main() running at', location.href);
-
-    // Gate B storage proofs (U4/U5). Run first, in a real extension context, and publish results
-    // for the verify harness. Wrapped so a probe failure never blocks the mount.
-    try {
-      const probes = await runStorageProbes();
-      // Stash on a DOM attribute (shared across content-script/main worlds, unlike window).
-      document.documentElement.dataset.hnsProbes = JSON.stringify(probes);
-      console.log('[HNS spike] storage probes:', JSON.stringify(probes));
-    } catch (err) {
-      document.documentElement.dataset.hnsProbes = JSON.stringify({ error: String(err) });
-      console.log('[HNS spike] storage probes ERROR:', String(err));
-    }
-    document.documentElement.dataset.hnsProbesDone = '1';
-
     const parent = await waitForPanelParent();
-    document.documentElement.dataset.hnsSpikeParent = String(!!parent);
-    console.log('[HNS spike] parent found?', !!parent, 'tableBody?', !!getTableBody());
 
-    // Layout check mirrors content.tsx verifyAndInject: the list table body must be present too,
+    // Layout check mirrors content.tsx's verifyAndInject: the list table body must be present too,
     // else flag broken layout and render nothing.
     if (!parent || !getTableBody()) {
       setLayoutStatus(false);
@@ -79,14 +61,17 @@ export default defineContentScript({
     setLayoutStatus(true);
 
     let root: Root | undefined;
-    const ui = await createShadowRootUi(ctx, {
-      name: 'hns-sort-panel',
+    const ui = createIntegratedUi(ctx, {
       position: 'inline',
       anchor: parent,
       // Prepend into HN's header cell, mirroring injectRootElement's parentElement.prepend.
       append: 'first',
-      onMount: (container) => {
-        root = createRoot(container);
+      // Reproduce content.tsx's hand-prepended <span id="hns-control-panel"> (KTD-1) so content.css's
+      // #hns-control-panel rule and ControlPanel's data-sort-count publish still resolve.
+      tag: 'span',
+      onMount: (wrapper) => {
+        wrapper.id = CONTROL_PANEL_ROOT_ID;
+        root = createRoot(wrapper);
         root.render(<ControlPanel />);
         return root;
       },
@@ -95,9 +80,6 @@ export default defineContentScript({
         root = undefined;
       },
     });
-    // Carry the panel root id onto the shadow host (it lives in the light DOM) so ControlPanel's
-    // document.getElementById(CONTROL_PANEL_ROOT_ID) data-sort-count publish still resolves.
-    ui.shadowHost.id = CONTROL_PANEL_ROOT_ID;
     ui.mount();
   },
 });
