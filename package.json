@@ -30,8 +30,8 @@
   },
   "dependencies": {
     "@plasmohq/storage": "^1.15.0",
-    "baseline-browser-mapping": "^2.11.12",
-    "caniuse-lite": "^1.0.30001806",
+    "baseline-browser-mapping": "^2.11.19",
+    "caniuse-lite": "^1.0.30001810",
     "plasmo": "0.90.5",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
@@ -42,14 +42,14 @@
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^14.6.3",
-    "@types/chrome": "^0.2.5",
+    "@testing-library/user-event": "^14.6.6",
+    "@types/chrome": "^0.2.7",
     "@types/node": "^25.9.3",
     "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.4",
-    "@vitejs/plugin-react": "^6.0.5",
-    "@vitest/coverage-v8": "^4.1.10",
-    "eslint": "^10.8.0",
+    "@types/react-dom": "^19.2.5",
+    "@vitejs/plugin-react": "^6.1.0",
+    "@vitest/coverage-v8": "^4.1.11",
+    "eslint": "^10.9.1",
     "eslint-plugin-react-hooks": "^7.1.1",
     "jiti": "^2.7.0",
     "jsdom": "^29.1.1",
@@ -58,9 +58,9 @@
     "prettier": "^3.9.6",
     "simple-git-hooks": "^2.13.1",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.66.0",
-    "vite": "^8.2.0",
-    "vitest": "^4.1.10"
+    "typescript-eslint": "^8.68.0",
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11"
   },
   "manifest": {
     "host_permissions": [
