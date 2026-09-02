@@ -7,6 +7,8 @@ export default defineConfig({
   alias: {
     '~app': resolve(import.meta.dirname, 'app'),
   },
+  // Package `name` is the typo'd `hacked_news_sorted`; keep the zip filename sane.
+  zip: { name: 'hacker-news-sorted' },
   manifest: {
     // WXT does not read package.json `displayName`; `name` would otherwise default to the
     // (typo'd, lowercase) package `name`. Set it explicitly (KTD-5). `version` auto-reads from package.json.

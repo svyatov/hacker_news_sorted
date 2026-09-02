@@ -49,7 +49,7 @@ No data leaves your browser. No analytics, no tracking, no external API calls. T
 Source code: https://github.com/svyatov/hacker_news_sorted
 
 Recent changes:
-2026-07-14 - v2.6.2 - Behind-the-scenes modernization for faster, more reliable updates
+2026-09-02 - v2.6.2 - Behind-the-scenes modernization; fixed a false layout warning on pages without a story list
 2026-07-14 - v2.6.1 - Refreshed the store description to cover all features
 2026-07-14 - v2.6.0 - Velocity & Heat sorts, comment author highlighting, responsive menu, dark-mode settings
 2026-03-24 - v2.5.0 - True time ago, new post fade cooldown, review prompt, redesigned settings

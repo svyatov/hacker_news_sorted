@@ -1,8 +1,7 @@
 import { readdirSync } from 'node:fs';
 import path from 'node:path';
 
-// @ts-expect-error Bun-specific API
-const ROOT_DIR = path.resolve(import.meta.dir, '../..');
+const ROOT_DIR = path.resolve(import.meta.dirname, '../..');
 const BUILD_DIR = path.join(ROOT_DIR, '.output/chrome-mv3');
 // WXT emits content scripts under content-scripts/<entrypoint>.{js,css} (verified from a real build, KTD-8).
 const CONTENT_SCRIPTS_DIR = path.join(BUILD_DIR, 'content-scripts');

@@ -2,7 +2,7 @@ import { createIntegratedUi, defineContentScript } from '#imports';
 import { createRoot, type Root } from 'react-dom/client';
 
 import ControlPanel from '~app/components/ControlPanel';
-import { CONTROL_PANEL_ROOT_ID, SETTINGS_KEYS } from '~app/constants';
+import { CONTROL_PANEL_ROOT_ID, SETTINGS_KEYS, SORT_PANEL_EXCLUDE_MATCHES } from '~app/constants';
 import { waitForPanelParent } from '~app/utils/layout';
 import { getTableBody } from '~app/utils/selectors';
 
@@ -18,29 +18,12 @@ const setLayoutStatus = (ok: boolean) => {
 
 export default defineContentScript({
   matches: ['*://news.ycombinator.com/*'],
-  // Pages with HN's header but no story list would render nothing and falsely flag a broken layout, so
-  // the panel skips them: comment/thread views (item — also covered by comments.content — plus threads,
-  // newcomments, context) and form/profile pages (submit, reply, login, forgot, changepw, newpoll, user,
-  // and the x expired-link notice). Every excluded route is listless, so nothing sortable is lost — story
-  // lists (submitted/favorites/upvoted/front/ask/show/...) are intentionally NOT excluded. `submit` has no
-  // trailing `*` so it can't swallow the `submitted` story list.
-  excludeMatches: [
-    '*://news.ycombinator.com/item*',
-    '*://news.ycombinator.com/threads*',
-    '*://news.ycombinator.com/newcomments*',
-    '*://news.ycombinator.com/context*',
-    '*://news.ycombinator.com/submit',
-    '*://news.ycombinator.com/reply*',
-    '*://news.ycombinator.com/login*',
-    '*://news.ycombinator.com/forgot*',
-    '*://news.ycombinator.com/changepw*',
-    '*://news.ycombinator.com/newpoll*',
-    '*://news.ycombinator.com/user*',
-    '*://news.ycombinator.com/x*',
-  ],
+  // Listless pages (see SORT_PANEL_EXCLUDE_MATCHES) never load the panel, so they can't falsely flag a broken layout.
+  excludeMatches: SORT_PANEL_EXCLUDE_MATCHES,
   // Page-global stylesheet (like Plasmo's `css: ['content.css']`): content.css styles both the panel
   // and HN's own list rows, so it's injected page-wide via the manifest, not into a shadow root (KTD-1).
   cssInjectionMode: 'manifest',
+  noScriptStartedPostMessage: true,
   async main(ctx) {
     const parent = await waitForPanelParent();
 

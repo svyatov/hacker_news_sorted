@@ -14,7 +14,7 @@
     "test:integration": "vitest run app/utils/selectors.integration.test.ts app/utils/comments.integration.test.ts",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "lint": "biome lint . && prettier --check .",
+    "lint": "biome lint . && prettier --check . && tsc --noEmit",
     "fixture:update": "bun app/__fixtures__/updateFixture.ts",
     "screenshots": "bun scripts/generate-screenshots.ts",
     "demo": "bun scripts/generate-demo.ts",

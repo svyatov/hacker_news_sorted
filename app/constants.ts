@@ -79,7 +79,7 @@ export const CSS_CLASSES = {
   REVIEW_LINK: 'hns-review-link',
   REVIEW_SUB: 'hns-review-sub',
   REVIEW_CLOSE: 'hns-review-close',
-  // Comment-page highlighting (contents/comments.ts + comments.css)
+  // Comment-page highlighting (entrypoints/comments.content + comments.css)
   OP_COMMENT: 'hns-op-comment',
   OP_BADGE: 'hns-op-badge',
   MARK_DOT: 'hns-mark-dot',
@@ -146,3 +146,32 @@ export const HN_CLASSES = {
   FATITEM: 'fatitem',
   TITLELINE: 'titleline',
 } as const;
+
+// Pages that carry HN's header but no story list. The sort panel skips them (manifest exclude_matches)
+// because it would render nothing there and falsely flag a broken layout: comment/thread views (item,
+// threads, newcomments, context, bestcomments, noobcomments, highlights), form/profile pages (submit,
+// reply, login, forgot, changepw, newpoll, user, the x expired-link notice), list indexes (lists, leaders),
+// and the static help pages (*.html, formatdoc). Story lists (submitted, best, noobstories, front, ...)
+// must stay unmatched: `submit` has no trailing `*` so it can't swallow `submitted`, and comment routes
+// use their full name so `best*`/`noob*` never appear.
+export const SORT_PANEL_EXCLUDE_MATCHES: string[] = [
+  '*://news.ycombinator.com/item*',
+  '*://news.ycombinator.com/threads*',
+  '*://news.ycombinator.com/newcomments*',
+  '*://news.ycombinator.com/context*',
+  '*://news.ycombinator.com/bestcomments*',
+  '*://news.ycombinator.com/noobcomments*',
+  '*://news.ycombinator.com/highlights*',
+  '*://news.ycombinator.com/submit',
+  '*://news.ycombinator.com/reply*',
+  '*://news.ycombinator.com/login*',
+  '*://news.ycombinator.com/forgot*',
+  '*://news.ycombinator.com/changepw*',
+  '*://news.ycombinator.com/newpoll*',
+  '*://news.ycombinator.com/user*',
+  '*://news.ycombinator.com/x*',
+  '*://news.ycombinator.com/lists*',
+  '*://news.ycombinator.com/leaders*',
+  '*://news.ycombinator.com/*.html',
+  '*://news.ycombinator.com/formatdoc*',
+];

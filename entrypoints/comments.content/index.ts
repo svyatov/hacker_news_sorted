@@ -12,6 +12,7 @@ import './comments.css';
 export default defineContentScript({
   matches: ['*://news.ycombinator.com/item*'],
   cssInjectionMode: 'manifest',
+  noScriptStartedPostMessage: true,
   main() {
     const storage = new Storage();
 

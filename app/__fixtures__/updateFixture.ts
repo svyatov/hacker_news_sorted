@@ -5,8 +5,8 @@
  * This is similar to VCR in Ruby - it captures real HTML for testing.
  */
 
-import { writeFileSync } from 'fs';
-import { join } from 'path';
+import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 const HOMEPAGE_URL = 'https://news.ycombinator.com';
 
