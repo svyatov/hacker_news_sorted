@@ -18,8 +18,7 @@ export function initBadge(): void {
 
   // React to layout status changes.
   chrome.storage.sync.onChanged.addListener((changes) => {
-    if (SETTINGS_KEYS.LAYOUT_OK in changes) {
-      updateBadge(changes[SETTINGS_KEYS.LAYOUT_OK].newValue !== false);
-    }
+    const change = changes[SETTINGS_KEYS.LAYOUT_OK];
+    if (change) updateBadge(change.newValue !== false);
   });
 }

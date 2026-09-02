@@ -97,7 +97,7 @@ describe('presenters', () => {
 
       const highlighted = infoRow.querySelectorAll(`.${CSS_CLASSES.HIGHLIGHT}`);
       expect(highlighted.length).toBe(1);
-      expect(highlighted[0].classList.contains(HN_CLASSES.SCORE)).toBe(true);
+      expect(highlighted[0]!.classList.contains(HN_CLASSES.SCORE)).toBe(true);
     });
   });
 

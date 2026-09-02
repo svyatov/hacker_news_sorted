@@ -62,7 +62,7 @@ describe('sorters', () => {
       const singleRow = [createMockRow({ originalIndex: 0, points: 100 })];
       const sorted = sortRows(singleRow, 'points');
       expect(sorted).toHaveLength(1);
-      expect(sorted[0].points).toBe(100);
+      expect(sorted[0]!.points).toBe(100);
     });
 
     it('should handle equal values', () => {

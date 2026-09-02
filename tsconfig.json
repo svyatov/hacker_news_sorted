@@ -3,8 +3,6 @@
   // typechecks cleanly under TypeScript 7, unlike the old Plasmo tsconfig base).
   "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
-    // WXT 0.21 turned this on in its generated base; it flags ~18 array-index sites. Off until fixed separately.
-    "noUncheckedIndexedAccess": false,
     "jsx": "react-jsx",
     "jsxImportSource": "react",
     // Force the ambient chrome global (@types/chrome) that the entrypoints use, plus node for scripts.

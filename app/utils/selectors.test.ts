@@ -31,7 +31,7 @@ describe('selectors', () => {
       const titleRows = getTitleRows(tableBody);
       expect(titleRows.length).toBe(POST_COUNT);
       for (let i = 0; i < POST_COUNT; i++) {
-        expect(titleRows[i].getAttribute('data-row')).toBe(String(i * ROWS_PER_POST + 1));
+        expect(titleRows[i]!.getAttribute('data-row')).toBe(String(i * ROWS_PER_POST + 1));
       }
     });
 
@@ -39,7 +39,7 @@ describe('selectors', () => {
       const infoRows = getInfoRows(tableBody);
       expect(infoRows.length).toBe(POST_COUNT);
       for (let i = 0; i < POST_COUNT; i++) {
-        expect(infoRows[i].getAttribute('data-row')).toBe(String(i * ROWS_PER_POST + 2));
+        expect(infoRows[i]!.getAttribute('data-row')).toBe(String(i * ROWS_PER_POST + 2));
       }
     });
 
@@ -47,7 +47,7 @@ describe('selectors', () => {
       const spacerRows = getSpacerRows(tableBody);
       expect(spacerRows.length).toBe(POST_COUNT);
       for (let i = 0; i < POST_COUNT; i++) {
-        expect(spacerRows[i].getAttribute('data-row')).toBe(String(i * ROWS_PER_POST + 3));
+        expect(spacerRows[i]!.getAttribute('data-row')).toBe(String(i * ROWS_PER_POST + 3));
       }
     });
 

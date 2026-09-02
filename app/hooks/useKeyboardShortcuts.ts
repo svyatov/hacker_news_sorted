@@ -42,7 +42,7 @@ export const useKeyboardShortcuts = ({
   // (skipped before conflict detection, so pressing it neither sorts nor flags a conflict).
   const activeKeys = useMemo(() => {
     const enabled = new Set(enabledSortOptions.map((option) => option.sortBy));
-    return new Set<string>(TARGET_KEYS.filter((key) => enabled.has(KEY_TO_SORT[key])));
+    return new Set<string>(TARGET_KEYS.filter((key) => enabled.has(KEY_TO_SORT[key]!)));
   }, [enabledSortOptions]);
 
   // Reconcile recorded conflicts with the live key set: when a sort is disabled its key is no
@@ -96,7 +96,7 @@ export const useKeyboardShortcuts = ({
 
       // Handle the sort
       event.preventDefault();
-      onSort(KEY_TO_SORT[key]);
+      onSort(KEY_TO_SORT[key]!);
     },
     [onSort, activeKeys],
   );
