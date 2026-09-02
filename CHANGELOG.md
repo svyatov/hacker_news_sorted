@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Update all dependencies to their latest versions, including WXT 0.21, jsdom 30, and jest-dom 7 (internal toolchain update with no change to any user-facing feature)
+
 ### Fixed
 
 - The broken-layout warning badge no longer appears on Hacker News pages that have no story list (submit, reply, login, password, poll, user profiles, and comment/thread views) — it now only signals a genuinely broken layout on pages where sorting applies

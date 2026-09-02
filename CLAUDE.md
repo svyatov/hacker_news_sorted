@@ -9,7 +9,7 @@ Hacker News Sorted is a Chrome extension that adds sorting capabilities to Hacke
 ## Commands
 
 ```bash
-bun dev            # Start WXT dev server (dev build at .output/chrome-mv3-dev)
+bun dev            # Start WXT dev server (dev build at .output/chrome-mv3-dev; load it as an unpacked extension manually, WXT 0.21 only auto-opens a browser if web-ext is installed)
 bun run build      # Production build (wxt build → .output/chrome-mv3)
 bun run package    # Package extension for distribution (wxt zip)
 bun run release    # Build and package
