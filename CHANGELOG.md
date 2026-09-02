@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.6.2] - 2026-09-02
+
+### Changed
+
+- Migrate the build tooling from Plasmo to WXT, upgrade to TypeScript 7, and switch linting from ESLint to Biome — an internal toolchain modernization with no change to any user-facing feature
+- Update all dependencies to their latest versions, including WXT 0.21, jsdom 30, and jest-dom 7 (internal toolchain update with no change to any user-facing feature)
+
+### Fixed
+
+- The broken-layout warning badge no longer appears on Hacker News pages that have no story list (submit, reply, login, password, poll, user profiles, comment/thread views, leaderboards, list indexes, and the static help pages); it now only signals a genuinely broken layout on pages where sorting applies
+- Fixed a race where the broken-layout badge could switch on even after the sort menu mounted successfully on a slow-loading page
+
 ## [2.6.1] - 2026-07-14
 
 ### Changed

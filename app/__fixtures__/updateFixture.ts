@@ -5,8 +5,8 @@
  * This is similar to VCR in Ruby - it captures real HTML for testing.
  */
 
-import { writeFileSync } from 'fs';
-import { join } from 'path';
+import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 const HOMEPAGE_URL = 'https://news.ycombinator.com';
 
@@ -19,7 +19,7 @@ const HOMEPAGE_URL = 'https://news.ycombinator.com';
 export function pickTopCommentedItemId(homepageHtml: string): string {
   const matches = [...homepageHtml.matchAll(/item\?id=(\d+)">(\d+)&nbsp;comments/g)];
   if (matches.length === 0) throw new Error('No commented stories found on homepage');
-  return matches.reduce((best, m) => (Number(m[2]) > Number(best[2]) ? m : best))[1];
+  return matches.reduce((best, m) => (Number(m[2]) > Number(best[2]) ? m : best))[1]!;
 }
 
 // HN 429s blank/bot user agents and concurrent bursts, so send a browser UA and back off on 429.

@@ -17,15 +17,16 @@ export const useParsedRows = (): { parsedRows: ParsedRow[]; footerRows: HTMLElem
 
     const footer = [titleRows.pop(), infoRows.pop()].filter((row): row is HTMLElement => row !== undefined);
 
-    const parsed = titleRows.map((_titleRow, index) => {
+    const parsed = titleRows.map((title, index) => {
+      const info = infoRows[index]!;
       return {
         originalIndex: index,
-        title: titleRows[index],
-        info: infoRows[index],
-        spacer: spacerRows[index],
-        points: getPoints(infoRows[index]),
-        time: getTime(infoRows[index]),
-        comments: getComments(infoRows[index]),
+        title,
+        info,
+        spacer: spacerRows[index]!,
+        points: getPoints(info),
+        time: getTime(info),
+        comments: getComments(info),
       };
     });
 

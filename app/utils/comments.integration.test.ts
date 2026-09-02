@@ -29,6 +29,6 @@ describe('comment selectors (integration with live HN item HTML)', () => {
   it('resolves getStoryAuthor and getCommentAuthor against real markup', () => {
     loadAndSetupFixture('hn-item.html');
     expect(getStoryAuthor()).toBeTruthy();
-    expect(getCommentAuthor(getCommentRows()[0])).toBeTruthy();
+    expect(getCommentAuthor(getCommentRows()[0]!)).toBeTruthy();
   });
 });

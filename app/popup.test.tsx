@@ -15,7 +15,7 @@ vi.mock('@plasmohq/storage/hook', () => ({
 }));
 
 // Lazy import so mock is in place
-const { default: Popup } = await import('~/popup');
+const { default: Popup } = await import('~/entrypoints/popup/App');
 
 describe('Popup', () => {
   it('should not show warning when layout is ok', () => {
@@ -95,7 +95,7 @@ describe('Popup', () => {
     storageValues = { [SETTINGS_KEYS.VELOCITY_ENABLED]: true };
     render(<Popup />);
 
-    const setVelocity = setters[SETTINGS_KEYS.VELOCITY_ENABLED];
+    const setVelocity = setters[SETTINGS_KEYS.VELOCITY_ENABLED]!;
     setVelocity.mockClear();
     fireEvent.click(screen.getByLabelText('Velocity sort'));
     expect(setVelocity).toHaveBeenCalledWith(false);
@@ -113,7 +113,7 @@ describe('Popup', () => {
     storageValues = { [SETTINGS_KEYS.OP_HIGHLIGHT]: true };
     render(<Popup />);
 
-    const setOp = setters[SETTINGS_KEYS.OP_HIGHLIGHT];
+    const setOp = setters[SETTINGS_KEYS.OP_HIGHLIGHT]!;
     setOp.mockClear();
     fireEvent.click(screen.getByLabelText('Highlight OP comments'));
     expect(setOp).toHaveBeenCalledWith(false);
@@ -123,7 +123,7 @@ describe('Popup', () => {
     storageValues = { [SETTINGS_KEYS.MARK_USER_HIGHLIGHT]: true };
     render(<Popup />);
 
-    const setMark = setters[SETTINGS_KEYS.MARK_USER_HIGHLIGHT];
+    const setMark = setters[SETTINGS_KEYS.MARK_USER_HIGHLIGHT]!;
     setMark.mockClear();
     fireEvent.click(screen.getByLabelText('Marked-user highlighting'));
     expect(setMark).toHaveBeenCalledWith(false);

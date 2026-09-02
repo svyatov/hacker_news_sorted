@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SETTINGS_KEYS } from '~app/constants';
+import { initBadge } from '~app/utils/badge';
 
 const setBadgeText = vi.fn();
 const setBadgeBackgroundColor = vi.fn();
@@ -24,7 +25,6 @@ vi.stubGlobal('chrome', {
 describe('background service worker', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.resetModules();
   });
 
   it('should set warning badge on startup when layout is broken', async () => {
@@ -32,7 +32,7 @@ describe('background service worker', () => {
       cb({ [SETTINGS_KEYS.LAYOUT_OK]: false });
     });
 
-    await import('~/background');
+    initBadge();
 
     expect(setBadgeText).toHaveBeenCalledWith({ text: ':(' });
     expect(setBadgeBackgroundColor).toHaveBeenCalledWith({ color: '#E05050' });
@@ -43,7 +43,7 @@ describe('background service worker', () => {
       cb({ [SETTINGS_KEYS.LAYOUT_OK]: true });
     });
 
-    await import('~/background');
+    initBadge();
 
     expect(setBadgeText).not.toHaveBeenCalled();
   });
@@ -53,7 +53,7 @@ describe('background service worker', () => {
       cb({ [SETTINGS_KEYS.LAYOUT_OK]: true });
     });
 
-    await import('~/background');
+    initBadge();
 
     storageChangeListener({ [SETTINGS_KEYS.LAYOUT_OK]: { newValue: false } });
 
@@ -65,7 +65,7 @@ describe('background service worker', () => {
       cb({ [SETTINGS_KEYS.LAYOUT_OK]: false });
     });
 
-    await import('~/background');
+    initBadge();
     vi.clearAllMocks();
 
     storageChangeListener({ [SETTINGS_KEYS.LAYOUT_OK]: { newValue: true } });

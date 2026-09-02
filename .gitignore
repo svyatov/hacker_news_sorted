@@ -26,8 +26,9 @@ out/
 build/
 dist/
 
-# plasmo
-.plasmo
+# wxt
+.output
+.wxt
 
 # typescript
 *.tsbuildinfo
@@ -39,3 +40,4 @@ scripts/screenshots/.hn-cache/
 .compound-engineering/
 docs/
 CONCEPTS.md
+graphify-out/

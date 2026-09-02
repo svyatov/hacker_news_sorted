@@ -27,7 +27,7 @@ export async function injectOverlayCard(
 
       if (titleNote) {
         const noteEl = document.createElement('span');
-        noteEl.style.cssText = styles.TITLE_NOTE + ' margin-left: 12px;';
+        noteEl.style.cssText = `${styles.TITLE_NOTE} margin-left: 12px;`;
         noteEl.textContent = titleNote;
         titleEl.appendChild(noteEl);
       }
