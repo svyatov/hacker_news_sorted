@@ -7,11 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-
-- Sorting by Time and Velocity and the True Time Ago correction work again after Hacker News changed its timestamp markup on 2026-08-27 (the Unix timestamp was dropped from the age tooltip, so every post was parsed as age zero)
-
-## [2.6.2] - 2026-09-02
+## [2.6.2] - 2026-09-06
 
 ### Changed
 
@@ -22,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The broken-layout warning badge no longer appears on Hacker News pages that have no story list (submit, reply, login, password, poll, user profiles, comment/thread views, leaderboards, list indexes, and the static help pages); it now only signals a genuinely broken layout on pages where sorting applies
 - Fixed a race where the broken-layout badge could switch on even after the sort menu mounted successfully on a slow-loading page
+- Sorting by Time and Velocity and the True Time Ago correction work again after Hacker News changed its timestamp markup on 2026-08-27 (the Unix timestamp was dropped from the age tooltip, so every post was parsed as age zero)
 
 ## [2.6.1] - 2026-07-14
 
