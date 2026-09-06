@@ -1,8 +1,6 @@
 import { stringToNumber } from '~app/utils/converters';
 import { getCommentsElement, getPointsElement, getTimeElement } from '~app/utils/selectors';
 
-const TITLE_UNIX_TS_INDEX = 1;
-
 export const getPoints = (infoRow: HTMLElement): number => {
   const pointsElement = getPointsElement(infoRow);
 
@@ -20,7 +18,12 @@ export const getTime = (infoRow: HTMLElement): number => {
   const title = timeElement.getAttribute('title');
   if (!title) return 0;
 
-  return stringToNumber(title.split(' ')[TITLE_UNIX_TS_INDEX] ?? '');
+  // HN title is an ISO datetime ("2026-09-06T07:21:06.000000Z"); older markup appended a Unix timestamp
+  const [iso, unix] = title.split(' ');
+  if (unix) return stringToNumber(unix);
+
+  const ms = Date.parse(iso ?? '');
+  return Number.isNaN(ms) ? 0 : Math.floor(ms / 1000);
 };
 
 export const getComments = (infoRow: HTMLElement): number => {
