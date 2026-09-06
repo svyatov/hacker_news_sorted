@@ -59,13 +59,13 @@ describe('selectors (integration with live HN HTML)', () => {
       minWithElement,
     );
 
-    // Canary: validate HN's .age title attribute format ("ISO_DATETIME UNIX_TIMESTAMP")
-    const titleFormatRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2} \d+$/;
+    // Canary: validate HN's .age title attribute format ("ISO_DATETIME.microsecondsZ", since 2026-08-27)
+    const titleFormatRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
     infoRows.forEach((row) => {
       const ageEl = getTimeElement(row);
       if (!ageEl) return;
       const title = ageEl.getAttribute('title');
-      expect(title, 'age title should match "ISO UNIX" format').toMatch(titleFormatRegex);
+      expect(title, 'age title should be an ISO datetime').toMatch(titleFormatRegex);
     });
 
     // Canary: validate HN's .age text format ("X minute(s)/hour(s)/day(s) ago")

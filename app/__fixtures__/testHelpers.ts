@@ -63,7 +63,7 @@ const commentRow = ({ id, author, collapsed = false, indent = 0 }: CommentSpec):
       <td class="ind" indent="${indent}"></td>
       <td class="default">
         <div><span class="${HN_CLASSES.COMHEAD}">${userLink(author)}
-          <span class="${HN_CLASSES.AGE}" title="2026-07-06T18:00:00 1783363200"><a href="item?id=${id}">1 hour ago</a></span>
+          <span class="${HN_CLASSES.AGE}" title="2026-07-06T18:00:00.000000Z"><a href="item?id=${id}">1 hour ago</a></span>
         </span></div>
         <div class="comment"><div class="commtext c00">comment ${id}</div></div>
       </td>
@@ -79,12 +79,12 @@ export const setupCommentThread = (options: CommentThreadOptions = {}): void => 
           <td class="title"><span class="${HN_CLASSES.TITLELINE}"><a href="https://example.com">A Story Title</a></span></td>
         </tr>
         <tr><td class="subtext"><span class="subline">${userLink(storyAuthor)}
-          <span class="${HN_CLASSES.AGE}" title="2026-07-06T16:00:00 1783356000">3 hours ago</span></span></td></tr>
+          <span class="${HN_CLASSES.AGE}" title="2026-07-06T16:00:00.000000Z">3 hours ago</span></span></td></tr>
       </table>`
     : `<table class="${HN_CLASSES.FATITEM}">
         <tr class="${HN_CLASSES.ATHING}" id="permalink">
           <td class="default"><div><span class="${HN_CLASSES.COMHEAD}">${userLink(storyAuthor)}
-            <span class="${HN_CLASSES.AGE}" title="2026-07-06T16:00:00 1783356000">3 hours ago</span></span></div></td>
+            <span class="${HN_CLASSES.AGE}" title="2026-07-06T16:00:00.000000Z">3 hours ago</span></span></div></td>
         </tr>
       </table>`;
 

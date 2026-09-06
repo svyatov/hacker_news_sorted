@@ -46,8 +46,14 @@ describe('parsers', () => {
   });
 
   describe('getTime', () => {
-    it('should extract unix timestamp from title attribute', () => {
-      // HN title format: "ISO_DATETIME UNIX_TIMESTAMP"
+    it('should parse the ISO datetime from title attribute', () => {
+      // HN title format since 2026-08-27: "ISO_DATETIME.microsecondsZ"
+      infoRow.innerHTML = `<td class="${HN_CLASSES.SUBTEXT}"><span><span class="${HN_CLASSES.AGE}" title="2026-01-11T18:49:32.000000Z">3 hours ago</span></span></td>`;
+      expect(getTime(infoRow)).toBe(1768157372);
+    });
+
+    it('should prefer the unix timestamp in the legacy title format', () => {
+      // Legacy HN title format: "ISO_DATETIME UNIX_TIMESTAMP"
       infoRow.innerHTML = `<td class="${HN_CLASSES.SUBTEXT}"><span><span class="${HN_CLASSES.AGE}" title="2026-01-11T18:49:32 1768157372">3 hours ago</span></span></td>`;
       expect(getTime(infoRow)).toBe(1768157372);
     });
@@ -68,7 +74,7 @@ describe('parsers', () => {
     });
 
     it('should handle promo posts with different structure', () => {
-      infoRow.innerHTML = `<td class="${HN_CLASSES.SUBTEXT}"><span class="${HN_CLASSES.AGE}" title="2026-01-11T18:49:32 1768157372">3 hours ago</span></td>`;
+      infoRow.innerHTML = `<td class="${HN_CLASSES.SUBTEXT}"><span class="${HN_CLASSES.AGE}" title="2026-01-11T18:49:32.000000Z">3 hours ago</span></td>`;
       expect(getTime(infoRow)).toBe(1768157372);
     });
   });
