@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Update all dependencies to their latest versions, including Vitest 5 (internal toolchain update with no change to any user-facing feature)
+
 ## [2.6.2] - 2026-09-06
 
 ### Changed
