@@ -119,6 +119,12 @@ h1 {
   transition: transform 0.2s;
 }
 
+/* Suppress toggle animation on load while useStorage settles (see popup.tsx) */
+.hns-no-transition .hns-toggle-slider,
+.hns-no-transition .hns-toggle-slider::before {
+  transition: none;
+}
+
 .hns-toggle-slider:hover {
   background-color: var(--hns-toggle-off-hover);
 }
@@ -203,10 +209,4 @@ h1 {
   outline: 2px solid #ff6600;
   outline-offset: 1px;
   border-color: transparent;
-}
-
-/* Suppress toggle animation on load while useStorage settles (see popup.tsx) */
-.hns-no-transition .hns-toggle-slider,
-.hns-no-transition .hns-toggle-slider::before {
-  transition: none;
 }
