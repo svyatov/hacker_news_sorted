@@ -2,13 +2,35 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { HN_CLASSES } from '~app/constants';
 
-import { getComments, getPoints, getTime } from './parsers';
+import { getComments, getPoints, getTime, parseAgeTitle } from './parsers';
 
 describe('parsers', () => {
   let infoRow: HTMLElement;
 
   beforeEach(() => {
     infoRow = document.createElement('tr');
+  });
+
+  it('runs under a non-UTC timezone so local-time parsing is caught', () => {
+    expect(new Date().getTimezoneOffset()).toBe(-330);
+  });
+
+  describe('parseAgeTitle', () => {
+    it.each([
+      ['2026-01-11T18:49:32', 1768157372], // since 2026-09-13: zone-less means UTC, never local
+      ['2026-01-11T18:49:32.000000Z', 1768157372], // 2026-08-27 .. 2026-09-12
+      ['2026-01-11T18:49:32 1768157372', 1768157372], // legacy: Unix suffix
+      ['2026-01-11T18:49:32 1768157400', 1768157400], // Unix suffix wins over the ISO part
+      ['2026-01-11 18:49:32', 1768157372], // space separator
+      ['2026-01-11T18:49:32+05:30', 1768137572], // explicit offset applied
+      ['2026-01-11T18:49:32 UTC', 1768157372],
+      ['2026-01-11', 1768089600], // date-only: midnight UTC
+      ['26-01-11T18:49:32', 0], // 2-digit year rejected
+      ['invalid-date', 0],
+      ['', 0],
+    ])('parseAgeTitle(%j) -> %i', (title, expected) => {
+      expect(parseAgeTitle(title)).toBe(expected);
+    });
   });
 
   describe('getPoints', () => {
@@ -46,9 +68,9 @@ describe('parsers', () => {
   });
 
   describe('getTime', () => {
-    it('should parse the ISO datetime from title attribute', () => {
-      // HN title format since 2026-08-27: "ISO_DATETIME.microsecondsZ"
-      infoRow.innerHTML = `<td class="${HN_CLASSES.SUBTEXT}"><span><span class="${HN_CLASSES.AGE}" title="2026-01-11T18:49:32.000000Z">3 hours ago</span></span></td>`;
+    it('should parse the zone-less ISO datetime from title attribute as UTC', () => {
+      // HN title format since 2026-09-13: "ISO_DATETIME" with no zone suffix
+      infoRow.innerHTML = `<td class="${HN_CLASSES.SUBTEXT}"><span><span class="${HN_CLASSES.AGE}" title="2026-01-11T18:49:32">3 hours ago</span></span></td>`;
       expect(getTime(infoRow)).toBe(1768157372);
     });
 

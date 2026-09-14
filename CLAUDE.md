@@ -67,7 +67,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 
 - `app/utils/selectors.ts` - DOM selectors for HN's table structure (title rows at 3n+1, info rows at 3n+2, spacer rows at 3n+3)
 - `app/utils/layout.ts` - `waitForPanelParent` (resolves HN's header cell, waiting via MutationObserver up to `LAYOUT_TIMEOUT_MS`, clearing the timeout on early resolve so a slow-but-successful mount can't later flip layout status to broken) + `LAYOUT_TIMEOUT_MS`; extracted from the entrypoint shell so the observer-vs-timeout race is unit-testable (`app/utils/layout.test.ts`)
-- `app/utils/parsers.ts` - Extract numeric values (points, time, comments) from info rows; `getTime` parses the `.age` title attribute, an ISO datetime (`"2026-09-06T07:21:06.000000Z"`, since 2026-08-27) via `Date.parse`, preferring the Unix timestamp suffix of the legacy `"ISO_DATETIME UNIX_TIMESTAMP"` format when present
+- `app/utils/parsers.ts` - Extract numeric values (points, time, comments) from info rows; `getTime` delegates to `parseAgeTitle`, which reads the `.age` title attribute in every format HN has used (legacy `"ISO_DATETIME UNIX_TIMESTAMP"`, `"2026-09-06T07:21:06.000000Z"` from 2026-08-27, zone-less `"2026-09-14T13:00:46"` since 2026-09-13, plus space separator, explicit offsets, and date-only) via `Date.UTC`; a zone-less datetime is UTC, never `Date.parse` (which would read it as local time and shift every post by the user's UTC offset)
 - `app/utils/converters.ts` - `stringToNumber` (parseInt wrapper), `nowInSeconds` (current epoch in seconds — use instead of inline `Math.floor(Date.now() / 1000)`)
 - `app/utils/sorters.ts` - Sort functions for each sort variant; velocity = `points / (ageHours + 2)` (damped), heat = `comments / points` with a below-zero sentinel for 0-points rows so job posts sink without `Infinity`/`NaN`
 - `app/utils/presenters.ts` - DOM manipulation to update table, highlight active sort column, and correct age text (`formatAge`, `correctAgeTexts`, `restoreAgeTexts`); `highlightActiveSort` early-returns for any variant without a column getter (default/velocity/heat/unknown), which also removes the cross-version crash from an unmapped variant arriving via sync
@@ -98,6 +98,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 - HN "second chance" posts show misleading age text (e.g., "7 hours ago" for a 3-day-old resubmission) because the server resets the display text while the title attribute retains the original submission timestamp
 - `formatAge` in `app/utils/presenters.ts` computes correct age from Unix timestamp; `correctAgeTexts`/`restoreAgeTexts` swap the `<a>` text inside `.age` spans, preserving originals via `data-original-age`
 - Toggle in popup (default: on), wired through `useSettings` → `ControlPanel` useEffect
+- The same text-vs-title gap is why the timestamp canary in `selectors.integration.test.ts` only requires an 80% agreement rate
 
 ### Review Prompt
 
@@ -149,7 +150,7 @@ Use `~` prefix for imports from project root (e.g., `~app/components/ControlPane
 ## Testing
 
 - **Framework**: Vitest with JSDOM and React Testing Library
-- **Config**: `vitest.config.ts` with path aliases and coverage settings
+- **Config**: `vitest.config.ts` with path aliases and coverage settings; pins `process.env.TZ = 'Asia/Kolkata'` (non-UTC, no DST) so any local-time date parsing fails tests (guarded by a test in `app/utils/parsers.test.ts`)
 - **Setup**: `vitest.setup.ts` with jest-dom matchers and localStorage mock
 
 ### Fixtures
@@ -166,7 +167,7 @@ Use `~` prefix for imports from project root (e.g., `~app/components/ControlPane
 Tests are co-located with source files using `.test.ts` / `.test.tsx` suffix:
 
 - `app/utils/*.test.ts` - Unit tests for utility functions
-- `app/utils/selectors.integration.test.ts` - List-page selectors run against `hn-homepage.html` (breaks if HN markup changes)
+- `app/utils/selectors.integration.test.ts` - List-page selectors run against `hn-homepage.html` (breaks if HN markup changes), plus the timestamp canary: every `.age` title must parse, and at least 80% must agree with HN's own "N unit(s) ago" text relative to the `<!-- hns-fetched-at: ... -->` stamp `updateFixture.ts` writes at the top of the fixture (the minority allowance is for second-chance posts, whose text is younger than their title)
 - `app/utils/comments.integration.test.ts` - Comment-page selectors run against `hn-item.html` (breaks if HN item markup changes); `bun run test:integration` runs both integration suites
 - `app/components/*.test.tsx` - Component tests
 - `app/hooks/*.test.ts` - Hook tests

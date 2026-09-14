@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { setupHNHomepage } from '~app/__fixtures__/loadFixture';
-import { HN_SELECTORS } from '~app/constants';
+import { loadHNHomepage, setupDocument, setupHNHomepage } from '~app/__fixtures__/loadFixture';
+import { HN_SELECTORS, SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_MINUTE } from '~app/constants';
 
+import { getTime } from './parsers';
 import {
   getCommentsElement,
   getInfoRows,
@@ -12,6 +13,8 @@ import {
   getTimeElement,
   getTitleRows,
 } from './selectors';
+
+const UNIT_SECONDS = { minute: SECONDS_PER_MINUTE, hour: SECONDS_PER_HOUR, day: SECONDS_PER_DAY } as const;
 
 describe('selectors (integration with live HN HTML)', () => {
   it('should match all HN_SELECTORS against real HN markup', () => {
@@ -58,23 +61,29 @@ describe('selectors (integration with live HN HTML)', () => {
     expect(commentsCount, `at least ${minWithElement}/${rowCount} should have COMMENTS`).toBeGreaterThanOrEqual(
       minWithElement,
     );
+  });
+  it('should parse every .age title to the instant HN displays (timestamp canary)', () => {
+    const html = loadHNHomepage();
+    setupDocument(html);
+    // Written by updateFixture.ts; the reference "now" the fixture's age texts were rendered against
+    const fetchedAt = Date.parse(html.match(/^<!-- hns-fetched-at: (\S+) -->/)![1]!) / 1000;
+    const rows = [...getInfoRows(getTableBody()!)].filter((row) => getTimeElement(row));
 
-    // Canary: validate HN's .age title attribute format ("ISO_DATETIME.microsecondsZ", since 2026-08-27)
-    const titleFormatRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
-    infoRows.forEach((row) => {
-      const ageEl = getTimeElement(row);
-      if (!ageEl) return;
-      const title = ageEl.getAttribute('title');
-      expect(title, 'age title should be an ISO datetime').toMatch(titleFormatRegex);
-    });
-
-    // Canary: validate HN's .age text format ("X minute(s)/hour(s)/day(s) ago")
-    const ageTextRegex = /^\d+ (minute|hour|day)s? ago$/;
-    infoRows.forEach((row) => {
-      const ageEl = getTimeElement(row);
-      if (!ageEl) return;
-      const text = ageEl.textContent?.trim();
-      expect(text, 'age text should match "N unit(s) ago" format').toMatch(ageTextRegex);
-    });
+    let agreeing = 0;
+    for (const row of rows) {
+      const ageEl = getTimeElement(row)!;
+      const text = ageEl.textContent?.trim() ?? '';
+      const match = text.match(/^(\d+) (minute|hour|day)s? ago$/);
+      expect(match, `age text should be "N unit(s) ago", got "${text}"`).not.toBeNull();
+      const time = getTime(row);
+      expect(time, `age title should parse: "${ageEl.getAttribute('title')}"`).not.toBe(0);
+      const unit = UNIT_SECONDS[match![2] as keyof typeof UNIT_SECONDS];
+      if (Math.abs(fetchedAt - time - Number(match![1]) * unit) <= unit) agreeing++;
+    }
+    // Second-chance posts show a younger text than their title timestamp, so only require a large majority.
+    // A local-time bug shifts every row by the runner's UTC offset (5.5h under the pinned TZ) and fails this.
+    expect(agreeing, `${agreeing}/${rows.length} rows agree with their age text`).toBeGreaterThanOrEqual(
+      Math.ceil(rows.length * 0.8),
+    );
   });
 });
