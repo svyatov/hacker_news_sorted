@@ -57,7 +57,9 @@ async function fetchAndSave({ url, file }: { url: string; file: string }): Promi
 async function main(): Promise<void> {
   console.log(`Fetching ${HOMEPAGE_URL}...`);
   const homepageHtml = await (await fetchWithRetry(HOMEPAGE_URL)).text();
-  writeFileSync(join(__dirname, 'hn-homepage.html'), homepageHtml, 'utf-8');
+  // Stamp the fetch instant so the timestamp canary can compare age titles against HN's own age texts.
+  const stamped = `<!-- hns-fetched-at: ${new Date().toISOString()} -->\n${homepageHtml}`;
+  writeFileSync(join(__dirname, 'hn-homepage.html'), stamped, 'utf-8');
   console.log(`Saved hn-homepage.html (${(homepageHtml.length / 1024).toFixed(2)} KB)`);
 
   // Derive the item target from the homepage we just fetched, so it can never rot.

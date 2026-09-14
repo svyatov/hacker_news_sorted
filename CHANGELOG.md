@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Update all dependencies to their latest versions, including Vitest 5 (internal toolchain update with no change to any user-facing feature)
 
+### Fixed
+
+- Sorting by Time and Velocity and the True Time Ago correction show the right ages again after Hacker News changed its timestamp markup on 2026-09-13 (the tooltip lost its `Z` suffix, so timestamps were read in the browser's local timezone and posts looked younger or older depending on the user's UTC offset); the parser now reads every timestamp format HN has used and the daily layout monitor checks parsed timestamps against HN's own age text
+
 ## [2.6.2] - 2026-09-06
 
 ### Changed
