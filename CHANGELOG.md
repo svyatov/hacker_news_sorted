@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Rewrite the Chrome Web Store description in plain language with natural search terms and clearer explanations of sorting, comment highlighting, and Chrome sync
+
 ## [2.6.3] - 2026-09-14
 
 ### Changed

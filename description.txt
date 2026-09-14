@@ -1,50 +1,20 @@
-Hacker News has one ranking algorithm. It's good, but sometimes you want a different view. This extension adds sort controls directly into the HN header bar - sort by points, time, comments, velocity, heat, or switch back to the default order. One click, the page reorders instantly. No reload, no new tab.
+Hacker News Sorted is a Chrome extension for those times when you open HN and want to find the most upvoted stories, see what's new, or read the busiest discussions. It adds sorting controls to the Hacker News header. Pick a sort and the posts on your current page reorder immediately, without a reload.
 
-Sort by points to find the most upvoted stories. Sort by time to catch posts that just landed. Sort by comments to see what people are actually discussing. Hit "default" to go back to HN's original order. The active sort is highlighted so you always know which view you're in.
+Sort by points, submission time, or comment count. Your active sort stays highlighted, and Default puts the page back in HN's original order. It works on story lists across news.ycombinator.com, including the front page, Newest, Ask HN, Show HN, Jobs, and past stories.
 
-It works on every Hacker News page that has a post list: the front page, Newest, Ask HN, Show HN, Jobs, past - all of them.
+For another view, try Velocity or Heat. Velocity ranks stories by points relative to their age, with an adjustment so a few early upvotes don't give a new post too much weight. Heat sorts by comments per point, helping you find stories with more discussion relative to their score. You can hide either option in settings.
 
-VELOCITY AND HEAT
+If you check HN throughout the day, orange dots help you spot posts that appeared since your last visit. They fade over an hour by default. Set the fade duration anywhere from 10 seconds to 24 hours, or turn the dots off. This works on the first page of each section.
 
-Two more ways to sort, beyond the basics. Velocity surfaces the fastest-rising posts - points per hour, damped so a brand-new post with a handful of upvotes doesn't leapfrog everything. Heat surfaces the most-argued threads - comments per point, so the posts drawing debate rise to the top. Turn either one off in the extension settings if you don't use it.
+The True Time Ago option shows each story's age from its original submission timestamp. That helps with HN's "second chance" posts: a story submitted three days ago can show a much younger age when it returns to the front page. With this option on, it reads "3 days ago." It's on by default and can be turned off.
 
-NEW POST INDICATORS
+In comment threads, the story author's replies get a light orange background and an OP badge. To follow someone else through a long discussion, click the diamond next to their name to highlight their comments. Click it again to clear the highlight, or pick another person. Your choice stays with that thread when you reload the tab. Both highlighting features have their own settings.
 
-An orange dot appears next to posts that showed up since your last visit. Instead of scanning the entire front page trying to remember what you've already seen, the extension marks them for you.
+Prefer the keyboard? Use P for points, T for time, C for comments, V for velocity, H for heat, and D for the default order. Shortcuts stay inactive while you type in a text field. If the extension detects a key conflict with Vimium or another extension, it disables its sorting shortcuts.
 
-The dots fade out gradually over time. The default fade duration is one hour, but you can set it anywhere from 10 seconds to 24 hours in the extension settings. When the highlight period ends, the dots disappear. New post detection only runs on the first page of each section - paginated pages are skipped.
+Click the extension icon to adjust the settings. Your sort preference, settings, and new-post history use Chrome's built-in sync storage, so they can follow you across devices when Chrome sync is enabled. No separate account is needed. If the extension can't find the page elements it needs for sorting, it shows a warning on the icon and in the settings popup.
 
-Toggle new post indicators on or off from the extension popup.
-
-TRUE TIME AGO
-
-Hacker News has a "second chance" system that resurfaces older posts. When a post gets a second chance, HN resets the displayed age - so a post submitted three days ago might show "7 hours ago" on the front page.
-
-This extension reads the original submission timestamp and shows the real age. If a post is actually three days old, it says "3 days ago" regardless of when HN resurfaced it. On by default. Turn it off in settings if you prefer HN's original age text.
-
-COMMENT AUTHOR HIGHLIGHTING
-
-On comment threads, the story author's own replies get a subtle orange tint and an "OP" badge, so you can always tell the original poster apart from everyone else. Following one particular commenter through a long thread? Click the marker next to their name and all of their comments get highlighted too. The mark sticks across reloads and clears when you close the browser. Both are on by default, each with its own toggle in settings.
-
-KEYBOARD SHORTCUTS
-
-P sorts by points. T sorts by time. C sorts by comments. V sorts by velocity. H sorts by heat. D restores the default order.
-
-The shortcuts only fire while you're browsing - they disable automatically when you're typing in a search box, text field, or any input. If you use Vimium or another extension that captures the same keys, the shortcuts step aside, so nothing double-fires.
-
-SYNCS ACROSS DEVICES
-
-Your sort preference, new post data, and all settings sync through Chrome's built-in sync storage. Set up the extension on your laptop, and your desktop picks up the same preferences. No extra account needed - just your Chrome profile.
-
-SETTINGS
-
-Click the extension icon to open the settings popup. From there you can toggle new post indicators, adjust the highlight fade duration, and switch true time ago on or off. Each setting has a short description explaining what it does.
-
-If Hacker News ever changes its page layout in a way that breaks sorting, the extension detects it. You'll see a warning badge on the icon and a banner in the popup instead of silent failures or broken pages.
-
-PRIVACY
-
-No data leaves your browser. No analytics, no tracking, no external API calls. The extension reads the HN page to parse post data and stores your preferences in Chrome's sync storage. That's it.
+Hacker News Sorted is open source. It reads the HN page you're viewing and processes the story data in your browser. There are no analytics, tracking, or external API calls. Saved settings and new-post history can sync through Chrome.
 
 Source code: https://github.com/svyatov/hacker_news_sorted
 
