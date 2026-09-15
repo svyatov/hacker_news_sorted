@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Rewrite the Chrome Web Store description in plain language with natural search terms and clearer explanations of sorting, comment highlighting, and Chrome sync
 
+### Fixed
+
+- Lower the layout monitor's timestamp canary floor from 80% to a majority so a front page with many second-chance posts or a cache-lagged "minutes ago" row does not fail the scheduled run
+
 ## [2.6.3] - 2026-09-14
 
 ### Changed
