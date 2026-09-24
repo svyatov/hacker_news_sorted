@@ -114,7 +114,8 @@ export const HN_SELECTORS = {
   TABLE_BODY: '#hnmain #bigbox > td > table > tbody',
 
   // One row per post (relative to table body); HN follows each with its info row, then a spacer row
-  POST_ROWS: 'tr.athing[id]',
+  // (comment lists such as favorites?comments=t also use athing rows, but not the submission class)
+  POST_ROWS: 'tr.athing.submission',
 
   // Info row elements (relative to info row)
   POINTS: 'td.subtext > span > span.score',
@@ -137,6 +138,8 @@ export const HN_CLASSES = {
   SCORE: 'score',
   AGE: 'age',
   ATHING: 'athing',
+  SUBMISSION: 'submission',
+  MORESPACE: 'morespace',
   SPACER: 'spacer',
   COMTR: 'comtr',
   COMHEAD: 'comhead',

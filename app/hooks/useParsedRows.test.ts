@@ -19,7 +19,7 @@ describe('useParsedRows', () => {
     const { result } = renderHook(() => useParsedRows());
     const parsedRows = result.current;
 
-    expect(parsedRows).toHaveLength(document.querySelectorAll('tr.athing.submission').length);
+    expect(parsedRows).toHaveLength(30);
     expect(parsedRows[0]).toMatchObject({ originalIndex: 0, title: document.querySelector('tr.athing.submission') });
     expect(parsedRows[0]!.info.querySelector('.subtext')).not.toBeNull();
     expect(parsedRows.every((row) => row.spacer.classList.contains('spacer'))).toBe(true);

@@ -26,13 +26,12 @@ describe('selectors (integration with live HN HTML)', () => {
 
     const posts = getPostRows();
     expect(posts.length, 'POST_ROWS should return 30 rows').toBe(30);
-    // Each post is its athing row, an info row, then a spacer; the footer follows the last spacer.
-    for (const post of posts) {
-      expect(post.nextElementSibling?.nextElementSibling, `post ${post.id} should end with a spacer`).toHaveClass(
-        HN_CLASSES.SPACER,
-      );
-    }
-    expect(posts.at(-1)!.nextElementSibling!.nextElementSibling!.nextElementSibling).toHaveClass('morespace');
+    // Each post is its submission row, an info row, then a spacer; the footer follows the last spacer.
+    const spacers = posts.map((post) => post.nextElementSibling?.nextElementSibling);
+    spacers.forEach((spacer, i) => {
+      expect(spacer, `post ${posts[i]!.id} should end with a spacer`).toHaveClass(HN_CLASSES.SPACER);
+    });
+    expect(spacers.at(-1)?.nextElementSibling).toHaveClass(HN_CLASSES.MORESPACE);
 
     const infoRows = getInfoRows();
     const rowCount = infoRows.length;

@@ -18,7 +18,7 @@ export const setupTableBody = (ids: string[]): HTMLTableSectionElement => {
 
   for (const id of ids) {
     const tr = document.createElement('tr');
-    tr.classList.add(HN_CLASSES.ATHING);
+    tr.classList.add(HN_CLASSES.ATHING, HN_CLASSES.SUBMISSION);
     tr.id = id;
     tbody.appendChild(tr);
     tbody.appendChild(document.createElement('tr'));

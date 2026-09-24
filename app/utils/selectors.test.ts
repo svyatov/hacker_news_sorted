@@ -9,13 +9,22 @@ describe('selectors', () => {
   describe('getPostRows', () => {
     afterEach(clearBody);
 
-    it('returns the id-carrying athing row of each post, in order', () => {
+    it('returns the submission row of each post, in order', () => {
       const tbody = setupTableBody(['a', 'b']);
-      const noId = document.createElement('tr');
-      noId.className = HN_CLASSES.ATHING;
-      tbody.append(noId, document.createElement('tr'));
+      tbody.append(document.createElement('tr'));
 
       expect(getPostRows().map((row) => row.id)).toEqual(['a', 'b']);
+    });
+
+    // Favorite and upvoted comment lists use the list table too, with two-row athing comments.
+    it('skips comment rows', () => {
+      const tbody = setupTableBody([]);
+      const comment = document.createElement('tr');
+      comment.className = HN_CLASSES.ATHING;
+      comment.id = 'c1';
+      tbody.append(comment, document.createElement('tr'));
+
+      expect(getPostRows()).toEqual([]);
     });
 
     it('returns nothing when the page has no list table', () => {
