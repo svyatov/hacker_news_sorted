@@ -1,24 +1,20 @@
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
-import type { Browser, BrowserContext, Page } from 'playwright';
-import { chromium } from 'playwright';
+import type { Page } from 'playwright';
 
-import { CONTROL_PANEL_ROOT_ID, CSS_CLASSES, HN_SELECTORS } from '~app/constants';
+import { CONTROL_PANEL_ROOT_ID } from '~app/constants';
 
-import { injectChromeStoragePolyfill } from './screenshots/chromePolyfill';
+import { loadWithExtension, setupBrowser, showNewPostIndicators } from './screenshots/browser';
 import { injectCommentsBundle, markUser } from './screenshots/comments';
-import {
-  COMMENT_MARK_USER,
-  COMMENT_THREAD_ID,
-  REAL_BROWSER_CONTEXT,
-  REAL_BROWSER_LAUNCH,
-} from './screenshots/constants';
+import { COMMENT_MARK_USER, COMMENT_THREAD_ID } from './screenshots/constants';
 import { gotoCached } from './screenshots/htmlCache';
-import { CSS_PATH, JS_PATH, SCREENSHOTS_DIR } from './screenshots/paths';
+import { SCREENSHOTS_DIR } from './screenshots/paths';
 
-// Viewport calculated so crop = exactly 3840×2160 (4K 16:9):
+// 4K 16:9 output crop.
+const CROP = { w: 3840, h: 2160 };
+// Viewport calculated so the crop is exactly CROP:
 // HN uses <table width="85%">, so 3840 / 0.85 ≈ 4518
-const VIEWPORT = { width: 4518, height: 2160 };
+const VIEWPORT = { width: 4518, height: CROP.h };
 // Page zoom for HN's header + base layout. Effective layout width = VIEWPORT / ZOOM ≈ 4518 / 3.2 =
 // 1412px; the full-word menu is force-shown (injectExtension) and HN's header keeps it on one line at
 // this width (~200px of slack). The post list is enlarged on top of this (CONTENT_ZOOM). #hnmain's
@@ -28,7 +24,13 @@ const OVERLAY_ID = 'hns-demo-overlay';
 // Single merged comment slide: one label for both the auto OP badge and the marked-user tint.
 const COMMENT_LABEL = 'OP & custom user comment highlighting';
 // CSS px from viewport edge to crop edge (right side)
-const CROP_MARGIN_CSS = Math.ceil((VIEWPORT.width - 3840) / 2 / ZOOM);
+const CROP_MARGIN_CSS = Math.ceil((VIEWPORT.width - CROP.w) / 2 / ZOOM);
+// The slide-label pill, shared by the homepage slides and the comment slide's load cover.
+const LABEL_CSS =
+  `position:fixed;top:40px;right:${CROP_MARGIN_CSS + 16}px;background:rgba(0,0,0,0.8);color:#fff;` +
+  `padding:24px 60px;border-radius:18px;font-size:42px;font-weight:600;` +
+  `font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;` +
+  `z-index:99999;border-left:7px solid #ff6600`;
 // #hnmain's layout (CSS) width at the page zoom above (HN's table is 85% of the viewport).
 const HNMAIN_CSS_WIDTH = Math.round((0.85 * VIEWPORT.width) / ZOOM);
 // Extra zoom applied to the post list / comment tree only — NOT the header, so the full-word sort menu
@@ -38,34 +40,25 @@ const HNMAIN_CSS_WIDTH = Math.round((0.85 * VIEWPORT.width) / ZOOM);
 // to HNMAIN_CSS_WIDTH / CONTENT_ZOOM so the scaled table refills #hnmain (no overflow).
 const CONTENT_ZOOM = 1.5;
 
-async function setupBrowserWithVideo(): Promise<{ browser: Browser; context: BrowserContext; page: Page }> {
-  const browser = await chromium.launch(REAL_BROWSER_LAUNCH);
-  const context = await browser.newContext({
-    ...REAL_BROWSER_CONTEXT,
-    viewport: VIEWPORT,
-    recordVideo: { dir: '/tmp/hns-demo', size: VIEWPORT },
-  });
-  const page = await context.newPage();
-  await injectChromeStoragePolyfill(page);
-  return { browser, context, page };
-}
-
-async function injectExtension(page: Page): Promise<void> {
-  await gotoCached(page, 'https://news.ycombinator.com');
-  await page.addStyleTag({ path: CSS_PATH });
-  await page.addScriptTag({ path: JS_PATH });
-  await page.waitForSelector(`#${CONTROL_PANEL_ROOT_ID}`, { timeout: 5000 });
+async function applyZoom(page: Page): Promise<void> {
   await page.evaluate((zoom) => {
     document.body.style.margin = '0';
     document.documentElement.style.zoom = String(zoom);
   }, ZOOM);
-  // Force the full-word menu tier (words on, single letters off) regardless of how the
-  // media query reads the zoomed layout width — 1506px effective is above the 1440 floor,
-  // so this just makes the intent explicit and deterministic.
-  await page.addStyleTag({
-    content: '.hns-btn-text { display: inline !important; } .hns-btn-shortcut { display: none !important; }',
-  });
+}
+
+async function injectExtension(page: Page): Promise<void> {
+  await loadWithExtension(page);
+  await applyZoom(page);
   await enlargeContent(page, ['#hnmain #bigbox > td > table']);
+}
+
+// getBoundingClientRect() with CSS zoom already returns physical pixel coordinates.
+async function getHnmainX(page: Page): Promise<number | null> {
+  return page.evaluate(() => {
+    const el = document.querySelector('#hnmain');
+    return el ? Math.floor(el.getBoundingClientRect().x) : null;
+  });
 }
 
 // Enlarge content below the header (post list / comment tree) without touching the sort menu, which
@@ -85,54 +78,19 @@ async function enlargeContent(page: Page, selectors: string[]): Promise<void> {
   );
 }
 
-async function showNewPostIndicators(page: Page): Promise<void> {
-  await page.evaluate(
-    ({ tableBodySelector, showNewClass, newPostClass }) => {
-      const tbody = document.querySelector(tableBodySelector);
-      if (!tbody) return;
-
-      tbody.classList.add(showNewClass);
-
-      const titleRows = tbody.querySelectorAll(':scope > tr:nth-child(3n+1)');
-      const indices = [0, 2, 3, 6, 8, 11];
-      for (const i of indices) {
-        titleRows[i]?.classList.add(newPostClass);
-      }
-    },
-    {
-      tableBodySelector: HN_SELECTORS.TABLE_BODY,
-      showNewClass: CSS_CLASSES.SHOW_NEW,
-      newPostClass: CSS_CLASSES.NEW_POST,
-    },
-  );
-}
-
 async function injectLabel(page: Page, text: string): Promise<void> {
   await page.evaluate(
-    ({ id, text, margin }) => {
+    ({ id, text, css }) => {
       document.querySelector(`#${id}`)?.remove();
 
       const label = document.createElement('div');
       label.id = id;
-      Object.assign(label.style, {
-        position: 'fixed',
-        top: '40px',
-        right: `${margin + 16}px`,
-        background: 'rgba(0, 0, 0, 0.8)',
-        color: '#fff',
-        padding: '24px 60px',
-        borderRadius: '18px',
-        fontSize: '42px',
-        fontWeight: '600',
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        zIndex: '99999',
-        borderLeft: '7px solid #ff6600',
-      });
+      label.style.cssText = css;
       label.textContent = text;
 
       document.body.appendChild(label);
     },
-    { id: OVERLAY_ID, text, margin: CROP_MARGIN_CSS },
+    { id: OVERLAY_ID, text, css: LABEL_CSS },
   );
 }
 
@@ -179,7 +137,7 @@ async function recordCommentSegment(page: Page, cropX: number, recordingStart: n
   // not a blank/missing slide. Beige (#f6f6ef) matches HN's background for a clean cut. Zoom is applied
   // here too so the label renders at final size during the load instead of snapping when zoom lands.
   await page.addInitScript(
-    ({ zoom, margin, labelId, text }) => {
+    ({ zoom, labelCss, labelId, text }) => {
       const build = () => {
         document.documentElement.style.zoom = String(zoom);
         const cover = document.createElement('div');
@@ -192,11 +150,7 @@ async function recordCommentSegment(page: Page, cropX: number, recordingStart: n
         const label = document.createElement('div');
         label.id = labelId;
         label.textContent = text;
-        label.style.cssText =
-          `position:fixed;top:40px;right:${margin + 16}px;background:rgba(0,0,0,0.8);color:#fff;` +
-          `padding:24px 60px;border-radius:18px;font-size:42px;font-weight:600;` +
-          `font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;` +
-          `z-index:2147483647;border-left:7px solid #ff6600`;
+        label.style.cssText = `${labelCss};z-index:2147483647`;
         document.documentElement.appendChild(label);
       };
       // At document-start <html> may not exist yet; build as soon as it does, before body paints.
@@ -206,20 +160,14 @@ async function recordCommentSegment(page: Page, cropX: number, recordingStart: n
           childList: true,
         });
     },
-    { zoom: ZOOM, margin: CROP_MARGIN_CSS, labelId: OVERLAY_ID, text: COMMENT_LABEL },
+    { zoom: ZOOM, labelCss: LABEL_CSS, labelId: OVERLAY_ID, text: COMMENT_LABEL },
   );
   await gotoCached(page, `https://news.ycombinator.com/item?id=${COMMENT_THREAD_ID}`);
-  await page.evaluate((zoom) => {
-    document.body.style.margin = '0';
-    document.documentElement.style.zoom = String(zoom);
-  }, ZOOM);
+  await applyZoom(page);
   await injectCommentsBundle(page);
   await enlargeContent(page, ['table.fatitem', 'table.comment-tree']);
 
-  const itemX = await page.evaluate(() => {
-    const el = document.querySelector('#hnmain');
-    return el ? Math.floor(el.getBoundingClientRect().x) : null;
-  });
+  const itemX = await getHnmainX(page);
   if (itemX === null) throw new Error('#hnmain not found on item page');
   if (Math.abs(itemX - cropX) > 40) {
     throw new Error(`Item-page #hnmain x=${itemX} diverges from homepage crop x=${cropX}; crop cannot be reused`);
@@ -251,15 +199,9 @@ async function recordCommentSegment(page: Page, cropX: number, recordingStart: n
 }
 
 async function getContentBounds(page: Page): Promise<{ x: number; y: number; w: number; h: number }> {
-  // getBoundingClientRect() with CSS zoom already returns physical pixel coordinates
-  const x = await page.evaluate(() => {
-    const el = document.querySelector('#hnmain');
-    if (!el) return null;
-    return Math.floor(el.getBoundingClientRect().x);
-  });
+  const x = await getHnmainX(page);
   if (x === null) throw new Error('#hnmain not found for crop measurement');
-  const w = 3840;
-  const h = 2160;
+  const { w, h } = CROP;
   if (x + w > VIEWPORT.width || h > VIEWPORT.height) {
     throw new Error(`Crop ${w}x${h} at x=${x} exceeds viewport ${VIEWPORT.width}x${VIEWPORT.height}`);
   }
@@ -268,7 +210,10 @@ async function getContentBounds(page: Page): Promise<{ x: number; y: number; w: 
 
 async function main() {
   console.log('Recording demo...');
-  const { browser, context, page } = await setupBrowserWithVideo();
+  const { browser, context, page } = await setupBrowser({
+    viewport: VIEWPORT,
+    recordVideo: { dir: '/tmp/hns-demo', size: VIEWPORT },
+  });
 
   const recordingStart = Date.now();
   await injectExtension(page);

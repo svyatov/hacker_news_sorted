@@ -7,8 +7,6 @@ import { applyCommentEnhancements, getMarkedUser, nextMark, setMarkedUser } from
 
 import './comments.css';
 
-// Port of contents/comments.ts to WXT (U3, R7/R9, KTD-2). The body is carried verbatim into main();
-// only the Plasmo `config` export becomes defineContentScript options + manifest CSS injection.
 export default defineContentScript({
   matches: ['*://news.ycombinator.com/item*'],
   cssInjectionMode: 'manifest',

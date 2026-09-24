@@ -1,5 +1,8 @@
 import type { VariantConfig } from './types';
 
+// Chrome Web Store screenshot size.
+export const SCREENSHOT_VIEWPORT = { width: 1280, height: 800 };
+
 export const SCREENSHOT_IDS = {
   OVERLAY: 'hns-screenshot-overlay',
   ARROW: 'hns-screenshot-arrow',

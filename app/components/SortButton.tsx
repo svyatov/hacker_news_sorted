@@ -1,28 +1,23 @@
-import { useCallback, type ReactElement } from 'react';
+import type { ReactElement } from 'react';
 
 import { CSS_CLASSES } from '~app/constants';
 import type { SortOption, SortVariant } from '~app/types';
 
-type ControlPanelButtonProps = {
+type SortButtonProps = {
   sortOption: SortOption;
   activeSort: SortVariant;
-  setActiveSort: (sortBy: SortVariant) => void;
+  onSort: (sortBy: SortVariant) => void;
 };
 
-const SortButton = ({ sortOption, activeSort, setActiveSort }: ControlPanelButtonProps): ReactElement => {
+const SortButton = ({ sortOption, activeSort, onSort }: SortButtonProps): ReactElement => {
   const { sortBy, text, shortcut } = sortOption;
   const isActive = activeSort === sortBy;
   const cssClasses = `${CSS_CLASSES.BTN}${isActive ? ` ${CSS_CLASSES.ACTIVE}` : ''}`;
 
-  const updateActiveSort = useCallback(() => {
-    if (isActive) return;
-    setActiveSort(sortBy);
-  }, [sortBy, isActive, setActiveSort]);
-
   return (
     <button
       type="button"
-      onClick={updateActiveSort}
+      onClick={() => !isActive && onSort(sortBy)}
       className={cssClasses}
       data-sort={sortBy}
       aria-pressed={isActive}

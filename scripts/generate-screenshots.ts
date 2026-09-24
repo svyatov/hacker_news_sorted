@@ -1,7 +1,8 @@
 import { captureVariants, injectExtension, setupBrowser } from './screenshots/browser';
+import { SCREENSHOT_VIEWPORT } from './screenshots/constants';
 
 async function main() {
-  const { browser, page } = await setupBrowser();
+  const { browser, page } = await setupBrowser({ viewport: SCREENSHOT_VIEWPORT });
   await injectExtension(page);
   await captureVariants(page);
   await browser.close();
