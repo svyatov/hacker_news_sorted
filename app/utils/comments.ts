@@ -15,7 +15,7 @@ export const getCommentAuthor = (row: HTMLElement): string | null =>
 // --- Mark dots ---
 
 const setDotState = (dot: HTMLElement, on: boolean): void => {
-  const user = dot.getAttribute(DOT_USER_ATTR) ?? '';
+  const user = dot.getAttribute(DOT_USER_ATTR)!;
   dot.classList.toggle(CSS_CLASSES.MARK_DOT_ON, on);
   dot.setAttribute('aria-pressed', String(on));
   dot.setAttribute('aria-label', on ? `Unhighlight ${user}` : `Highlight comments by ${user}`);
@@ -57,19 +57,18 @@ const removeMarkDots = (): void => {
 const applyUserHighlight = (username: string, kind: HighlightKind): void => {
   for (const row of getCommentRows()) {
     if (getCommentAuthor(row) !== username) continue;
-    const comhead = row.querySelector(HN_SELECTORS.COMMENT_HEAD);
+    // The author matched, so the comhead exists; clearHighlights ran first, so no badge is there yet.
+    const comhead = row.querySelector(HN_SELECTORS.COMMENT_HEAD)!;
 
     if (kind === 'op') {
       row.classList.add(CSS_CLASSES.OP_COMMENT);
-      if (comhead && !comhead.querySelector(`.${CSS_CLASSES.OP_BADGE}`)) {
-        const badge = document.createElement('span');
-        badge.className = CSS_CLASSES.OP_BADGE;
-        badge.textContent = 'OP';
-        comhead.querySelector(HN_SELECTORS.COMMENT_AUTHOR)?.insertAdjacentElement('afterend', badge);
-      }
+      const badge = document.createElement('span');
+      badge.className = CSS_CLASSES.OP_BADGE;
+      badge.textContent = 'OP';
+      comhead.querySelector(HN_SELECTORS.COMMENT_AUTHOR)!.insertAdjacentElement('afterend', badge);
     } else {
       row.classList.add(CSS_CLASSES.MARKED_COMMENT);
-      const dot = comhead?.querySelector<HTMLElement>(`.${CSS_CLASSES.MARK_DOT}`);
+      const dot = comhead.querySelector<HTMLElement>(`.${CSS_CLASSES.MARK_DOT}`);
       if (dot) setDotState(dot, true);
     }
   }

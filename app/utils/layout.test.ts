@@ -42,6 +42,15 @@ describe('waitForPanelParent', () => {
     expect(clearSpy, 'early resolve must cancel the broken-layout timeout').toHaveBeenCalled();
   });
 
+  it('keeps waiting through unrelated DOM mutations', async () => {
+    const promise = waitForPanelParent(1000);
+    document.body.appendChild(document.createElement('div'));
+    await Promise.resolve(); // let the observer see the unrelated mutation first
+    document.body.appendChild(buildHeader());
+
+    await expect(promise).resolves.toHaveClass('hns-target');
+  });
+
   it('resolves null when the header never appears within the timeout', async () => {
     vi.useFakeTimers();
 

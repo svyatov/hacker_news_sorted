@@ -1,12 +1,56 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { clearBody, setupTableBody } from '~app/__fixtures__/testHelpers';
 import { CSS_CLASSES, HN_CLASSES, SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_MINUTE } from '~app/constants';
 import type { ParsedRow, SortVariant } from '~app/types';
 import { nowInSeconds } from '~app/utils/converters';
 
-import { correctAgeTexts, formatAge, highlightActiveSort, restoreAgeTexts } from './presenters';
+import { correctAgeTexts, formatAge, highlightActiveSort, restoreAgeTexts, updateTable } from './presenters';
 
 describe('presenters', () => {
+  describe('updateTable', () => {
+    afterEach(clearBody);
+
+    // Wraps each post's three rows from setupTableBody into a ParsedRow, with a score span to highlight.
+    const parseRows = (tbody: HTMLElement): ParsedRow[] =>
+      [...tbody.querySelectorAll<HTMLElement>(`tr.${HN_CLASSES.ATHING}`)].map((title, originalIndex) => {
+        const info = title.nextElementSibling as HTMLElement;
+        info.innerHTML = `<td class="${HN_CLASSES.SUBTEXT}"><span><span class="${HN_CLASSES.SCORE}">1 point</span></span></td>`;
+        const spacer = info.nextElementSibling as HTMLElement;
+        return { originalIndex, title, info, spacer, points: 0, time: 0, comments: 0 };
+      });
+
+    it('reorders the post rows, appends the footer, and highlights the sorted column', () => {
+      const tbody = setupTableBody(['a', 'b']);
+      const [a, b] = parseRows(tbody);
+      const footer = document.createElement('tr');
+
+      updateTable([b!, a!], [footer], 'points');
+
+      expect([...tbody.children]).toEqual([b!.title, b!.info, b!.spacer, a!.title, a!.info, a!.spacer, footer]);
+      expect(a!.info.querySelector(`.${HN_CLASSES.SCORE}`)).toHaveClass(CSS_CLASSES.HIGHLIGHT);
+    });
+
+    it('leaves the table untouched when there are no rows', () => {
+      const tbody = setupTableBody(['a']);
+      const before = [...tbody.children];
+      updateTable([], [], 'points');
+      expect([...tbody.children]).toEqual(before);
+    });
+
+    it('does nothing when the page has no list table', () => {
+      const row = document.createElement('tr');
+      expect(() =>
+        updateTable(
+          [{ originalIndex: 0, title: row, info: row, spacer: row, points: 0, time: 0, comments: 0 }],
+          [],
+          'points',
+        ),
+      ).not.toThrow();
+      expect(row.isConnected).toBe(false);
+    });
+  });
+
   describe('highlightActiveSort', () => {
     let infoRow: HTMLElement;
 
@@ -206,6 +250,12 @@ describe('presenters', () => {
       correctAgeTexts([row]);
       correctAgeTexts([row]);
       expect(row.info.querySelector('a')?.getAttribute('data-original-age')).toBe('14 hours ago');
+    });
+
+    it('restoreAgeTexts should skip rows without a link inside .age', () => {
+      const row = makeRow('3 hours ago', nowInSeconds() - SECONDS_PER_HOUR);
+      row.info.querySelector('a')?.remove();
+      expect(() => restoreAgeTexts([row])).not.toThrow();
     });
 
     it('restoreAgeTexts should be a no-op when no original was saved', () => {

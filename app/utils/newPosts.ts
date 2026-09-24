@@ -33,9 +33,9 @@ const migratePostIds = (stored: string[] | PostTimestamps): PostTimestamps => {
 const getPostRow = (tableBody: HTMLElement | null, id: string) =>
   tableBody?.querySelector<HTMLElement>(`tr.athing[id="${id}"]`);
 
+// Ids come from getPostIds() on the same table in the same tick, so the row exists.
 const markRow = (tableBody: HTMLElement | null, id: string, fade: number): void => {
-  const row = getPostRow(tableBody, id);
-  if (!row) return;
+  const row = getPostRow(tableBody, id)!;
   row.classList.add(CSS_CLASSES.NEW_POST);
   row.style.setProperty(FADE_PROPERTY, String(fade));
 };

@@ -2,7 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createStorageMock } from '~app/__fixtures__/testHelpers';
-import { SETTINGS_KEYS, SORT_OPTIONS } from '~app/constants';
+import { SETTINGS_DEFAULTS, SETTINGS_KEYS, SORT_OPTIONS } from '~app/constants';
 
 // --- Storage mock ---
 const { store, mockSet, mockGet, mockUnwatch, watcherCallbacks, reset, StorageClass } = createStorageMock();
@@ -38,6 +38,30 @@ describe('useSettings', () => {
 
       expect(result.current.activeSort).toBe('comments');
     });
+
+    it('ignores changes that arrive before init completes', async () => {
+      store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'time';
+      const { result } = renderHook(() => useSettings());
+
+      act(() => {
+        watcherCallbacks[SETTINGS_KEYS.LAST_ACTIVE_SORT]?.({ newValue: 'comments' });
+      });
+      await act(() => Promise.resolve());
+
+      expect(result.current.activeSort).toBe('time');
+    });
+
+    it('falls back to the default sort when the key is cleared', async () => {
+      store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'time';
+      const { result } = renderHook(() => useSettings());
+      await act(() => Promise.resolve());
+
+      act(() => {
+        watcherCallbacks[SETTINGS_KEYS.LAST_ACTIVE_SORT]?.({ newValue: undefined });
+      });
+
+      expect(result.current.activeSort).toBe(SETTINGS_DEFAULTS[SETTINGS_KEYS.LAST_ACTIVE_SORT]);
+    });
   });
 
   describe('TRUE_TIME_AGO watcher', () => {
@@ -52,6 +76,18 @@ describe('useSettings', () => {
       });
 
       expect(result.current.showTrueTimeAgo).toBe(false);
+    });
+
+    it('falls back to the default when the key is cleared', async () => {
+      store[SETTINGS_KEYS.TRUE_TIME_AGO] = false;
+      const { result } = renderHook(() => useSettings());
+      await act(() => Promise.resolve());
+
+      act(() => {
+        watcherCallbacks[SETTINGS_KEYS.TRUE_TIME_AGO]?.({ newValue: undefined });
+      });
+
+      expect(result.current.showTrueTimeAgo).toBe(true);
     });
   });
 

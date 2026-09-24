@@ -23,6 +23,7 @@ describe('parsers', () => {
       ['2026-01-11T18:49:32 1768157400', 1768157400], // Unix suffix wins over the ISO part
       ['2026-01-11 18:49:32', 1768157372], // space separator
       ['2026-01-11T18:49:32+05:30', 1768137572], // explicit offset applied
+      ['2026-01-11T18:49:32-05:00', 1768175372], // negative offset applied
       ['2026-01-11T18:49:32 UTC', 1768157372],
       ['2026-01-11', 1768089600], // date-only: midnight UTC
       ['26-01-11T18:49:32', 0], // 2-digit year rejected
