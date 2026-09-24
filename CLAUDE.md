@@ -30,6 +30,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 - `entrypoints/hn-sort.content/index.tsx` - Main entry point, injects the ControlPanel into HN's header via WXT's `createIntegratedUi` — a light-DOM `<span id="hns-control-panel">` mount (`tag: 'span'`, `append: 'first'`) plus page-global `cssInjectionMode: 'manifest'`, not a shadow root, so `content.css` styles both the panel and HN's own list rows exactly as before. Its `excludeMatches` is `SORT_PANEL_EXCLUDE_MATCHES` from `app/constants.ts` (unit-tested in `app/constants.test.ts`), covering every listless HN page: comment/thread views (`item*`, also handled by comments.content, plus `threads*`, `newcomments*`, `context*`, `bestcomments*`, `noobcomments*`, `highlights*`), form/profile pages (`submit`, `reply*`, `login*`, `forgot*`, `changepw*`, `newpoll*`, `user*`, `x*`), list indexes (`lists*`, `leaders*`), and static help pages (`*.html`, `formatdoc*`), so the sort panel never loads where there is no list table to sort and would otherwise falsely flag a broken layout (KTD-5). `submit` has no trailing `*` so it cannot match the `submitted` story list; story-list routes are intentionally not excluded. Both content scripts set `noScriptStartedPostMessage` so WXT does not post a startup message into the page (Plasmo never did). `waitForPanelParent` (the header-cell MutationObserver wait) lives in `app/utils/layout.ts` so its observer-vs-timeout race is unit-testable
 - `entrypoints/hn-sort.content/content.css` - Styles for the control panel, sort highlighting, and new-post indicators. Three-tier responsive menu: full names on wide screens, single-letter labels on medium, and a native `<select>` dropdown tier on narrow screens. **Both** tier switches are count-aware — one `@media` block per enabled-option count (4/5/6) keyed on the `#hns-control-panel[data-sort-count='N']` attribute — because each tier's width, and thus the point at which it would push HN's own header nav onto a second line, grows with the option count. Word↔letter (`min-width` 1280/1360/1440px); letter↔dropdown (`max-width` 1080/1120/1160px) hides `.hns-buttons-tier` and shows `.hns-dropdown-tier`. All breakpoints are calibrated against HN's header so the menu always collapses to a more compact tier _before_ it would wrap HN's nav (measured letter-row wrap floors ~1044/1084/1124px; the dropdown has no visible label so it stays as narrow as HN's own ~750px nav-wrap floor)
 - Detects layout breakage: writes `hns-layout-ok` to `chrome.storage.sync` based on whether expected DOM elements are found (with a 3-second timeout)
+- Once the layout check passes, starts new-post tracking with `ctx.onInvalidated(trackNewPosts())`. New-post tracking is independent of React and the panel
 - **Dev gotcha**: WXT's dev server hot-reloads most edits, but content-script CSS or entrypoint-config changes may still need a page reload (or an extension reload) to appear
 
 ### Comment-Page Content Script
@@ -58,7 +59,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 
 ### Data Flow
 
-1. `useSettings` hook reads sort preference and post IDs from `chrome.storage.sync`, marks new posts, exposes reactive `activeSort`, the derived `enabledSortOptions` list, and a `settled` first-paint flag; validates `activeSort` against the enabled set (unknown/disabled → `default`, R6)
+1. `useSettings` hook reads sort preference from `chrome.storage.sync`, exposes reactive `activeSort`, the derived `enabledSortOptions` list, and a `settled` first-paint flag; validates `activeSort` against the enabled set (unknown/disabled → `default`, R6)
 2. `useParsedRows` hook extracts post data from HN's DOM on mount (title, info, spacer rows per post)
 3. `sortRows` creates a new sorted array based on active sort option (velocity/heat are computed at sort time, not stored)
 4. `updateTable` replaces the table body with reordered rows and highlights the active sort column (velocity/heat span two columns, so they highlight nothing — KTD-2)
@@ -71,7 +72,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 - `app/utils/converters.ts` - `stringToNumber` (parseInt wrapper), `nowInSeconds` (current epoch in seconds — use instead of inline `Math.floor(Date.now() / 1000)`)
 - `app/utils/sorters.ts` - Sort functions for each sort variant; velocity = `points / (ageHours + 2)` (damped), heat = `comments / points` with a below-zero sentinel for 0-points rows so job posts sink without `Infinity`/`NaN`
 - `app/utils/presenters.ts` - DOM manipulation to update table, highlight active sort column, and correct age text (`formatAge`, `correctAgeTexts`, `restoreAgeTexts`); `highlightActiveSort` early-returns for any variant without a column getter (default/velocity/heat/unknown), which also removes the cross-version crash from an unmapped variant arriving via sync
-- `app/utils/newPosts.ts` - New post detection and fade: exports `PostTimestamps` type, `migratePostIds`, `markNewPosts` (with cooldown-aware opacity), `updateFadeOpacities`, `clearNewPostMarkers`, `isFirstPage`
+- `app/utils/newPosts.ts` - New-post tracking behind one entry point, `trackNewPosts(): () => void` (see Settings & New Post Detection)
 
 ### Keyboard Shortcuts
 
@@ -82,14 +83,16 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 
 ### Settings & New Post Detection
 
-- `app/hooks/useSettings.ts` - Central hook managing all synced state via `@plasmohq/storage` (chrome.storage.sync):
+- `app/hooks/useSettings.ts` - Hook for the panel's synced state via `@plasmohq/storage` (chrome.storage.sync):
   - Sort preference (`activeSort` / `setActiveSort`) — syncs across devices, reactive via watchers
-  - Post timestamps — stores `Record<string, number>` (post ID → discovery timestamp, `-1` for known) per page; migrates old `string[]` format automatically
-  - Show-new toggle — applies/removes `hns-show-new` CSS class on table body
-  - Fade interval — drives `--hns-fade` CSS custom property on new-post rows, with cooldown/showNew-aware lifecycle and memory leak guards (`mountedRef`, `intervalRef`, `showNewRef`)
   - True time ago toggle (`showTrueTimeAgo`) — exposes reactive boolean for age text correction
-  - Velocity/Heat enabled toggles — derive `enabledSortOptions` (the SORT_OPTIONS subset the panel, dropdown, and hotkeys all consume); validated in the init read and both watchers (last-active-sort + toggle changes) via `resolveActiveSort`, which resolves unknown/disabled sorts to `default` locally without writing back (KTD-6, no ping-pong). Ref mirrors (`velocityEnabledRef`/`heatEnabledRef`) keep watchers validating against current state
+  - Sort toggles: every `SORT_OPTIONS` entry with an `enableKey` is toggleable; the hook reads and watches those keys generically (`TOGGLE_KEYS`) and derives `enabledSortOptions` (the SORT_OPTIONS subset the panel, dropdown, and hotkeys all consume); validated in the init read and all watchers (last-active-sort + toggle changes) via `resolveActiveSort`, which resolves unknown/disabled sorts to `default` locally without writing back (KTD-6, no ping-pong). A ref mirror (`togglesRef`) keeps watchers validating against current state
   - `settled` flag — flips after the async init read so the panel doesn't flash a six-option layout before reflowing (KTD-8)
+- `app/utils/newPosts.ts` - `trackNewPosts()` starts new-post tracking for the current list page and returns dispose. Everything else in the file is private and tested only through that boundary (`newPosts.test.ts`):
+  - Post timestamps: stores `Record<string, number>` (post ID → discovery timestamp, `-1` for known) per pathname; migrates the old `string[]` format
+  - Show-new toggle: applies/removes the `hns-show-new` CSS class on the table body
+  - Fade: one `syncInterval()` rule drives `--hns-fade` on new-post rows; the timer runs only while show-new is on, the tracker is not disposed, and some post is still fading
+  - Watches `hns-show-new`, `hns-cooldown`, and the page's post-ids key; the post-ids watcher stays off until init's own write lands and never writes back (no ping-pong)
 - All settings sync across devices via `chrome.storage.sync`
 - New-post detection only runs on first pages (skips paginated pages with `?p=...` or `?next=...`)
 
@@ -114,7 +117,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
   - Extension constants (`CONTROL_PANEL_ROOT_ID`, `SORT_COUNT_ATTR` — the `data-sort-count` attribute driving count-aware CSS breakpoints)
   - `CSS_CLASSES` - Extension CSS class names (highlight, buttons, labels, `SHOW_NEW`, `NEW_POST`, `CONFLICT_NOTE`, `BUTTONS_TIER`, `DROPDOWN_TIER`, `DROPDOWN`)
   - `CSS_SELECTORS` - Derived CSS selectors from class names
-  - `SORT_OPTIONS` - Sort option configuration array (sort variant, display text, keyboard shortcut); order: points, time, comments, velocity, heat, default
+  - `SORT_OPTIONS` - Sort option configuration array (sort variant, display text, keyboard shortcut, and an optional `enableKey` naming the boolean setting that turns the sort on or off); order: points, time, comments, velocity, heat, default. To make a sort toggleable, add an `hns-<name>-enabled` key to `SETTINGS_KEYS`/`SETTINGS_DEFAULTS` and set it as the sort's `enableKey` (the `SortOption['enableKey']` type accepts any `*-enabled` settings key); `useSettings` needs no change
   - `SETTINGS_KEYS` - Storage key names for chrome.storage.sync (`SHOW_NEW`, `LAST_ACTIVE_SORT`, `POST_IDS_PREFIX`, `COOLDOWN`, `TRUE_TIME_AGO`, `VELOCITY_ENABLED`, `HEAT_ENABLED`, `OP_HIGHLIGHT`, `MARK_USER_HIGHLIGHT`)
   - `SETTINGS_DEFAULTS` - Default values for settings
   - `COOLDOWN_BOUNDS` - Min/max bounds for cooldown input validation

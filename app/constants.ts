@@ -102,8 +102,8 @@ export const SORT_OPTIONS: SortOption[] = [
   { sortBy: 'points', text: 'points', shortcut: 'P' },
   { sortBy: 'time', text: 'time', shortcut: 'T' },
   { sortBy: 'comments', text: 'comments', shortcut: 'C' },
-  { sortBy: 'velocity', text: 'velocity', shortcut: 'V' },
-  { sortBy: 'heat', text: 'heat', shortcut: 'H' },
+  { sortBy: 'velocity', text: 'velocity', shortcut: 'V', enableKey: SETTINGS_KEYS.VELOCITY_ENABLED },
+  { sortBy: 'heat', text: 'heat', shortcut: 'H', enableKey: SETTINGS_KEYS.HEAT_ENABLED },
   { sortBy: 'default', text: 'default', shortcut: 'D' },
 ];
 

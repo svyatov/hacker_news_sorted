@@ -10,9 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Rewrite the Chrome Web Store description in plain language with natural search terms and clearer explanations of sorting, comment highlighting, and Chrome sync
+- Move new-post tracking out of the sort settings into its own module with a single entry point, and derive the Velocity and Heat on/off toggles from the sort option list (internal restructuring with no change to any user-facing feature)
 
 ### Fixed
 
+- Posts on page 2 and later of a list no longer all show the new-post indicator (at full strength, without fading) when the first page of the same list loads in another tab
+- New-post indicators picked up from a visit in another tab now fade out over the highlight duration instead of staying until the page is reloaded
+- Posts that dropped off a list are no longer marked as new in an older tab of the same list when the list loads in another tab
 - Lower the layout monitor's timestamp canary floor from 80% to a majority so a front page with many second-chance posts or a cache-lagged "minutes ago" row does not fail the scheduled run
 
 ## [2.6.3] - 2026-09-14

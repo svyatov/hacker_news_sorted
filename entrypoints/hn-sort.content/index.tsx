@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import ControlPanel from '~app/components/ControlPanel';
 import { CONTROL_PANEL_ROOT_ID, SETTINGS_KEYS, SORT_PANEL_EXCLUDE_MATCHES } from '~app/constants';
 import { waitForPanelParent } from '~app/utils/layout';
+import { trackNewPosts } from '~app/utils/newPosts';
 import { getTableBody } from '~app/utils/selectors';
 
 import './content.css';
@@ -34,6 +35,7 @@ export default defineContentScript({
       return;
     }
     setLayoutStatus(true);
+    ctx.onInvalidated(trackNewPosts());
 
     let root: Root | undefined;
     const ui = createIntegratedUi(ctx, {
