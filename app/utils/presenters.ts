@@ -5,25 +5,11 @@ import { getCommentsElement, getPointsElement, getTableBody, getTimeElement } fr
 
 const DATA_ORIGINAL_AGE = 'data-original-age';
 
-export const updateTable = (parsedRows: ParsedRow[], footerRows: HTMLElement[], activeSort: SortVariant): void => {
-  if (parsedRows.length === 0) return;
-
-  const tableBody = getTableBody();
-  if (!tableBody) return;
-
-  const fragment = document.createDocumentFragment();
-
-  parsedRows.forEach((rowSet) => {
-    fragment.appendChild(rowSet.title);
-    fragment.appendChild(highlightActiveSort(rowSet.info, activeSort));
-    fragment.appendChild(rowSet.spacer);
-  });
-
-  footerRows.forEach((row) => {
-    fragment.appendChild(row);
-  });
-
-  tableBody.replaceChildren(fragment);
+// Moving the posts to the top leaves whatever follows them (the "More" footer) last.
+export const updateTable = (parsedRows: ParsedRow[], activeSort: SortVariant): void => {
+  getTableBody()?.prepend(
+    ...parsedRows.flatMap((row) => [row.title, highlightActiveSort(row.info, activeSort), row.spacer]),
+  );
 };
 
 // Only single-column sorts have a highlight target. Variants without an entry here

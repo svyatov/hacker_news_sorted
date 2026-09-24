@@ -113,10 +113,8 @@ export const HN_SELECTORS = {
   CONTROL_PANEL_PARENT: '#hnmain tr:has(> td > .pagetop > .hnname) > td:last-child',
   TABLE_BODY: '#hnmain #bigbox > td > table > tbody',
 
-  // Row patterns (relative to table body)
-  TITLE_ROWS: 'tr:nth-child(3n+1)',
-  INFO_ROWS: 'tr:nth-child(3n+2)',
-  SPACER_ROWS: 'tr:nth-child(3n+3)',
+  // One row per post (relative to table body); HN follows each with its info row, then a spacer row
+  POST_ROWS: 'tr.athing[id]',
 
   // Info row elements (relative to info row)
   POINTS: 'td.subtext > span > span.score',

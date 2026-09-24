@@ -1,61 +1,25 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { clearBody, setupTableBody } from '~app/__fixtures__/testHelpers';
 import { HN_CLASSES } from '~app/constants';
 
-import {
-  getCommentsElement,
-  getInfoRows,
-  getPointsElement,
-  getSpacerRows,
-  getTimeElement,
-  getTitleRows,
-} from './selectors';
-
-const POST_COUNT = 3;
-const ROWS_PER_POST = 3; // title + info + spacer
+import { getCommentsElement, getPointsElement, getPostRows, getTimeElement } from './selectors';
 
 describe('selectors', () => {
-  describe('row selectors', () => {
-    let tableBody: HTMLElement;
+  describe('getPostRows', () => {
+    afterEach(clearBody);
 
-    beforeEach(() => {
-      tableBody = document.createElement('tbody');
-      for (let i = 0; i < POST_COUNT * ROWS_PER_POST; i++) {
-        const tr = document.createElement('tr');
-        tr.setAttribute('data-row', String(i + 1));
-        tableBody.appendChild(tr);
-      }
+    it('returns the id-carrying athing row of each post, in order', () => {
+      const tbody = setupTableBody(['a', 'b']);
+      const noId = document.createElement('tr');
+      noId.className = HN_CLASSES.ATHING;
+      tbody.append(noId, document.createElement('tr'));
+
+      expect(getPostRows().map((row) => row.id)).toEqual(['a', 'b']);
     });
 
-    it('should select the first row of each 3-row post group', () => {
-      const titleRows = getTitleRows(tableBody);
-      expect(titleRows.length).toBe(POST_COUNT);
-      for (let i = 0; i < POST_COUNT; i++) {
-        expect(titleRows[i]!.getAttribute('data-row')).toBe(String(i * ROWS_PER_POST + 1));
-      }
-    });
-
-    it('should select the second row of each 3-row post group', () => {
-      const infoRows = getInfoRows(tableBody);
-      expect(infoRows.length).toBe(POST_COUNT);
-      for (let i = 0; i < POST_COUNT; i++) {
-        expect(infoRows[i]!.getAttribute('data-row')).toBe(String(i * ROWS_PER_POST + 2));
-      }
-    });
-
-    it('should select the third row of each 3-row post group', () => {
-      const spacerRows = getSpacerRows(tableBody);
-      expect(spacerRows.length).toBe(POST_COUNT);
-      for (let i = 0; i < POST_COUNT; i++) {
-        expect(spacerRows[i]!.getAttribute('data-row')).toBe(String(i * ROWS_PER_POST + 3));
-      }
-    });
-
-    it('should handle empty table body', () => {
-      const emptyTableBody = document.createElement('tbody');
-      expect(getTitleRows(emptyTableBody).length).toBe(0);
-      expect(getInfoRows(emptyTableBody).length).toBe(0);
-      expect(getSpacerRows(emptyTableBody).length).toBe(0);
+    it('returns nothing when the page has no list table', () => {
+      expect(getPostRows()).toEqual([]);
     });
   });
 

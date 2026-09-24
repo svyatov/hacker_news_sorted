@@ -15,7 +15,7 @@ const VELOCITY_ONLY = SORT_OPTIONS.filter((o) => o.sortBy !== 'heat'); // 5
 
 // Mock the hooks and utilities
 vi.mock('~app/hooks/useParsedRows', () => ({
-  useParsedRows: () => ({ parsedRows: [], footerRows: [] }),
+  useParsedRows: () => [],
 }));
 
 vi.mock('~app/utils/presenters', () => ({

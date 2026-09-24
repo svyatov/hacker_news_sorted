@@ -16,7 +16,7 @@ const SORT_BY_TEXT = 'Sort by';
 
 const ControlPanel = (): ReactElement | null => {
   const { activeSort, setActiveSort, showTrueTimeAgo, enabledSortOptions, settled } = useSettings();
-  const { parsedRows, footerRows } = useParsedRows();
+  const parsedRows = useParsedRows();
   const { showPrompt, dismissPrompt, incrementSortCount } = useReviewPrompt();
 
   const sortedRows = useMemo(() => sortRows(parsedRows, activeSort), [parsedRows, activeSort]);
@@ -25,13 +25,13 @@ const ControlPanel = (): ReactElement | null => {
     // Wait for the settled read so the table sorts once with the resolved sort, instead of
     // reordering from the default first and then again once settings load (PE2).
     if (!settled) return;
-    updateTable(sortedRows, footerRows, activeSort);
+    updateTable(sortedRows, activeSort);
     if (showTrueTimeAgo) {
       correctAgeTexts(sortedRows);
     } else {
       restoreAgeTexts(sortedRows);
     }
-  }, [sortedRows, footerRows, activeSort, showTrueTimeAgo, settled]);
+  }, [sortedRows, activeSort, showTrueTimeAgo, settled]);
 
   // Publish the enabled-option count on the imperatively-created panel root (outside
   // React's tree) so count-aware CSS breakpoints can key off it (KTD-3).

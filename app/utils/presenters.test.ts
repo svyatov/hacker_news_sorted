@@ -20,12 +20,13 @@ describe('presenters', () => {
         return { originalIndex, title, info, spacer, points: 0, time: 0, comments: 0 };
       });
 
-    it('reorders the post rows, appends the footer, and highlights the sorted column', () => {
+    it('reorders the post rows, keeps the footer last, and highlights the sorted column', () => {
       const tbody = setupTableBody(['a', 'b']);
       const [a, b] = parseRows(tbody);
       const footer = document.createElement('tr');
+      tbody.appendChild(footer);
 
-      updateTable([b!, a!], [footer], 'points');
+      updateTable([b!, a!], 'points');
 
       expect([...tbody.children]).toEqual([b!.title, b!.info, b!.spacer, a!.title, a!.info, a!.spacer, footer]);
       expect(a!.info.querySelector(`.${HN_CLASSES.SCORE}`)).toHaveClass(CSS_CLASSES.HIGHLIGHT);
@@ -34,7 +35,7 @@ describe('presenters', () => {
     it('leaves the table untouched when there are no rows', () => {
       const tbody = setupTableBody(['a']);
       const before = [...tbody.children];
-      updateTable([], [], 'points');
+      updateTable([], 'points');
       expect([...tbody.children]).toEqual(before);
     });
 
@@ -43,7 +44,6 @@ describe('presenters', () => {
       expect(() =>
         updateTable(
           [{ originalIndex: 0, title: row, info: row, spacer: row, points: 0, time: 0, comments: 0 }],
-          [],
           'points',
         ),
       ).not.toThrow();

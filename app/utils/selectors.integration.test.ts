@@ -1,20 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import { loadHNHomepage, setupDocument, setupHNHomepage } from '~app/__fixtures__/loadFixture';
-import { HN_SELECTORS, SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_MINUTE } from '~app/constants';
+import { HN_CLASSES, HN_SELECTORS, SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_MINUTE } from '~app/constants';
 
 import { getTime } from './parsers';
-import {
-  getCommentsElement,
-  getInfoRows,
-  getPointsElement,
-  getSpacerRows,
-  getTableBody,
-  getTimeElement,
-  getTitleRows,
-} from './selectors';
+import { getCommentsElement, getPointsElement, getPostRows, getTimeElement } from './selectors';
 
 const UNIT_SECONDS = { minute: SECONDS_PER_MINUTE, hour: SECONDS_PER_HOUR, day: SECONDS_PER_DAY } as const;
+
+const getInfoRows = (): HTMLElement[] => getPostRows().map((post) => post.nextElementSibling as HTMLElement);
 
 describe('selectors (integration with live HN HTML)', () => {
   it('should match all HN_SELECTORS against real HN markup', () => {
@@ -25,22 +19,22 @@ describe('selectors (integration with live HN HTML)', () => {
       'CONTROL_PANEL_PARENT should match exactly 1 element',
     ).toHaveLength(1);
 
-    const tableBody = getTableBody();
     expect(
       document.querySelectorAll(HN_SELECTORS.TABLE_BODY),
       'TABLE_BODY should match exactly 1 element',
     ).toHaveLength(1);
 
-    const titleRows = getTitleRows(tableBody!);
-    expect(titleRows.length, 'TITLE_ROWS should return 31 rows').toBe(31);
+    const posts = getPostRows();
+    expect(posts.length, 'POST_ROWS should return 30 rows').toBe(30);
+    // Each post is its athing row, an info row, then a spacer; the footer follows the last spacer.
+    for (const post of posts) {
+      expect(post.nextElementSibling?.nextElementSibling, `post ${post.id} should end with a spacer`).toHaveClass(
+        HN_CLASSES.SPACER,
+      );
+    }
+    expect(posts.at(-1)!.nextElementSibling!.nextElementSibling!.nextElementSibling).toHaveClass('morespace');
 
-    const infoRows = getInfoRows(tableBody!);
-    expect(infoRows.length, 'INFO_ROWS should match TITLE_ROWS count').toBe(titleRows.length);
-
-    const spacerRows = getSpacerRows(tableBody!);
-    // Last post doesn't have a trailing spacer row
-    expect(spacerRows.length, 'SPACER_ROWS should be less than TITLE_ROWS count by 1').toBe(titleRows.length - 1);
-
+    const infoRows = getInfoRows();
     const rowCount = infoRows.length;
     const minWithElement = rowCount - 5; // Allow up to 5 promo/job posts
 
@@ -67,7 +61,7 @@ describe('selectors (integration with live HN HTML)', () => {
     setupDocument(html);
     // Written by updateFixture.ts; the reference "now" the fixture's age texts were rendered against
     const fetchedAt = Date.parse(html.match(/^<!-- hns-fetched-at: (\S+) -->/)![1]!) / 1000;
-    const rows = [...getInfoRows(getTableBody()!)].filter((row) => getTimeElement(row));
+    const rows = getInfoRows().filter((row) => getTimeElement(row));
 
     let agreeing = 0;
     for (const row of rows) {

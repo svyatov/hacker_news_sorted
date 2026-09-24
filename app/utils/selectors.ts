@@ -8,16 +8,8 @@ export const getTableBody = (): HTMLElement | null => {
   return document.querySelector(HN_SELECTORS.TABLE_BODY);
 };
 
-export const getTitleRows = (tableBody: HTMLElement): NodeListOf<HTMLElement> => {
-  return tableBody.querySelectorAll(HN_SELECTORS.TITLE_ROWS);
-};
-
-export const getInfoRows = (tableBody: HTMLElement): NodeListOf<HTMLElement> => {
-  return tableBody.querySelectorAll(HN_SELECTORS.INFO_ROWS);
-};
-
-export const getSpacerRows = (tableBody: HTMLElement): NodeListOf<HTMLElement> => {
-  return tableBody.querySelectorAll(HN_SELECTORS.SPACER_ROWS);
+export const getPostRows = (): HTMLElement[] => {
+  return [...(getTableBody()?.querySelectorAll<HTMLElement>(HN_SELECTORS.POST_ROWS) ?? [])];
 };
 
 export const getPointsElement = (infoRow: HTMLElement): HTMLElement | null => {

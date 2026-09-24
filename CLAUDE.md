@@ -60,13 +60,13 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 ### Data Flow
 
 1. `useSettings` hook reads sort preference from `chrome.storage.sync`, exposes reactive `activeSort`, the derived `enabledSortOptions` list, and a `settled` first-paint flag; validates `activeSort` against the enabled set (unknown/disabled → `default`, R6)
-2. `useParsedRows` hook extracts post data from HN's DOM on mount (title, info, spacer rows per post)
+2. `useParsedRows` hook extracts post data from HN's DOM on mount: one row set per `getPostRows()` row (title, then the info and spacer rows that follow it)
 3. `sortRows` creates a new sorted array based on active sort option (velocity/heat are computed at sort time, not stored)
-4. `updateTable` replaces the table body with reordered rows and highlights the active sort column (velocity/heat span two columns, so they highlight nothing — KTD-2)
+4. `updateTable` prepends the reordered post rows to the table body, so whatever follows the posts (the "More" footer) stays last with no footer detection, and highlights the active sort column (velocity/heat span two columns, so they highlight nothing, KTD-2)
 
 ### Key Utils
 
-- `app/utils/selectors.ts` - DOM selectors for HN's table structure (title rows at 3n+1, info rows at 3n+2, spacer rows at 3n+3)
+- `app/utils/selectors.ts` - DOM selectors for HN's table structure. `getPostRows()` is the one definition of a post on a list page (`tr.athing[id]`, followed by its info row, then a spacer row); `useParsedRows`, `updateTable`, and `newPosts` all go through it
 - `app/utils/layout.ts` - `waitForPanelParent` (resolves HN's header cell, waiting via MutationObserver up to `LAYOUT_TIMEOUT_MS`, clearing the timeout on early resolve so a slow-but-successful mount can't later flip layout status to broken) + `LAYOUT_TIMEOUT_MS`; extracted from the entrypoint shell so the observer-vs-timeout race is unit-testable (`app/utils/layout.test.ts`)
 - `app/utils/parsers.ts` - Extract numeric values (points, time, comments) from info rows; `getTime` delegates to `parseAgeTitle`, which reads the `.age` title attribute in every format HN has used (legacy `"ISO_DATETIME UNIX_TIMESTAMP"`, `"2026-09-06T07:21:06.000000Z"` from 2026-08-27, zone-less `"2026-09-14T13:00:46"` since 2026-09-13, plus space separator, explicit offsets, and date-only) via `Date.UTC`; a zone-less datetime is UTC, never `Date.parse` (which would read it as local time and shift every post by the user's UTC offset)
 - `app/utils/settings.ts` - `watchSettings(keys, onChange)`: the one way to follow synced settings live (used by `useSettings`, `newPosts`, and `comments.content`). Calls `onChange` once when every key has loaded (`changed` undefined), then once per change with the changed key, always with a full snapshot, defaults from `SETTINGS_DEFAULTS` applied. A change that lands during the first read wins over it, a rejected read falls back to the default, and it returns dispose

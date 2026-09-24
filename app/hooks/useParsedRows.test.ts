@@ -11,18 +11,18 @@ afterEach(clearBody);
 describe('useParsedRows', () => {
   it('returns nothing when the page has no list table', () => {
     const { result } = renderHook(() => useParsedRows());
-    expect(result.current).toEqual({ parsedRows: [], footerRows: [] });
+    expect(result.current).toEqual([]);
   });
 
-  it('parses one row set per post and splits off the "More" footer', () => {
+  it('parses one row set per post', () => {
     setupHNHomepage();
     const { result } = renderHook(() => useParsedRows());
-    const { parsedRows, footerRows } = result.current;
+    const parsedRows = result.current;
 
     expect(parsedRows).toHaveLength(document.querySelectorAll('tr.athing.submission').length);
     expect(parsedRows[0]).toMatchObject({ originalIndex: 0, title: document.querySelector('tr.athing.submission') });
+    expect(parsedRows[0]!.info.querySelector('.subtext')).not.toBeNull();
+    expect(parsedRows.every((row) => row.spacer.classList.contains('spacer'))).toBe(true);
     expect(parsedRows[0]!.time).toBeGreaterThan(0);
-    expect(footerRows).toHaveLength(2);
-    expect(footerRows[1]!.querySelector('.morelink')).not.toBeNull();
   });
 });
