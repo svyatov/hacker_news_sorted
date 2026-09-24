@@ -7,21 +7,21 @@ import type { SortOption, SortVariant } from '~app/types';
 
 const storage = new Storage();
 
-// The set of currently-selectable sorts: every SORT_OPTIONS variant minus any whose disable
-// toggle is off. Single source of truth that BOTH revert-on-disable (resolveActiveSort) and the
-// rendered option list (enabledSortOptions) read from, so the two can't drift. To add a toggle,
-// extend the filter here plus SETTINGS_KEYS/DEFAULTS and the init read + watcher below.
-const enabledSortSet = (velocityEnabled: boolean, heatEnabled: boolean): Set<SortVariant> =>
-  new Set(
-    SORT_OPTIONS.map((option) => option.sortBy).filter(
-      (sort) => (sort !== 'velocity' || velocityEnabled) && (sort !== 'heat' || heatEnabled),
-    ),
-  );
+type ToggleKey = NonNullable<SortOption['enableKey']>;
+type Toggles = Record<ToggleKey, boolean>;
+
+const TOGGLE_KEYS = SORT_OPTIONS.flatMap((option) => option.enableKey ?? []);
+const DEFAULT_TOGGLES = Object.fromEntries(TOGGLE_KEYS.map((key) => [key, SETTINGS_DEFAULTS[key]])) as Toggles;
+
+// The currently-selectable sorts. Single source of truth that BOTH revert-on-disable
+// (resolveActiveSort) and the rendered option list (enabledSortOptions) read from.
+const enabledSorts = (toggles: Toggles): SortOption[] =>
+  SORT_OPTIONS.filter((option) => !option.enableKey || toggles[option.enableKey]);
 
 // A stored/synced sort value that is unknown (newer version) or currently disabled resolves to
 // HN's default order (R6). Convergence point for every entry: init read + all watchers.
-const resolveActiveSort = (stored: SortVariant, velocityEnabled: boolean, heatEnabled: boolean): SortVariant =>
-  enabledSortSet(velocityEnabled, heatEnabled).has(stored) ? stored : 'default';
+const resolveActiveSort = (stored: SortVariant, toggles: Toggles): SortVariant =>
+  enabledSorts(toggles).some((option) => option.sortBy === stored) ? stored : 'default';
 
 type UseSettingsReturn = {
   activeSort: SortVariant;
@@ -34,11 +34,10 @@ type UseSettingsReturn = {
 export const useSettings = (): UseSettingsReturn => {
   const [activeSort, setActiveSortState] = useState<SortVariant>(SETTINGS_DEFAULTS[SETTINGS_KEYS.LAST_ACTIVE_SORT]);
   const [showTrueTimeAgo, setShowTrueTimeAgoState] = useState(SETTINGS_DEFAULTS[SETTINGS_KEYS.TRUE_TIME_AGO]);
-  const [velocityEnabled, setVelocityEnabledState] = useState(SETTINGS_DEFAULTS[SETTINGS_KEYS.VELOCITY_ENABLED]);
-  const [heatEnabled, setHeatEnabledState] = useState(SETTINGS_DEFAULTS[SETTINGS_KEYS.HEAT_ENABLED]);
+  const [toggles, setTogglesState] = useState(DEFAULT_TOGGLES);
   const [settled, setSettled] = useState(false);
-  const velocityEnabledRef = useRef(SETTINGS_DEFAULTS[SETTINGS_KEYS.VELOCITY_ENABLED]);
-  const heatEnabledRef = useRef(SETTINGS_DEFAULTS[SETTINGS_KEYS.HEAT_ENABLED]);
+  // Mirror of `toggles` so watchers validate against the current value, not their closure's.
+  const togglesRef = useRef(DEFAULT_TOGGLES);
   // Sort/toggle watchers go live only once init has read their values, so an early change can't be
   // overwritten by (or race) the init read.
   const sortsReadyRef = useRef(false);
@@ -52,21 +51,18 @@ export const useSettings = (): UseSettingsReturn => {
   useEffect(() => {
     mountedRef.current = true;
 
-    const init = async () => {
-      const velocity = await storage.get<boolean>(SETTINGS_KEYS.VELOCITY_ENABLED);
-      const velocityValue = velocity ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.VELOCITY_ENABLED];
-      velocityEnabledRef.current = velocityValue;
-      setVelocityEnabledState(velocityValue);
+    const setToggles = (next: Toggles) => {
+      togglesRef.current = next;
+      setTogglesState(next);
+    };
 
-      const heat = await storage.get<boolean>(SETTINGS_KEYS.HEAT_ENABLED);
-      const heatValue = heat ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.HEAT_ENABLED];
-      heatEnabledRef.current = heatValue;
-      setHeatEnabledState(heatValue);
+    const init = async () => {
+      const loaded = { ...DEFAULT_TOGGLES };
+      for (const key of TOGGLE_KEYS) loaded[key] = (await storage.get<boolean>(key)) ?? DEFAULT_TOGGLES[key];
+      setToggles(loaded);
 
       const sort = await storage.get<SortVariant>(SETTINGS_KEYS.LAST_ACTIVE_SORT);
-      setActiveSortState(
-        resolveActiveSort(sort ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.LAST_ACTIVE_SORT], velocityValue, heatValue),
-      );
+      setActiveSortState(resolveActiveSort(sort ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.LAST_ACTIVE_SORT], loaded));
       setSettled(true);
       sortsReadyRef.current = true;
 
@@ -86,21 +82,7 @@ export const useSettings = (): UseSettingsReturn => {
         const incoming =
           (change.newValue as SortVariant | undefined) ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.LAST_ACTIVE_SORT];
         // Resolve locally (revert-on-disable); never write the resolved value back (no ping-pong).
-        setActiveSortState(resolveActiveSort(incoming, velocityEnabledRef.current, heatEnabledRef.current));
-      },
-      [SETTINGS_KEYS.VELOCITY_ENABLED]: (change) => {
-        if (!sortsReadyRef.current) return;
-        const enabled = (change.newValue as boolean | undefined) ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.VELOCITY_ENABLED];
-        velocityEnabledRef.current = enabled;
-        setVelocityEnabledState(enabled);
-        setActiveSortState((prev) => resolveActiveSort(prev, enabled, heatEnabledRef.current));
-      },
-      [SETTINGS_KEYS.HEAT_ENABLED]: (change) => {
-        if (!sortsReadyRef.current) return;
-        const enabled = (change.newValue as boolean | undefined) ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.HEAT_ENABLED];
-        heatEnabledRef.current = enabled;
-        setHeatEnabledState(enabled);
-        setActiveSortState((prev) => resolveActiveSort(prev, velocityEnabledRef.current, enabled));
+        setActiveSortState(resolveActiveSort(incoming, togglesRef.current));
       },
       [SETTINGS_KEYS.TRUE_TIME_AGO]: (change) => {
         setShowTrueTimeAgoState(
@@ -108,6 +90,15 @@ export const useSettings = (): UseSettingsReturn => {
         );
       },
     };
+
+    for (const key of TOGGLE_KEYS) {
+      watcherMap[key] = (change) => {
+        if (!sortsReadyRef.current) return;
+        const next = { ...togglesRef.current, [key]: (change.newValue as boolean | undefined) ?? DEFAULT_TOGGLES[key] };
+        setToggles(next);
+        setActiveSortState((prev) => resolveActiveSort(prev, next));
+      };
+    }
 
     storage.watch(watcherMap);
 
@@ -117,10 +108,7 @@ export const useSettings = (): UseSettingsReturn => {
     };
   }, []);
 
-  const enabledSortOptions = useMemo(() => {
-    const enabled = enabledSortSet(velocityEnabled, heatEnabled);
-    return SORT_OPTIONS.filter((option) => enabled.has(option.sortBy));
-  }, [velocityEnabled, heatEnabled]);
+  const enabledSortOptions = useMemo(() => enabledSorts(toggles), [toggles]);
 
   return { activeSort, setActiveSort, showTrueTimeAgo, enabledSortOptions, settled };
 };

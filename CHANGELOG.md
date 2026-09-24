@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Rewrite the Chrome Web Store description in plain language with natural search terms and clearer explanations of sorting, comment highlighting, and Chrome sync
-- Move new-post tracking out of the sort settings into its own module with a single entry point (internal restructuring with no change to any user-facing feature)
+- Move new-post tracking out of the sort settings into its own module with a single entry point, and derive the Velocity and Heat on/off toggles from the sort option list (internal restructuring with no change to any user-facing feature)
 
 ### Fixed
 

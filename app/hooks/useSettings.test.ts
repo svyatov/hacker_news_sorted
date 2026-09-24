@@ -2,7 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createStorageMock } from '~app/__fixtures__/testHelpers';
-import { SETTINGS_KEYS } from '~app/constants';
+import { SETTINGS_KEYS, SORT_OPTIONS } from '~app/constants';
 
 // --- Storage mock ---
 const { store, mockSet, mockGet, mockUnwatch, watcherCallbacks, reset, StorageClass } = createStorageMock();
@@ -66,20 +66,6 @@ describe('useSettings', () => {
       expect(result.current.enabledSortOptions).toHaveLength(6);
     });
 
-    it('reverts active velocity to default and shrinks the set when disabled (AE3)', async () => {
-      store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'velocity';
-      const { result } = renderHook(() => useSettings());
-      await act(() => Promise.resolve());
-      expect(result.current.activeSort).toBe('velocity');
-
-      act(() => {
-        watcherCallbacks[SETTINGS_KEYS.VELOCITY_ENABLED]?.({ newValue: false });
-      });
-
-      expect(result.current.activeSort).toBe('default');
-      expect(result.current.enabledSortOptions.map((o) => o.sortBy)).not.toContain('velocity');
-    });
-
     it('resolves a synced derived sort value to default when that sort is disabled', async () => {
       store[SETTINGS_KEYS.HEAT_ENABLED] = false;
       const { result } = renderHook(() => useSettings());
@@ -93,29 +79,12 @@ describe('useSettings', () => {
       expect(result.current.activeSort).toBe('default');
     });
 
-    it('resolves stored velocity to default at page load when velocity is disabled', async () => {
-      store[SETTINGS_KEYS.VELOCITY_ENABLED] = false;
-      store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'velocity';
-      const { result } = renderHook(() => useSettings());
-      await act(() => Promise.resolve());
-
-      expect(result.current.activeSort).toBe('default');
-    });
-
     it('resolves an unknown stored variant to default at page load', async () => {
       store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'bogus';
       const { result } = renderHook(() => useSettings());
       await act(() => Promise.resolve());
 
       expect(result.current.activeSort).toBe('default');
-    });
-
-    it('keeps stored velocity at page load when velocity is enabled', async () => {
-      store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'velocity';
-      const { result } = renderHook(() => useSettings());
-      await act(() => Promise.resolve());
-
-      expect(result.current.activeSort).toBe('velocity');
     });
 
     it('leaves the active sort untouched when disabling a non-active derived sort', async () => {
@@ -142,29 +111,6 @@ describe('useSettings', () => {
       });
 
       expect(mockSet).not.toHaveBeenCalledWith(SETTINGS_KEYS.LAST_ACTIVE_SORT, expect.anything());
-    });
-
-    it('does not restore a stored derived sort on re-enable mid-session, but a reload does', async () => {
-      store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'velocity';
-      const { result, unmount } = renderHook(() => useSettings());
-      await act(() => Promise.resolve());
-
-      act(() => {
-        watcherCallbacks[SETTINGS_KEYS.VELOCITY_ENABLED]?.({ newValue: false });
-      });
-      expect(result.current.activeSort).toBe('default');
-
-      // Re-enable mid-session: stays default (stored value not restored)
-      act(() => {
-        watcherCallbacks[SETTINGS_KEYS.VELOCITY_ENABLED]?.({ newValue: true });
-      });
-      expect(result.current.activeSort).toBe('default');
-
-      // Stored value was never overwritten, so a fresh mount (reload) restores velocity
-      unmount();
-      const { result: reloaded } = renderHook(() => useSettings());
-      await act(() => Promise.resolve());
-      expect(reloaded.current.activeSort).toBe('velocity');
     });
 
     it('flips the settled flag only after the init read resolves', async () => {
@@ -220,6 +166,64 @@ describe('useSettings', () => {
       expect(enabled).toContain('heat');
     });
   });
+
+  describe.each(SORT_OPTIONS.filter((option) => option.enableKey))(
+    'toggleable sort $sortBy',
+    ({ sortBy, enableKey }) => {
+      const toggle = (enabled: boolean) =>
+        act(() => {
+          watcherCallbacks[enableKey!]?.({ newValue: enabled });
+        });
+
+      it('reverts to default and leaves the enabled set when disabled while active (AE3)', async () => {
+        store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = sortBy;
+        const { result } = renderHook(() => useSettings());
+        await act(() => Promise.resolve());
+        expect(result.current.activeSort).toBe(sortBy);
+
+        toggle(false);
+
+        expect(result.current.activeSort).toBe('default');
+        expect(result.current.enabledSortOptions.map((o) => o.sortBy)).not.toContain(sortBy);
+      });
+
+      it('resolves to default at page load when disabled', async () => {
+        store[enableKey!] = false;
+        store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = sortBy;
+        const { result } = renderHook(() => useSettings());
+        await act(() => Promise.resolve());
+
+        expect(result.current.activeSort).toBe('default');
+      });
+
+      it('is kept at page load when enabled', async () => {
+        store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = sortBy;
+        const { result } = renderHook(() => useSettings());
+        await act(() => Promise.resolve());
+
+        expect(result.current.activeSort).toBe(sortBy);
+      });
+
+      it('is not restored on re-enable mid-session, but a reload restores it', async () => {
+        store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = sortBy;
+        const { result, unmount } = renderHook(() => useSettings());
+        await act(() => Promise.resolve());
+
+        toggle(false);
+        expect(result.current.activeSort).toBe('default');
+
+        // Re-enable mid-session: stays default (stored value not restored)
+        toggle(true);
+        expect(result.current.activeSort).toBe('default');
+
+        // Stored value was never overwritten, so a fresh mount (reload) restores it
+        unmount();
+        const { result: reloaded } = renderHook(() => useSettings());
+        await act(() => Promise.resolve());
+        expect(reloaded.current.activeSort).toBe(sortBy);
+      });
+    },
+  );
 
   describe('memory leak prevention', () => {
     it('should call unwatch on unmount', async () => {

@@ -86,7 +86,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 - `app/hooks/useSettings.ts` - Hook for the panel's synced state via `@plasmohq/storage` (chrome.storage.sync):
   - Sort preference (`activeSort` / `setActiveSort`) — syncs across devices, reactive via watchers
   - True time ago toggle (`showTrueTimeAgo`) — exposes reactive boolean for age text correction
-  - Velocity/Heat enabled toggles — derive `enabledSortOptions` (the SORT_OPTIONS subset the panel, dropdown, and hotkeys all consume); validated in the init read and both watchers (last-active-sort + toggle changes) via `resolveActiveSort`, which resolves unknown/disabled sorts to `default` locally without writing back (KTD-6, no ping-pong). Ref mirrors (`velocityEnabledRef`/`heatEnabledRef`) keep watchers validating against current state
+  - Sort toggles — every `SORT_OPTIONS` entry with an `enableKey` is toggleable; the hook reads and watches those keys generically (`TOGGLE_KEYS`) and derives `enabledSortOptions` (the SORT_OPTIONS subset the panel, dropdown, and hotkeys all consume); validated in the init read and all watchers (last-active-sort + toggle changes) via `resolveActiveSort`, which resolves unknown/disabled sorts to `default` locally without writing back (KTD-6, no ping-pong). A ref mirror (`togglesRef`) keeps watchers validating against current state
   - `settled` flag — flips after the async init read so the panel doesn't flash a six-option layout before reflowing (KTD-8)
 - `app/utils/newPosts.ts` - `trackNewPosts()` starts new-post tracking for the current list page and returns dispose. Everything else in the file is private and tested only through that boundary (`newPosts.test.ts`):
   - Post timestamps: stores `Record<string, number>` (post ID → discovery timestamp, `-1` for known) per pathname; migrates the old `string[]` format
@@ -117,7 +117,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
   - Extension constants (`CONTROL_PANEL_ROOT_ID`, `SORT_COUNT_ATTR` — the `data-sort-count` attribute driving count-aware CSS breakpoints)
   - `CSS_CLASSES` - Extension CSS class names (highlight, buttons, labels, `SHOW_NEW`, `NEW_POST`, `CONFLICT_NOTE`, `BUTTONS_TIER`, `DROPDOWN_TIER`, `DROPDOWN`)
   - `CSS_SELECTORS` - Derived CSS selectors from class names
-  - `SORT_OPTIONS` - Sort option configuration array (sort variant, display text, keyboard shortcut); order: points, time, comments, velocity, heat, default
+  - `SORT_OPTIONS` - Sort option configuration array (sort variant, display text, keyboard shortcut, and an optional `enableKey` naming the boolean setting that turns the sort on or off); order: points, time, comments, velocity, heat, default. To make a sort toggleable, set its `enableKey` and add that key to the `SortOption['enableKey']` union in `app/types.ts`; `useSettings` needs no change
   - `SETTINGS_KEYS` - Storage key names for chrome.storage.sync (`SHOW_NEW`, `LAST_ACTIVE_SORT`, `POST_IDS_PREFIX`, `COOLDOWN`, `TRUE_TIME_AGO`, `VELOCITY_ENABLED`, `HEAT_ENABLED`, `OP_HIGHLIGHT`, `MARK_USER_HIGHLIGHT`)
   - `SETTINGS_DEFAULTS` - Default values for settings
   - `COOLDOWN_BOUNDS` - Min/max bounds for cooldown input validation
