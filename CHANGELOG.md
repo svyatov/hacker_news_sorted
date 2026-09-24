@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Posts on page 2 and later of a list no longer all show the new-post indicator (at full strength, without fading) when the first page of the same list loads in another tab
 - Lower the layout monitor's timestamp canary floor from 80% to a majority so a front page with many second-chance posts or a cache-lagged "minutes ago" row does not fail the scheduled run
 
 ## [2.6.3] - 2026-09-14

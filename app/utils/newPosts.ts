@@ -107,6 +107,9 @@ const clearNewPostMarkers = (): void => {
 // Marks the posts on this list page that are new since the last visit, fades the marks over the
 // cooldown, and follows the show-new/cooldown settings and other tabs' visits live. Returns dispose.
 export const trackNewPosts = (): (() => void) => {
+  // Later pages share the first page's pathname key, so they must not read or react to it at all.
+  if (!isFirstPage()) return () => {};
+
   const postIdsKey = `${SETTINGS_KEYS.POST_IDS_PREFIX}${window.location.pathname}`;
   let timestamps: PostTimestamps = {};
   let showNew: boolean = SETTINGS_DEFAULTS[SETTINGS_KEYS.SHOW_NEW];
@@ -138,7 +141,7 @@ export const trackNewPosts = (): (() => void) => {
     cooldownMs =
       ((await storage.get<number>(SETTINGS_KEYS.COOLDOWN)) ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN]) * 1000;
 
-    if (isFirstPage() && getPostIds().length > 0) {
+    if (getPostIds().length > 0) {
       const stored = await storage.get<string[] | PostTimestamps>(postIdsKey);
       remark(stored ? migratePostIds(stored) : {});
       await storage.set(postIdsKey, timestamps);
@@ -154,12 +157,12 @@ export const trackNewPosts = (): (() => void) => {
       showNew = (change.newValue as boolean | undefined) ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.SHOW_NEW];
       applyShowNew();
       if (!showNew) clearNewPostMarkers();
-      else if (isFirstPage()) remark(timestamps);
+      else remark(timestamps);
       syncInterval();
     },
     [SETTINGS_KEYS.COOLDOWN]: (change) => {
       cooldownMs = ((change.newValue as number | undefined) ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN]) * 1000;
-      if (!showNew || !isFirstPage()) return;
+      if (!showNew) return;
       remark(timestamps);
       syncInterval();
     },

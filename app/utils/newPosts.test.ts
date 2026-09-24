@@ -272,6 +272,18 @@ describe('trackNewPosts', () => {
       expect(isMarked('post-1')).toBe(true);
     });
 
+    it('ignores the first page of the same list when this is a later page', async () => {
+      vi.stubGlobal('location', { pathname: '/news', search: '?p=2' });
+      setupTableBody(['page2-post']);
+      dispose = trackNewPosts();
+      await flush();
+
+      // Loading /news in another tab writes page 1's ids under the same pathname key.
+      emit(`${SETTINGS_KEYS.POST_IDS_PREFIX}/news`, { 'page1-post': -1 });
+
+      expect(isMarked('page2-post')).toBe(false);
+    });
+
     it('ignores changes that arrive before init has stored its own ids', async () => {
       setupTableBody(['post-1']);
       store[POST_IDS_KEY] = { 'post-1': -1 };
