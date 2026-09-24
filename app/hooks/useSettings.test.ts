@@ -1,97 +1,23 @@
 import { act, renderHook } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { clearBody, createStorageMock, FAKE_NOW, getRowById, setupTableBody } from '~app/__fixtures__/testHelpers';
-import { CSS_CLASSES, SETTINGS_DEFAULTS, SETTINGS_KEYS } from '~app/constants';
-import type { PostTimestamps } from '~app/utils/newPosts';
-
-const COOLDOWN = SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN];
-const COOLDOWN_MS = COOLDOWN * 1000;
+import { createStorageMock } from '~app/__fixtures__/testHelpers';
+import { SETTINGS_KEYS } from '~app/constants';
 
 // --- Storage mock ---
 const { store, mockSet, mockGet, mockUnwatch, watcherCallbacks, reset, StorageClass } = createStorageMock();
 vi.mock('@plasmohq/storage', () => ({ Storage: StorageClass }));
 
-// --- Stubs ---
-vi.stubGlobal('location', { pathname: '/', search: '' });
-
 const { useSettings } = await import('./useSettings');
 
 describe('useSettings', () => {
   beforeEach(() => {
-    clearBody();
     vi.clearAllMocks();
-    vi.useFakeTimers();
-    vi.setSystemTime(FAKE_NOW);
     reset();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-    vi.restoreAllMocks();
-  });
-
-  describe('init', () => {
-    it('should migrate string[] format to PostTimestamps', async () => {
-      setupTableBody(['post-1', 'post-2']);
-      store[SETTINGS_KEYS.SHOW_NEW] = true;
-      store['hns-post-ids:/'] = ['post-1', 'post-2'];
-
-      renderHook(() => useSettings());
-      await act(() => Promise.resolve());
-
-      // Should save migrated format (with Date.now() timestamps since they're treated as fresh)
-      const savedData = mockSet.mock.calls.find((c) => c[0] === 'hns-post-ids:/')?.[1] as PostTimestamps;
-      expect(savedData).toBeDefined();
-      expect(typeof savedData['post-1']).toBe('number');
-      expect(Array.isArray(savedData)).toBe(false);
-    });
-
-    it('should not re-migrate PostTimestamps format', async () => {
-      setupTableBody(['post-1']);
-      store[SETTINGS_KEYS.SHOW_NEW] = true;
-      const existing: PostTimestamps = { 'post-1': -1 };
-      store['hns-post-ids:/'] = existing;
-
-      renderHook(() => useSettings());
-      await act(() => Promise.resolve());
-
-      const savedData = mockSet.mock.calls.find((c) => c[0] === 'hns-post-ids:/')?.[1] as PostTimestamps;
-      expect(savedData).toBeDefined();
-      expect(savedData['post-1']).toBe(-1);
-    });
-
-    it('should mark new posts and start fade interval', async () => {
-      setupTableBody(['post-1', 'post-2']);
-      store[SETTINGS_KEYS.SHOW_NEW] = true;
-      store['hns-post-ids:/'] = { 'post-1': -1 } as PostTimestamps;
-
-      renderHook(() => useSettings());
-      await act(() => Promise.resolve());
-
-      expect(getRowById('post-2').classList.contains(CSS_CLASSES.NEW_POST)).toBe(true);
-      expect(getRowById('post-2').style.getPropertyValue('--hns-fade')).toBe('1');
-    });
-
-    it('should use default cooldown when none is stored', async () => {
-      setupTableBody(['post-1', 'post-2']);
-      store[SETTINGS_KEYS.SHOW_NEW] = true;
-      store['hns-post-ids:/'] = { 'post-1': -1 } as PostTimestamps;
-
-      renderHook(() => useSettings());
-      await act(() => Promise.resolve());
-
-      const savedData = mockSet.mock.calls.find((c) => c[0] === 'hns-post-ids:/')?.[1] as PostTimestamps;
-      expect(savedData['post-2']).toBe(FAKE_NOW);
-    });
   });
 
   describe('setActiveSort', () => {
     it('should update state and persist to storage', async () => {
-      setupTableBody([]);
-      renderHook(() => useSettings());
-      await act(() => Promise.resolve());
-
       const { result } = renderHook(() => useSettings());
       await act(() => Promise.resolve());
 
@@ -103,7 +29,6 @@ describe('useSettings', () => {
 
   describe('LAST_ACTIVE_SORT watcher', () => {
     it('should update activeSort from watcher after init', async () => {
-      setupTableBody([]);
       const { result } = renderHook(() => useSettings());
       await act(() => Promise.resolve());
 
@@ -117,7 +42,6 @@ describe('useSettings', () => {
 
   describe('TRUE_TIME_AGO watcher', () => {
     it('should update showTrueTimeAgo from watcher', async () => {
-      setupTableBody([]);
       const { result } = renderHook(() => useSettings());
       await act(() => Promise.resolve());
 
@@ -131,222 +55,8 @@ describe('useSettings', () => {
     });
   });
 
-  describe('fade interval', () => {
-    it('should update opacity on interval tick', async () => {
-      setupTableBody(['post-1']);
-      store[SETTINGS_KEYS.SHOW_NEW] = true;
-      store['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
-
-      renderHook(() => useSettings());
-      await act(() => Promise.resolve());
-
-      // post-1 is new, starts at opacity 1
-      expect(getRowById('post-1').style.getPropertyValue('--hns-fade')).toBe('1');
-
-      // Advance halfway through cooldown
-      vi.advanceTimersByTime(COOLDOWN_MS / 2);
-
-      const opacity = Number(getRowById('post-1').style.getPropertyValue('--hns-fade'));
-      expect(opacity).toBeCloseTo(0.5, 1);
-    });
-
-    it('should remove class when cooldown expires but preserve timestamp', async () => {
-      setupTableBody(['post-1']);
-      store[SETTINGS_KEYS.SHOW_NEW] = true;
-      store['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
-
-      renderHook(() => useSettings());
-      await act(() => Promise.resolve());
-
-      // Advance past cooldown
-      vi.advanceTimersByTime(COOLDOWN_MS + 1000);
-
-      expect(getRowById('post-1').classList.contains(CSS_CLASSES.NEW_POST)).toBe(false);
-      expect(getRowById('post-1').style.getPropertyValue('--hns-fade')).toBe('');
-    });
-
-    it('should clear interval on unmount', async () => {
-      setupTableBody(['post-1']);
-      store[SETTINGS_KEYS.SHOW_NEW] = true;
-      store['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
-
-      const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval');
-      const { unmount } = renderHook(() => useSettings());
-      await act(() => Promise.resolve());
-
-      unmount();
-      expect(clearIntervalSpy).toHaveBeenCalled();
-    });
-  });
-
-  describe('cooldown watcher', () => {
-    it('should restart interval with new period on cooldown change', async () => {
-      setupTableBody(['post-1']);
-      store[SETTINGS_KEYS.SHOW_NEW] = true;
-      store['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
-
-      const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval');
-      renderHook(() => useSettings());
-      await act(() => Promise.resolve());
-
-      const callsBefore = clearIntervalSpy.mock.calls.length;
-
-      // Simulate cooldown change from popup
-      act(() => {
-        watcherCallbacks[SETTINGS_KEYS.COOLDOWN]?.({ newValue: 300 });
-      });
-
-      // Should have cleared the old interval
-      expect(clearIntervalSpy.mock.calls.length).toBeGreaterThan(callsBefore);
-    });
-
-    it('should revive indicators when cooldown is increased', async () => {
-      setupTableBody(['post-1']);
-      store[SETTINGS_KEYS.SHOW_NEW] = true;
-      store['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
-
-      renderHook(() => useSettings());
-      await act(() => Promise.resolve());
-
-      // post-1 is new, starts at opacity 1
-      expect(getRowById('post-1').classList.contains(CSS_CLASSES.NEW_POST)).toBe(true);
-
-      // Advance past default cooldown
-      vi.advanceTimersByTime(COOLDOWN_MS + 1000);
-      expect(getRowById('post-1').classList.contains(CSS_CLASSES.NEW_POST)).toBe(false);
-
-      // Double the cooldown — post-1 should reappear
-      act(() => {
-        watcherCallbacks[SETTINGS_KEYS.COOLDOWN]?.({ newValue: COOLDOWN * 2 });
-      });
-
-      expect(getRowById('post-1').classList.contains(CSS_CLASSES.NEW_POST)).toBe(true);
-    });
-
-    it('should stop interval when no posts were ever new', async () => {
-      setupTableBody(['post-1']);
-      store[SETTINGS_KEYS.SHOW_NEW] = true;
-      // All posts are known (-1), none were ever new
-      store['hns-post-ids:/'] = { 'post-1': -1 } as PostTimestamps;
-
-      const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
-      renderHook(() => useSettings());
-      await act(() => Promise.resolve());
-
-      const callsBefore = setIntervalSpy.mock.calls.length;
-
-      // Change cooldown — should NOT start interval since no active timestamps
-      act(() => {
-        watcherCallbacks[SETTINGS_KEYS.COOLDOWN]?.({ newValue: 120 });
-      });
-
-      expect(setIntervalSpy.mock.calls.length).toBe(callsBefore);
-    });
-
-    it('should not restart interval when showNew is off', async () => {
-      setupTableBody(['post-1']);
-      store[SETTINGS_KEYS.SHOW_NEW] = false;
-      store['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
-
-      const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
-      renderHook(() => useSettings());
-      await act(() => Promise.resolve());
-
-      const callsBefore = setIntervalSpy.mock.calls.length;
-
-      act(() => {
-        watcherCallbacks[SETTINGS_KEYS.COOLDOWN]?.({ newValue: 300 });
-      });
-
-      // setInterval should not have been called again
-      expect(setIntervalSpy.mock.calls.length).toBe(callsBefore);
-    });
-  });
-
-  describe('showNew watcher', () => {
-    it('should stop interval when toggled off', async () => {
-      setupTableBody(['post-1']);
-      store[SETTINGS_KEYS.SHOW_NEW] = true;
-      store['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
-
-      const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval');
-      renderHook(() => useSettings());
-      await act(() => Promise.resolve());
-
-      act(() => {
-        watcherCallbacks[SETTINGS_KEYS.SHOW_NEW]?.({ newValue: false });
-      });
-
-      expect(clearIntervalSpy).toHaveBeenCalled();
-    });
-
-    it('should restart interval when toggled back on', async () => {
-      setupTableBody(['post-1']);
-      store[SETTINGS_KEYS.SHOW_NEW] = true;
-      store['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
-
-      const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
-      renderHook(() => useSettings());
-      await act(() => Promise.resolve());
-
-      // Toggle off then on
-      act(() => {
-        watcherCallbacks[SETTINGS_KEYS.SHOW_NEW]?.({ newValue: false });
-      });
-      const callsAfterOff = setIntervalSpy.mock.calls.length;
-
-      act(() => {
-        watcherCallbacks[SETTINGS_KEYS.SHOW_NEW]?.({ newValue: true });
-      });
-
-      expect(setIntervalSpy.mock.calls.length).toBeGreaterThan(callsAfterOff);
-    });
-  });
-
-  describe('postIds watcher', () => {
-    it('should re-apply marks from incoming timestamps without writing back', async () => {
-      setupTableBody(['post-1', 'post-2']);
-      store[SETTINGS_KEYS.SHOW_NEW] = true;
-      store['hns-post-ids:/'] = { 'post-1': -1, 'post-2': -1 } as PostTimestamps;
-
-      renderHook(() => useSettings());
-      await act(() => Promise.resolve());
-
-      mockSet.mockClear();
-
-      // Simulate incoming timestamps from another tab
-      const incomingTs: PostTimestamps = { 'post-1': Date.now(), 'post-2': -1 };
-      act(() => {
-        watcherCallbacks['hns-post-ids:/']?.({ newValue: incomingTs });
-      });
-
-      // post-1 should be marked as new
-      expect(getRowById('post-1').classList.contains(CSS_CLASSES.NEW_POST)).toBe(true);
-      // Should NOT have written back to storage
-      expect(mockSet).not.toHaveBeenCalledWith('hns-post-ids:/', expect.anything());
-    });
-
-    it('should handle migrated array format from watcher', async () => {
-      setupTableBody(['post-1']);
-      store[SETTINGS_KEYS.SHOW_NEW] = true;
-      store['hns-post-ids:/'] = { 'post-1': -1 } as PostTimestamps;
-
-      renderHook(() => useSettings());
-      await act(() => Promise.resolve());
-
-      // Simulate old-format data from another tab that hasn't updated yet
-      act(() => {
-        watcherCallbacks['hns-post-ids:/']?.({ newValue: ['post-1'] });
-      });
-
-      // Should not throw, should handle gracefully
-      expect(getRowById('post-1')).toBeDefined();
-    });
-  });
-
   describe('derived sort toggles & validation', () => {
     it('defaults both derived sorts to enabled', async () => {
-      setupTableBody([]);
       const { result } = renderHook(() => useSettings());
       await act(() => Promise.resolve());
 
@@ -357,7 +67,6 @@ describe('useSettings', () => {
     });
 
     it('reverts active velocity to default and shrinks the set when disabled (AE3)', async () => {
-      setupTableBody([]);
       store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'velocity';
       const { result } = renderHook(() => useSettings());
       await act(() => Promise.resolve());
@@ -372,7 +81,6 @@ describe('useSettings', () => {
     });
 
     it('resolves a synced derived sort value to default when that sort is disabled', async () => {
-      setupTableBody([]);
       store[SETTINGS_KEYS.HEAT_ENABLED] = false;
       const { result } = renderHook(() => useSettings());
       await act(() => Promise.resolve());
@@ -386,7 +94,6 @@ describe('useSettings', () => {
     });
 
     it('resolves stored velocity to default at page load when velocity is disabled', async () => {
-      setupTableBody([]);
       store[SETTINGS_KEYS.VELOCITY_ENABLED] = false;
       store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'velocity';
       const { result } = renderHook(() => useSettings());
@@ -396,7 +103,6 @@ describe('useSettings', () => {
     });
 
     it('resolves an unknown stored variant to default at page load', async () => {
-      setupTableBody([]);
       store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'bogus';
       const { result } = renderHook(() => useSettings());
       await act(() => Promise.resolve());
@@ -405,7 +111,6 @@ describe('useSettings', () => {
     });
 
     it('keeps stored velocity at page load when velocity is enabled', async () => {
-      setupTableBody([]);
       store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'velocity';
       const { result } = renderHook(() => useSettings());
       await act(() => Promise.resolve());
@@ -414,7 +119,6 @@ describe('useSettings', () => {
     });
 
     it('leaves the active sort untouched when disabling a non-active derived sort', async () => {
-      setupTableBody([]);
       store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'points';
       const { result } = renderHook(() => useSettings());
       await act(() => Promise.resolve());
@@ -427,7 +131,6 @@ describe('useSettings', () => {
     });
 
     it('never writes the resolved value back to storage (no ping-pong)', async () => {
-      setupTableBody([]);
       store[SETTINGS_KEYS.VELOCITY_ENABLED] = false;
       store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'velocity';
       const { result } = renderHook(() => useSettings());
@@ -442,7 +145,6 @@ describe('useSettings', () => {
     });
 
     it('does not restore a stored derived sort on re-enable mid-session, but a reload does', async () => {
-      setupTableBody([]);
       store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'velocity';
       const { result, unmount } = renderHook(() => useSettings());
       await act(() => Promise.resolve());
@@ -466,7 +168,6 @@ describe('useSettings', () => {
     });
 
     it('flips the settled flag only after the init read resolves', async () => {
-      setupTableBody([]);
       const { result } = renderHook(() => useSettings());
       expect(result.current.settled).toBe(false);
 
@@ -475,7 +176,6 @@ describe('useSettings', () => {
     });
 
     it('still settles (with defaults) if a storage read rejects, so the panel never vanishes', async () => {
-      setupTableBody([]);
       mockGet.mockRejectedValueOnce(new Error('extension context invalidated'));
       const { result } = renderHook(() => useSettings());
 
@@ -485,7 +185,6 @@ describe('useSettings', () => {
     });
 
     it('ignores toggle changes that arrive before init completes, then settles from the init read', async () => {
-      setupTableBody([]);
       store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'velocity';
       const { result } = renderHook(() => useSettings());
 
@@ -504,7 +203,6 @@ describe('useSettings', () => {
     });
 
     it('falls back to the default when a toggle watcher receives an undefined value', async () => {
-      setupTableBody([]);
       store[SETTINGS_KEYS.VELOCITY_ENABLED] = false;
       store[SETTINGS_KEYS.HEAT_ENABLED] = false;
       const { result } = renderHook(() => useSettings());
@@ -525,35 +223,11 @@ describe('useSettings', () => {
 
   describe('memory leak prevention', () => {
     it('should call unwatch on unmount', async () => {
-      setupTableBody([]);
-      renderHook(() => useSettings());
-      await act(() => Promise.resolve());
-
       const { unmount } = renderHook(() => useSettings());
       await act(() => Promise.resolve());
 
       unmount();
       expect(mockUnwatch).toHaveBeenCalled();
-    });
-
-    it('should not start interval after unmount during async init', async () => {
-      setupTableBody(['post-1']);
-      store[SETTINGS_KEYS.SHOW_NEW] = true;
-      store['hns-post-ids:/'] = { 'old-1': -1 } as PostTimestamps;
-
-      const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
-      const { unmount } = renderHook(() => useSettings());
-
-      // Unmount before init completes
-      unmount();
-      await act(() => Promise.resolve());
-
-      // setInterval should not have been called after unmount
-      // (the mountedRef guard should prevent it)
-      const intervalCallsAfterUnmount = setIntervalSpy.mock.calls.length;
-      // Advance time to check no intervals fire
-      vi.advanceTimersByTime(COOLDOWN_MS);
-      expect(setIntervalSpy.mock.calls.length).toBe(intervalCallsAfterUnmount);
     });
   });
 });

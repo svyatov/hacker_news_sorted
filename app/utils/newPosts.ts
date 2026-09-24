@@ -1,16 +1,21 @@
-import { CSS_CLASSES } from '~app/constants';
+import { Storage, type StorageCallbackMap } from '@plasmohq/storage';
+
+import { CSS_CLASSES, SETTINGS_DEFAULTS, SETTINGS_KEYS } from '~app/constants';
 import { getTableBody } from '~app/utils/selectors';
 
+// Post id -> discovery time (ms), or -1 for a post that was already there on the first visit.
 export type PostTimestamps = Record<string, number>;
+
+const storage = new Storage();
 
 const FADE_PROPERTY = '--hns-fade';
 
-export const isFirstPage = (): boolean => {
+const isFirstPage = (): boolean => {
   const params = new URLSearchParams(window.location.search);
   return !(params.has('p') || params.has('next'));
 };
 
-export const getPostIds = (): string[] => {
+const getPostIds = (): string[] => {
   const tableBody = getTableBody();
   if (!tableBody) return [];
 
@@ -18,18 +23,14 @@ export const getPostIds = (): string[] => {
   return Array.from(rows, (row) => row.id);
 };
 
-export const migratePostIds = (stored: string[] | PostTimestamps): PostTimestamps => {
+const migratePostIds = (stored: string[] | PostTimestamps): PostTimestamps => {
   if (Array.isArray(stored)) {
     return Object.fromEntries(stored.map((id) => [id, Date.now()]));
   }
   return stored;
 };
 
-export const markNewPosts = (
-  currentIds: string[],
-  previousTimestamps: PostTimestamps,
-  cooldownMs: number,
-): PostTimestamps => {
+const markNewPosts = (currentIds: string[], previousTimestamps: PostTimestamps, cooldownMs: number): PostTimestamps => {
   const result: PostTimestamps = {};
 
   if (Object.keys(previousTimestamps).length === 0) {
@@ -72,7 +73,7 @@ export const markNewPosts = (
   return result;
 };
 
-export const updateFadeOpacities = (timestamps: PostTimestamps, cooldownMs: number): void => {
+const updateFadeOpacities = (timestamps: PostTimestamps, cooldownMs: number): void => {
   const tableBody = getTableBody();
 
   for (const [id, ts] of Object.entries(timestamps)) {
@@ -92,7 +93,7 @@ export const updateFadeOpacities = (timestamps: PostTimestamps, cooldownMs: numb
   }
 };
 
-export const clearNewPostMarkers = (): void => {
+const clearNewPostMarkers = (): void => {
   const tableBody = getTableBody();
   if (!tableBody) return;
 
@@ -101,4 +102,81 @@ export const clearNewPostMarkers = (): void => {
     row.classList.remove(CSS_CLASSES.NEW_POST);
     row.style.removeProperty(FADE_PROPERTY);
   }
+};
+
+// Marks the posts on this list page that are new since the last visit, fades the marks over the
+// cooldown, and follows the show-new/cooldown settings and other tabs' visits live. Returns dispose.
+export const trackNewPosts = (): (() => void) => {
+  const postIdsKey = `${SETTINGS_KEYS.POST_IDS_PREFIX}${window.location.pathname}`;
+  let timestamps: PostTimestamps = {};
+  let showNew: boolean = SETTINGS_DEFAULTS[SETTINGS_KEYS.SHOW_NEW];
+  let cooldownMs = SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN] * 1000;
+  let interval: ReturnType<typeof setInterval> | undefined;
+  // The postIds watcher stays off until init's own write lands, so it can't react to it (no ping-pong).
+  let ready = false;
+  let disposed = false;
+
+  const applyShowNew = () => getTableBody()?.classList.toggle(CSS_CLASSES.SHOW_NEW, showNew);
+
+  const remark = (previous: PostTimestamps) => {
+    clearNewPostMarkers();
+    timestamps = markNewPosts(getPostIds(), previous, cooldownMs);
+  };
+
+  // The single rule for the fade timer: it runs only while shown, alive, and something is still fading.
+  const syncInterval = () => {
+    clearInterval(interval);
+    interval = undefined;
+    if (disposed || !showNew || !Object.values(timestamps).some((ts) => ts > 0)) return;
+    const period = Math.max(1000, Math.floor(cooldownMs / 50));
+    interval = setInterval(() => updateFadeOpacities(timestamps, cooldownMs), period);
+  };
+
+  const init = async () => {
+    showNew = (await storage.get<boolean>(SETTINGS_KEYS.SHOW_NEW)) ?? showNew;
+    applyShowNew();
+    cooldownMs =
+      ((await storage.get<number>(SETTINGS_KEYS.COOLDOWN)) ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN]) * 1000;
+
+    if (isFirstPage() && getPostIds().length > 0) {
+      const stored = await storage.get<string[] | PostTimestamps>(postIdsKey);
+      remark(stored ? migratePostIds(stored) : {});
+      await storage.set(postIdsKey, timestamps);
+      if (disposed) return;
+      syncInterval();
+    }
+
+    ready = true;
+  };
+
+  const watchers: StorageCallbackMap = {
+    [SETTINGS_KEYS.SHOW_NEW]: (change) => {
+      showNew = (change.newValue as boolean | undefined) ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.SHOW_NEW];
+      applyShowNew();
+      if (!showNew) clearNewPostMarkers();
+      else if (isFirstPage()) remark(timestamps);
+      syncInterval();
+    },
+    [SETTINGS_KEYS.COOLDOWN]: (change) => {
+      cooldownMs = ((change.newValue as number | undefined) ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN]) * 1000;
+      if (!showNew || !isFirstPage()) return;
+      remark(timestamps);
+      syncInterval();
+    },
+    [postIdsKey]: (change) => {
+      if (!ready) return;
+      // Never write back: the other tab already stored this value.
+      remark(migratePostIds((change.newValue ?? {}) as string[] | PostTimestamps));
+    },
+  };
+
+  // A rejected storage read (e.g. "extension context invalidated") just leaves posts unmarked.
+  init().catch(() => {});
+  storage.watch(watchers);
+
+  return () => {
+    disposed = true;
+    syncInterval();
+    storage.unwatch(watchers);
+  };
 };
