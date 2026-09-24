@@ -39,7 +39,7 @@ describe('useSettings', () => {
       expect(result.current.activeSort).toBe('comments');
     });
 
-    it('ignores changes that arrive before init completes', async () => {
+    it('keeps a change that arrives before init completes over the older init read', async () => {
       store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'time';
       const { result } = renderHook(() => useSettings());
 
@@ -48,7 +48,7 @@ describe('useSettings', () => {
       });
       await act(() => Promise.resolve());
 
-      expect(result.current.activeSort).toBe('time');
+      expect(result.current.activeSort).toBe('comments');
     });
 
     it('falls back to the default sort when the key is cleared', async () => {
@@ -166,11 +166,10 @@ describe('useSettings', () => {
       expect(result.current.settled).toBe(true);
     });
 
-    it('ignores toggle changes that arrive before init completes, then settles from the init read', async () => {
+    it('applies toggle changes that arrive before init completes, then settles once', async () => {
       store[SETTINGS_KEYS.LAST_ACTIVE_SORT] = 'velocity';
       const { result } = renderHook(() => useSettings());
 
-      // Watchers are live before init resolves; sortsReadyRef is still false → guarded out.
       act(() => {
         watcherCallbacks[SETTINGS_KEYS.VELOCITY_ENABLED]?.({ newValue: false });
         watcherCallbacks[SETTINGS_KEYS.HEAT_ENABLED]?.({ newValue: false });
@@ -178,10 +177,10 @@ describe('useSettings', () => {
 
       await act(() => Promise.resolve());
 
-      // init's own read wins over the ignored pre-init changes.
+      // The pre-init changes win over init's older read, so the stored velocity sort is now disabled.
       expect(result.current.settled).toBe(true);
-      expect(result.current.activeSort).toBe('velocity');
-      expect(result.current.enabledSortOptions.map((o) => o.sortBy)).toContain('velocity');
+      expect(result.current.activeSort).toBe('default');
+      expect(result.current.enabledSortOptions.map((o) => o.sortBy)).not.toContain('velocity');
     });
 
     it('falls back to the default when a toggle watcher receives an undefined value', async () => {

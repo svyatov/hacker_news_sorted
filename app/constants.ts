@@ -1,4 +1,4 @@
-import type { SortOption } from '~app/types';
+import type { SortOption, SortVariant } from '~app/types';
 
 // Extension constants
 export const CONTROL_PANEL_ROOT_ID = 'hns-control-panel';
@@ -29,7 +29,7 @@ export const SETTINGS_KEYS = {
 
 export const SETTINGS_DEFAULTS = {
   [SETTINGS_KEYS.SHOW_NEW]: true as boolean,
-  [SETTINGS_KEYS.LAST_ACTIVE_SORT]: 'points' as const,
+  [SETTINGS_KEYS.LAST_ACTIVE_SORT]: 'points' as SortVariant,
   [SETTINGS_KEYS.LAYOUT_OK]: true as boolean,
   [SETTINGS_KEYS.REVIEW_DISMISSED]: false as boolean,
   [SETTINGS_KEYS.INSTALL_TIMESTAMP]: 0 as number,
