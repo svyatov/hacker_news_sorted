@@ -1,7 +1,7 @@
 import { Storage, type StorageCallbackMap } from '@plasmohq/storage';
 
 import { CSS_CLASSES, SETTINGS_DEFAULTS, SETTINGS_KEYS } from '~app/constants';
-import { getTableBody } from '~app/utils/selectors';
+import { getPostRows, getTableBody } from '~app/utils/selectors';
 import { watchSettings } from '~app/utils/settings';
 
 // Post id -> discovery time (ms), or -1 for a post that was already there on the first visit.
@@ -16,13 +16,7 @@ const isFirstPage = (): boolean => {
   return !(params.has('p') || params.has('next'));
 };
 
-const getPostIds = (): string[] => {
-  const tableBody = getTableBody();
-  if (!tableBody) return [];
-
-  const rows = tableBody.querySelectorAll<HTMLElement>('tr.athing[id]');
-  return Array.from(rows, (row) => row.id);
-};
+const getPostIds = (): string[] => getPostRows().map((row) => row.id);
 
 const migratePostIds = (stored: string[] | PostTimestamps): PostTimestamps => {
   if (Array.isArray(stored)) {
@@ -31,12 +25,11 @@ const migratePostIds = (stored: string[] | PostTimestamps): PostTimestamps => {
   return stored;
 };
 
-const getPostRow = (tableBody: HTMLElement | null, id: string) =>
-  tableBody?.querySelector<HTMLElement>(`tr.athing[id="${id}"]`);
+const getPostRow = (id: string) => getPostRows().find((row) => row.id === id);
 
 // Ids come from getPostIds() on the same table in the same tick, so the row exists.
-const markRow = (tableBody: HTMLElement | null, id: string, fade: number): void => {
-  const row = getPostRow(tableBody, id)!;
+const markRow = (id: string, fade: number): void => {
+  const row = getPostRow(id)!;
   row.classList.add(CSS_CLASSES.NEW_POST);
   row.style.setProperty(FADE_PROPERTY, String(fade));
 };
@@ -49,20 +42,18 @@ const markNewPosts = (currentIds: string[], previousTimestamps: PostTimestamps, 
     return result;
   }
 
-  const tableBody = getTableBody();
-
   for (const id of currentIds) {
     const ts = previousTimestamps[id];
 
     if (ts === undefined) {
       // New post
       result[id] = Date.now();
-      markRow(tableBody, id, 1);
+      markRow(id, 1);
     } else if (ts > 0) {
       // Previously discovered, keep original timestamp
       result[id] = ts;
       const remaining = ts + cooldownMs - Date.now();
-      if (remaining > 0) markRow(tableBody, id, remaining / cooldownMs);
+      if (remaining > 0) markRow(id, remaining / cooldownMs);
     } else {
       // Known (-1): never was new
       result[id] = -1;
@@ -73,11 +64,9 @@ const markNewPosts = (currentIds: string[], previousTimestamps: PostTimestamps, 
 };
 
 const updateFadeOpacities = (timestamps: PostTimestamps, cooldownMs: number): void => {
-  const tableBody = getTableBody();
-
   for (const [id, ts] of Object.entries(timestamps)) {
     if (ts <= 0) continue;
-    const row = getPostRow(tableBody, id);
+    const row = getPostRow(id);
     if (!row) continue;
 
     const opacity = Math.max(0, (ts + cooldownMs - Date.now()) / cooldownMs);
