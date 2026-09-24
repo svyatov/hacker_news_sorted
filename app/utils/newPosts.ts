@@ -2,6 +2,7 @@ import { Storage, type StorageCallbackMap } from '@plasmohq/storage';
 
 import { CSS_CLASSES, SETTINGS_DEFAULTS, SETTINGS_KEYS } from '~app/constants';
 import { getTableBody } from '~app/utils/selectors';
+import { watchSettings } from '~app/utils/settings';
 
 // Post id -> discovery time (ms), or -1 for a post that was already there on the first visit.
 export type PostTimestamps = Record<string, number>;
@@ -132,12 +133,7 @@ export const trackNewPosts = (): (() => void) => {
     syncInterval();
   };
 
-  const init = async () => {
-    showNew = (await storage.get<boolean>(SETTINGS_KEYS.SHOW_NEW)) ?? showNew;
-    applyShowNew();
-    cooldownMs =
-      ((await storage.get<number>(SETTINGS_KEYS.COOLDOWN)) ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN]) * 1000;
-
+  const loadPostIds = async () => {
     if (getPostIds().length > 0) {
       const stored = await storage.get<string[] | PostTimestamps>(postIdsKey);
       remark(stored ? migratePostIds(stored) : {});
@@ -147,21 +143,28 @@ export const trackNewPosts = (): (() => void) => {
     ready = true;
   };
 
-  const watchers: StorageCallbackMap = {
-    [SETTINGS_KEYS.SHOW_NEW]: (change) => {
-      showNew = (change.newValue as boolean | undefined) ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.SHOW_NEW];
-      applyShowNew();
-      if (showNew) {
-        remark(timestamps);
-      } else {
-        clearNewPostMarkers();
-        syncInterval();
-      }
-    },
-    [SETTINGS_KEYS.COOLDOWN]: (change) => {
-      cooldownMs = ((change.newValue as number | undefined) ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN]) * 1000;
+  const stopSettings = watchSettings([SETTINGS_KEYS.SHOW_NEW, SETTINGS_KEYS.COOLDOWN], (values, changed) => {
+    showNew = values[SETTINGS_KEYS.SHOW_NEW];
+    cooldownMs = values[SETTINGS_KEYS.COOLDOWN] * 1000;
+
+    if (changed === SETTINGS_KEYS.COOLDOWN) {
       if (showNew) remark(timestamps);
-    },
+      return;
+    }
+
+    applyShowNew();
+    if (!changed) {
+      // A rejected storage read (e.g. "extension context invalidated") just leaves posts unmarked.
+      loadPostIds().catch(() => {});
+    } else if (showNew) {
+      remark(timestamps);
+    } else {
+      clearNewPostMarkers();
+      syncInterval();
+    }
+  });
+
+  const postIdsWatcher: StorageCallbackMap = {
     [postIdsKey]: (change) => {
       if (!ready) return;
       // Never write back: the other tab already stored this value. Merge over our own map, because the
@@ -171,14 +174,12 @@ export const trackNewPosts = (): (() => void) => {
       remark({ ...timestamps, ...incoming });
     },
   };
-
-  // A rejected storage read (e.g. "extension context invalidated") just leaves posts unmarked.
-  init().catch(() => {});
-  storage.watch(watchers);
+  storage.watch(postIdsWatcher);
 
   return () => {
     disposed = true;
     syncInterval();
-    storage.unwatch(watchers);
+    stopSettings();
+    storage.unwatch(postIdsWatcher);
   };
 };

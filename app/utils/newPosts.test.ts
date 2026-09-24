@@ -149,8 +149,9 @@ describe('trackNewPosts', () => {
       expect(() => emit(SETTINGS_KEYS.SHOW_NEW, false)).not.toThrow();
     });
 
-    it('leaves posts unmarked when a storage read rejects', async () => {
-      mockGet.mockRejectedValueOnce(new Error('Extension context invalidated.'));
+    it('leaves posts unmarked when storage reads reject', async () => {
+      // An invalidated extension context fails every read: both settings and the post ids.
+      for (let i = 0; i < 3; i++) mockGet.mockRejectedValueOnce(new Error('Extension context invalidated.'));
       setupTableBody(['post-1']);
       store[POST_IDS_KEY] = { 'old-1': -1 };
       dispose = trackNewPosts();
@@ -381,7 +382,8 @@ describe('trackNewPosts', () => {
       const stop = await startWithNewPost();
       stop();
 
-      expect(mockUnwatch).toHaveBeenCalledWith(mockWatch.mock.calls[0]?.[0]);
+      for (const [watchers] of mockWatch.mock.calls) expect(mockUnwatch).toHaveBeenCalledWith(watchers);
+      expect(mockUnwatch).toHaveBeenCalledTimes(mockWatch.mock.calls.length);
     });
 
     it('does not start a fade timer when disposed during init', async () => {
