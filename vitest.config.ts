@@ -17,6 +17,7 @@ export default defineConfig({
       reporter: ['text', 'html', 'lcov'],
       include: ['app/**/*.{ts,tsx}'],
       exclude: ['app/**/*.test.{ts,tsx}', 'app/__fixtures__/**'],
+      thresholds: { 100: true },
     },
   },
   resolve: {

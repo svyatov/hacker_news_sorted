@@ -72,4 +72,13 @@ describe('background service worker', () => {
 
     expect(setBadgeText).toHaveBeenCalledWith({ text: '' });
   });
+
+  it('should ignore changes to other storage keys', async () => {
+    storageGet.mockImplementation((_key: string, cb: (result: Record<string, unknown>) => void) => cb({}));
+
+    initBadge();
+    storageChangeListener({ [SETTINGS_KEYS.SHOW_NEW]: { newValue: false } });
+
+    expect(setBadgeText).not.toHaveBeenCalled();
+  });
 });

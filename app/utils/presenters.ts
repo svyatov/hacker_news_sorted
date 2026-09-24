@@ -79,7 +79,7 @@ export const correctAgeTexts = (parsedRows: ParsedRow[]): void => {
     const link = ageEl?.querySelector('a');
     if (!link) continue;
     if (!link.hasAttribute(DATA_ORIGINAL_AGE)) {
-      link.setAttribute(DATA_ORIGINAL_AGE, link.textContent ?? '');
+      link.setAttribute(DATA_ORIGINAL_AGE, link.textContent);
     }
     link.textContent = formatAge(row.time);
   }

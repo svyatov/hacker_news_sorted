@@ -9,7 +9,7 @@ const COOLDOWN = SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN];
 const COOLDOWN_MS = COOLDOWN * 1000;
 const POST_IDS_KEY = `${SETTINGS_KEYS.POST_IDS_PREFIX}/`;
 
-const { store, mockSet, mockWatch, mockUnwatch, watcherCallbacks, reset, StorageClass } = createStorageMock();
+const { store, mockGet, mockSet, mockWatch, mockUnwatch, watcherCallbacks, reset, StorageClass } = createStorageMock();
 vi.mock('@plasmohq/storage', () => ({ Storage: StorageClass }));
 
 const { trackNewPosts } = await import('./newPosts');
@@ -146,6 +146,18 @@ describe('trackNewPosts', () => {
       await flush();
 
       expect(savedTimestamps()).toBeUndefined();
+      expect(() => emit(SETTINGS_KEYS.SHOW_NEW, false)).not.toThrow();
+    });
+
+    it('leaves posts unmarked when a storage read rejects', async () => {
+      mockGet.mockRejectedValueOnce(new Error('Extension context invalidated.'));
+      setupTableBody(['post-1']);
+      store[POST_IDS_KEY] = { 'old-1': -1 };
+      dispose = trackNewPosts();
+      await flush();
+
+      expect(isMarked('post-1')).toBe(false);
+      expect(savedTimestamps()).toBeUndefined();
     });
   });
 
@@ -166,6 +178,25 @@ describe('trackNewPosts', () => {
 
       expect(isMarked('post-1')).toBe(false);
       expect(fadeOf('post-1')).toBe('');
+    });
+
+    it('leaves known posts alone while a new one fades', async () => {
+      setupTableBody(['post-1', 'post-2']);
+      store[POST_IDS_KEY] = { 'post-2': -1 };
+      dispose = trackNewPosts();
+      await flush();
+
+      vi.advanceTimersByTime(COOLDOWN_MS / 2);
+
+      expect(isMarked('post-2')).toBe(false);
+      expect(fadeOf('post-2')).toBe('');
+    });
+
+    it('keeps fading after a marked row leaves the page', async () => {
+      dispose = await startWithNewPost();
+      getRowById('post-1').remove();
+
+      expect(() => vi.advanceTimersByTime(COOLDOWN_MS / 2)).not.toThrow();
     });
 
     it('stops fading after dispose', async () => {
@@ -191,6 +222,16 @@ describe('trackNewPosts', () => {
 
       emit(SETTINGS_KEYS.COOLDOWN, COOLDOWN * 2);
       vi.advanceTimersByTime(COOLDOWN_MS);
+
+      expect(Number(fadeOf('post-1'))).toBeCloseTo(0.5, 1);
+    });
+
+    it('falls back to the default cooldown when the setting is removed', async () => {
+      dispose = await startWithNewPost();
+
+      emit(SETTINGS_KEYS.COOLDOWN, COOLDOWN * 2);
+      emit(SETTINGS_KEYS.COOLDOWN, undefined);
+      vi.advanceTimersByTime(COOLDOWN_MS / 2);
 
       expect(Number(fadeOf('post-1'))).toBeCloseTo(0.5, 1);
     });
@@ -235,6 +276,16 @@ describe('trackNewPosts', () => {
       expect(isMarked('post-1')).toBe(false);
       expect(fadeOf('post-1')).toBe('');
       expect(document.querySelector(`.${CSS_CLASSES.SHOW_NEW}`)).toBeNull();
+    });
+
+    it('falls back to showing marks when the setting is removed', async () => {
+      store[SETTINGS_KEYS.SHOW_NEW] = false;
+      dispose = await startWithNewPost();
+
+      emit(SETTINGS_KEYS.SHOW_NEW, undefined);
+
+      expect(isMarked('post-1')).toBe(true);
+      expect(document.querySelector(`.${CSS_CLASSES.SHOW_NEW}`)).not.toBeNull();
     });
 
     it('re-marks and resumes fading when turned back on', async () => {
@@ -283,6 +334,14 @@ describe('trackNewPosts', () => {
       vi.advanceTimersByTime(COOLDOWN_MS / 2);
 
       expect(Number(fadeOf('post-1'))).toBeCloseTo(0.5, 1);
+    });
+
+    it('keeps its own marks when another tab clears the key', async () => {
+      dispose = await startWithNewPost();
+
+      emit(POST_IDS_KEY, undefined);
+
+      expect(isMarked('post-1')).toBe(true);
     });
 
     it('accepts the legacy string[] format', async () => {

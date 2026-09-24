@@ -41,7 +41,6 @@ export const useSettings = (): UseSettingsReturn => {
   // Sort/toggle watchers go live only once init has read their values, so an early change can't be
   // overwritten by (or race) the init read.
   const sortsReadyRef = useRef(false);
-  const mountedRef = useRef(true);
 
   const setActiveSort = useCallback((sort: SortVariant) => {
     setActiveSortState(sort);
@@ -49,8 +48,6 @@ export const useSettings = (): UseSettingsReturn => {
   }, []);
 
   useEffect(() => {
-    mountedRef.current = true;
-
     const setToggles = (next: Toggles) => {
       togglesRef.current = next;
       setTogglesState(next);
@@ -72,9 +69,7 @@ export const useSettings = (): UseSettingsReturn => {
 
     // Never let a rejected storage read block first paint forever (e.g. "extension context
     // invalidated" during a mid-session update): degrade to defaults instead of a vanished panel.
-    init().catch(() => {
-      if (mountedRef.current) setSettled(true);
-    });
+    init().catch(() => setSettled(true));
 
     const watcherMap: StorageCallbackMap = {
       [SETTINGS_KEYS.LAST_ACTIVE_SORT]: (change) => {
@@ -103,7 +98,6 @@ export const useSettings = (): UseSettingsReturn => {
     storage.watch(watcherMap);
 
     return () => {
-      mountedRef.current = false;
       storage.unwatch(watcherMap);
     };
   }, []);

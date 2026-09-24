@@ -50,6 +50,11 @@ describe('getCommentAuthor', () => {
     expect(getCommentAuthor(getRowById('1'))).toBe('Simon');
     expect(getCommentAuthor(getRowById('1'))).not.toBe('simon');
   });
+
+  it('returns null for a comment without an author link ([deleted])', () => {
+    setupCommentThread({ comments: [{ id: '1', author: '' }] });
+    expect(getCommentAuthor(getRowById('1'))).toBeNull();
+  });
 });
 
 describe('OP highlighting (AE4)', () => {
@@ -133,6 +138,20 @@ describe('marked-user highlighting', () => {
     expect(getRowById('op1').querySelector(`.${CSS_CLASSES.MARK_DOT}`)).not.toBeNull();
   });
 
+  it('keeps the marked tint on the OP (without a dot) when OP highlighting turns on after marking them', () => {
+    setupCommentThread({ storyAuthor: OP, comments: [{ id: 'op1', author: OP }] });
+    setMarkedUser(OP);
+    applyCommentEnhancements({ opEnabled: true, markEnabled: true });
+    expect(isOp('op1')).toBe(true);
+    expect(isMarked('op1')).toBe(true);
+    expect(getRowById('op1').querySelector(`.${CSS_CLASSES.MARK_DOT}`)).toBeNull();
+  });
+
+  it('does not throw when a dot is clicked without an onMark handler', () => {
+    applyCommentEnhancements({ opEnabled: false, markEnabled: true });
+    expect(() => dotIn('b1').click()).not.toThrow();
+  });
+
   it('moves the single mark from A to B (AE1)', () => {
     setMarkedUser('alice');
     applyCommentEnhancements({ opEnabled: false, markEnabled: true });
@@ -192,6 +211,13 @@ describe('mark persistence (AE3)', () => {
     expect(getMarkedUser()).toBe('alice');
 
     vi.stubGlobal('location', { search: '?id=200' });
+    expect(getMarkedUser()).toBeNull();
+  });
+
+  it('neither reads nor stores a mark when the URL has no thread id', () => {
+    vi.stubGlobal('location', { search: '' });
+    setMarkedUser('alice');
+    expect(sessionStorage.length).toBe(0);
     expect(getMarkedUser()).toBeNull();
   });
 });

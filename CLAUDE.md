@@ -153,6 +153,7 @@ Use `~` prefix for imports from project root (e.g., `~app/components/ControlPane
 ## Testing
 
 - **Framework**: Vitest with JSDOM and React Testing Library
+- **Coverage**: `app/**` must stay at 100% statements, branches, functions, and lines (`coverage.thresholds` in `vitest.config.ts`); `bun run test:coverage` fails in CI below that. Cover a new branch with a test, or delete it if no input can reach it
 - **Config**: `vitest.config.ts` with path aliases and coverage settings; pins `process.env.TZ = 'Asia/Kolkata'` (non-UTC, no DST) so any local-time date parsing fails tests (guarded by a test in `app/utils/parsers.test.ts`)
 - **Setup**: `vitest.setup.ts` with jest-dom matchers and localStorage mock
 
