@@ -9,7 +9,7 @@ const COOLDOWN = SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN];
 const COOLDOWN_MS = COOLDOWN * 1000;
 const POST_IDS_KEY = `${SETTINGS_KEYS.POST_IDS_PREFIX}/`;
 
-const { store, mockSet, mockUnwatch, watcherCallbacks, reset, StorageClass } = createStorageMock();
+const { store, mockSet, mockWatch, mockUnwatch, watcherCallbacks, reset, StorageClass } = createStorageMock();
 vi.mock('@plasmohq/storage', () => ({ Storage: StorageClass }));
 
 const { trackNewPosts } = await import('./newPosts');
@@ -264,6 +264,18 @@ describe('trackNewPosts', () => {
       expect(mockSet).not.toHaveBeenCalled();
     });
 
+    it('does not mark posts that the other tab no longer lists', async () => {
+      setupTableBody(['post-1', 'post-2']);
+      store[POST_IDS_KEY] = { 'post-1': -1, 'post-2': -1 };
+      dispose = trackNewPosts();
+      await flush();
+
+      // The other tab loaded after post-2 fell off the list, so its stored map lacks post-2.
+      emit(POST_IDS_KEY, { 'post-1': -1, 'post-3': Date.now() });
+
+      expect(isMarked('post-2')).toBe(false);
+    });
+
     it('fades marks that arrive while nothing else is fading', async () => {
       dispose = await startWithNewPost('post-1');
 
@@ -310,7 +322,7 @@ describe('trackNewPosts', () => {
       const stop = await startWithNewPost();
       stop();
 
-      expect(mockUnwatch).toHaveBeenCalled();
+      expect(mockUnwatch).toHaveBeenCalledWith(mockWatch.mock.calls[0]?.[0]);
     });
 
     it('does not start a fade timer when disposed during init', async () => {

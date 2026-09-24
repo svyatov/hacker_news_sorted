@@ -168,8 +168,11 @@ export const trackNewPosts = (): (() => void) => {
     },
     [postIdsKey]: (change) => {
       if (!ready) return;
-      // Never write back: the other tab already stored this value.
-      remark(migratePostIds((change.newValue ?? {}) as string[] | PostTimestamps));
+      // Never write back: the other tab already stored this value. Merge over our own map, because the
+      // other tab only stores the posts on its page: a post that fell off the list since we loaded is
+      // missing there, not new.
+      const incoming = migratePostIds((change.newValue ?? {}) as string[] | PostTimestamps);
+      remark({ ...timestamps, ...incoming });
     },
   };
 
