@@ -30,6 +30,16 @@ const migratePostIds = (stored: string[] | PostTimestamps): PostTimestamps => {
   return stored;
 };
 
+const getPostRow = (tableBody: HTMLElement | null, id: string) =>
+  tableBody?.querySelector<HTMLElement>(`tr.athing[id="${id}"]`);
+
+const markRow = (tableBody: HTMLElement | null, id: string, fade: number): void => {
+  const row = getPostRow(tableBody, id);
+  if (!row) return;
+  row.classList.add(CSS_CLASSES.NEW_POST);
+  row.style.setProperty(FADE_PROPERTY, String(fade));
+};
+
 const markNewPosts = (currentIds: string[], previousTimestamps: PostTimestamps, cooldownMs: number): PostTimestamps => {
   const result: PostTimestamps = {};
 
@@ -46,24 +56,12 @@ const markNewPosts = (currentIds: string[], previousTimestamps: PostTimestamps, 
     if (ts === undefined) {
       // New post
       result[id] = Date.now();
-      if (tableBody) {
-        const row = tableBody.querySelector<HTMLElement>(`tr.athing[id="${id}"]`);
-        if (row) {
-          row.classList.add(CSS_CLASSES.NEW_POST);
-          row.style.setProperty(FADE_PROPERTY, '1');
-        }
-      }
+      markRow(tableBody, id, 1);
     } else if (ts > 0) {
       // Previously discovered, keep original timestamp
       result[id] = ts;
       const remaining = ts + cooldownMs - Date.now();
-      if (remaining > 0 && tableBody) {
-        const row = tableBody.querySelector<HTMLElement>(`tr.athing[id="${id}"]`);
-        if (row) {
-          row.classList.add(CSS_CLASSES.NEW_POST);
-          row.style.setProperty(FADE_PROPERTY, String(remaining / cooldownMs));
-        }
-      }
+      if (remaining > 0) markRow(tableBody, id, remaining / cooldownMs);
     } else {
       // Known (-1): never was new
       result[id] = -1;
@@ -78,9 +76,7 @@ const updateFadeOpacities = (timestamps: PostTimestamps, cooldownMs: number): vo
 
   for (const [id, ts] of Object.entries(timestamps)) {
     if (ts <= 0) continue;
-
-    if (!tableBody) continue;
-    const row = tableBody.querySelector<HTMLElement>(`tr.athing[id="${id}"]`);
+    const row = getPostRow(tableBody, id);
     if (!row) continue;
 
     const opacity = Math.max(0, (ts + cooldownMs - Date.now()) / cooldownMs);

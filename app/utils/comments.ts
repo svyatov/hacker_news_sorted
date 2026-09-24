@@ -48,13 +48,13 @@ export const injectMarkDots = (onActivate: (username: string) => void, skipUser:
   }
 };
 
-export const removeMarkDots = (): void => {
+const removeMarkDots = (): void => {
   for (const dot of document.querySelectorAll(`.${CSS_CLASSES.MARK_DOT}`)) dot.remove();
 };
 
 // --- Highlighting ---
 
-export const applyUserHighlight = (username: string, kind: HighlightKind): void => {
+const applyUserHighlight = (username: string, kind: HighlightKind): void => {
   for (const row of getCommentRows()) {
     if (getCommentAuthor(row) !== username) continue;
     const comhead = row.querySelector(HN_SELECTORS.COMMENT_HEAD);

@@ -9,10 +9,6 @@ import { getTableBody } from '~app/utils/selectors';
 
 import './content.css';
 
-// Port of content.tsx's Plasmo mount lifecycle to WXT (U2, R5/R6/R11, KTD-1). Light-DOM
-// integrated UI + page-global CSS — not a shadow root — so content.css keeps styling both the
-// panel and HN's own list rows (sort-highlight, new-post fade), matching the current behavior.
-
 const setLayoutStatus = (ok: boolean) => {
   chrome.storage.sync.set({ [SETTINGS_KEYS.LAYOUT_OK]: ok });
 };
@@ -21,15 +17,14 @@ export default defineContentScript({
   matches: ['*://news.ycombinator.com/*'],
   // Listless pages (see SORT_PANEL_EXCLUDE_MATCHES) never load the panel, so they can't falsely flag a broken layout.
   excludeMatches: SORT_PANEL_EXCLUDE_MATCHES,
-  // Page-global stylesheet (like Plasmo's `css: ['content.css']`): content.css styles both the panel
-  // and HN's own list rows, so it's injected page-wide via the manifest, not into a shadow root (KTD-1).
+  // Page-global stylesheet: content.css styles both the light-DOM panel and HN's own list rows
+  // (sort highlight, new-post fade), so it's injected page-wide via the manifest (KTD-1).
   cssInjectionMode: 'manifest',
   noScriptStartedPostMessage: true,
   async main(ctx) {
     const parent = await waitForPanelParent();
 
-    // Layout check mirrors content.tsx's verifyAndInject: the list table body must be present too,
-    // else flag broken layout and render nothing.
+    // The list table body must be present too, else flag broken layout and render nothing.
     if (!parent || !getTableBody()) {
       setLayoutStatus(false);
       return;
@@ -41,10 +36,10 @@ export default defineContentScript({
     const ui = createIntegratedUi(ctx, {
       position: 'inline',
       anchor: parent,
-      // Prepend into HN's header cell, mirroring injectRootElement's parentElement.prepend.
+      // Prepend into HN's header cell.
       append: 'first',
-      // Reproduce content.tsx's hand-prepended <span id="hns-control-panel"> (KTD-1) so content.css's
-      // #hns-control-panel rule and ControlPanel's data-sort-count publish still resolve.
+      // A <span id="hns-control-panel"> (KTD-1), so content.css's #hns-control-panel rule and
+      // ControlPanel's data-sort-count publish resolve.
       tag: 'span',
       onMount: (wrapper) => {
         wrapper.id = CONTROL_PANEL_ROOT_ID;

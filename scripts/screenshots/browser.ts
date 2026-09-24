@@ -1,30 +1,39 @@
 import path from 'node:path';
-import type { Browser, Page } from 'playwright';
+import type { BrowserContextOptions, Page } from 'playwright';
 import { chromium } from 'playwright';
 
 import { CONTROL_PANEL_ROOT_ID, CSS_CLASSES, HN_SELECTORS } from '~app/constants';
 
 import { injectChromeStoragePolyfill } from './chromePolyfill';
 import { injectCommentsBundle, markUser } from './comments';
-import { REAL_BROWSER_CONTEXT, REAL_BROWSER_LAUNCH, VARIANTS } from './constants';
+import { REAL_BROWSER_CONTEXT, REAL_BROWSER_LAUNCH, SCREENSHOT_VIEWPORT, VARIANTS } from './constants';
 import { gotoCached } from './htmlCache';
 import { injectArrow, injectOverlayCard, removeOverlays } from './overlays';
 import { CSS_PATH, JS_PATH, SCREENSHOTS_DIR } from './paths';
 import type { VariantConfig } from './types';
 
-export async function setupBrowser(): Promise<{ browser: Browser; page: Page }> {
+export async function setupBrowser(contextOptions: BrowserContextOptions) {
   const browser = await chromium.launch(REAL_BROWSER_LAUNCH);
-  const context = await browser.newContext({ ...REAL_BROWSER_CONTEXT, viewport: { width: 1280, height: 800 } });
+  const context = await browser.newContext({ ...REAL_BROWSER_CONTEXT, ...contextOptions });
   const page = await context.newPage();
   await injectChromeStoragePolyfill(page);
-  return { browser, page };
+  return { browser, context, page };
 }
 
-export async function injectExtension(page: Page): Promise<void> {
+// Load HN with the built sort bundle and force the full-word menu tier, so the menu shows words
+// whatever the media query reads from the (zoomed or narrow) layout width.
+export async function loadWithExtension(page: Page): Promise<void> {
   await gotoCached(page, 'https://news.ycombinator.com');
   await page.addStyleTag({ path: CSS_PATH });
   await page.addScriptTag({ path: JS_PATH });
   await page.waitForSelector(`#${CONTROL_PANEL_ROOT_ID}`, { timeout: 5000 });
+  await page.addStyleTag({
+    content: '.hns-btn-text { display: inline !important; } .hns-btn-shortcut { display: none !important; }',
+  });
+}
+
+export async function injectExtension(page: Page): Promise<void> {
+  await loadWithExtension(page);
 
   // Fill the 1280×800 frame and make the list legible in a thumbnail:
   //  - drop HN's 15% side gutters (width="85%") and the body margin so content spans edge-to-edge;
@@ -42,16 +51,11 @@ export async function injectExtension(page: Page): Promise<void> {
         list.style.zoom = String(listZoom);
       }
     },
-    { listZoom: 1.3, viewportWidth: 1280 },
+    { listZoom: 1.3, viewportWidth: SCREENSHOT_VIEWPORT.width },
   );
-  // Force the full-word menu tier. At 1280px the 6-option media query (min-width 1440px)
-  // would show single letters; a full-width header has room for the words, so show them.
-  await page.addStyleTag({
-    content: '.hns-btn-text { display: inline !important; } .hns-btn-shortcut { display: none !important; }',
-  });
 }
 
-async function showNewPostIndicators(page: Page): Promise<void> {
+export async function showNewPostIndicators(page: Page): Promise<void> {
   await page.evaluate(
     ({ tableBodySelector, showNewClass, newPostClass }) => {
       const tbody = document.querySelector(tableBodySelector);
@@ -91,15 +95,13 @@ export async function captureVariants(page: Page): Promise<void> {
       await showNewPostIndicators(page);
     }
 
-    await page.click(`#${CONTROL_PANEL_ROOT_ID} [data-sort="${variant.sort}"]`);
+    const button = `#${CONTROL_PANEL_ROOT_ID} [data-sort="${variant.sort}"]`;
+    await page.click(button);
     await page.waitForTimeout(100);
 
     await injectOverlayCard(page, variant.title, variant.subtitle, variant.titleNote);
 
-    if (!variant.hideArrow) {
-      const arrowTarget = `#${CONTROL_PANEL_ROOT_ID} [data-sort="${variant.sort}"]`;
-      await injectArrow(page, arrowTarget);
-    }
+    if (!variant.hideArrow) await injectArrow(page, button);
 
     const screenshotPath = path.join(SCREENSHOTS_DIR, variant.filename);
     await page.screenshot({ path: screenshotPath });

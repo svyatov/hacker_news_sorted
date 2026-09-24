@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 
 import { useStorage } from '@plasmohq/storage/hook';
 
@@ -8,6 +8,34 @@ import './popup.css';
 
 type SettingsKey = keyof typeof SETTINGS_DEFAULTS;
 const useSettingsStorage = <K extends SettingsKey>(key: K) => useStorage(key, SETTINGS_DEFAULTS[key]);
+
+type ToggleProps = {
+  name: string;
+  label: string;
+  ariaLabel?: string;
+  hint: ReactNode;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+};
+
+const Toggle = ({ name, label, ariaLabel = label, hint, checked, onChange }: ToggleProps) => (
+  <div className="hns-setting">
+    <div className="hns-setting-label">
+      <span>{label}</span>
+      <span className="hns-hint">{hint}</span>
+    </div>
+    <label className="hns-toggle">
+      <input
+        type="checkbox"
+        name={name}
+        aria-label={ariaLabel}
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+      <span className="hns-toggle-slider" />
+    </label>
+  </div>
+);
 
 const Popup = () => {
   const [showNew, setShowNew] = useSettingsStorage(SETTINGS_KEYS.SHOW_NEW);
@@ -43,22 +71,13 @@ const Popup = () => {
       )}
 
       <fieldset className="hns-group">
-        <div className="hns-setting">
-          <div className="hns-setting-label">
-            <span>Highlight new posts</span>
-            <span className="hns-hint">Mark posts added since your last visit</span>
-          </div>
-          <label className="hns-toggle">
-            <input
-              type="checkbox"
-              name="show-new"
-              aria-label="Highlight new posts"
-              checked={showNew}
-              onChange={(e) => setShowNew(e.target.checked)}
-            />
-            <span className="hns-toggle-slider" />
-          </label>
-        </div>
+        <Toggle
+          name="show-new"
+          label="Highlight new posts"
+          hint="Mark posts added since your last visit"
+          checked={showNew}
+          onChange={setShowNew}
+        />
 
         {showNew && (
           <div className="hns-setting hns-setting-child">
@@ -89,102 +108,60 @@ const Popup = () => {
       </fieldset>
 
       <fieldset className="hns-group">
-        <div className="hns-setting">
-          <div className="hns-setting-label">
-            <span>Show true &ldquo;time ago&rdquo;</span>
-            <span className="hns-hint">Fix misleading ages on resurfaced posts</span>
-          </div>
-          <label className="hns-toggle">
-            <input
-              type="checkbox"
-              name="true-time-ago"
-              aria-label="Show true time ago setting"
-              checked={trueTimeAgo}
-              onChange={(e) => setTrueTimeAgo(e.target.checked)}
-            />
-            <span className="hns-toggle-slider" />
-          </label>
-        </div>
+        <Toggle
+          name="true-time-ago"
+          label="Show true “time ago”"
+          ariaLabel="Show true time ago setting"
+          hint="Fix misleading ages on resurfaced posts"
+          checked={trueTimeAgo}
+          onChange={setTrueTimeAgo}
+        />
       </fieldset>
 
       <fieldset className="hns-group">
-        <div className="hns-setting">
-          <div className="hns-setting-label">
-            <span>Velocity sort</span>
-            <span className="hns-hint">
+        <Toggle
+          name="velocity-enabled"
+          label="Velocity sort"
+          hint={
+            <>
               Adds a sort for the fastest-rising posts
               <br />
               (points per hour)
-            </span>
-          </div>
-          <label className="hns-toggle">
-            <input
-              type="checkbox"
-              name="velocity-enabled"
-              aria-label="Velocity sort"
-              checked={velocityEnabled}
-              onChange={(e) => setVelocityEnabled(e.target.checked)}
-            />
-            <span className="hns-toggle-slider" />
-          </label>
-        </div>
-
-        <div className="hns-setting">
-          <div className="hns-setting-label">
-            <span>Heat sort</span>
-            <span className="hns-hint">
+            </>
+          }
+          checked={velocityEnabled}
+          onChange={setVelocityEnabled}
+        />
+        <Toggle
+          name="heat-enabled"
+          label="Heat sort"
+          hint={
+            <>
               Adds a sort for the most-discussed posts
               <br />
               (comments per point)
-            </span>
-          </div>
-          <label className="hns-toggle">
-            <input
-              type="checkbox"
-              name="heat-enabled"
-              aria-label="Heat sort"
-              checked={heatEnabled}
-              onChange={(e) => setHeatEnabled(e.target.checked)}
-            />
-            <span className="hns-toggle-slider" />
-          </label>
-        </div>
+            </>
+          }
+          checked={heatEnabled}
+          onChange={setHeatEnabled}
+        />
       </fieldset>
 
       <fieldset className="hns-group">
-        <div className="hns-setting">
-          <div className="hns-setting-label">
-            <span>Highlight OP comments</span>
-            <span className="hns-hint">Tint the story author&rsquo;s comments on threads</span>
-          </div>
-          <label className="hns-toggle">
-            <input
-              type="checkbox"
-              name="op-highlight"
-              aria-label="Highlight OP comments"
-              checked={opHighlight}
-              onChange={(e) => setOpHighlight(e.target.checked)}
-            />
-            <span className="hns-toggle-slider" />
-          </label>
-        </div>
-
-        <div className="hns-setting">
-          <div className="hns-setting-label">
-            <span>Marked-user highlighting</span>
-            <span className="hns-hint">Tint all comments of the marked user</span>
-          </div>
-          <label className="hns-toggle">
-            <input
-              type="checkbox"
-              name="mark-user-highlight"
-              aria-label="Marked-user highlighting"
-              checked={markUserHighlight}
-              onChange={(e) => setMarkUserHighlight(e.target.checked)}
-            />
-            <span className="hns-toggle-slider" />
-          </label>
-        </div>
+        <Toggle
+          name="op-highlight"
+          label="Highlight OP comments"
+          hint="Tint the story author’s comments on threads"
+          checked={opHighlight}
+          onChange={setOpHighlight}
+        />
+        <Toggle
+          name="mark-user-highlight"
+          label="Marked-user highlighting"
+          hint="Tint all comments of the marked user"
+          checked={markUserHighlight}
+          onChange={setMarkUserHighlight}
+        />
       </fieldset>
 
       <div className="hns-review-link">

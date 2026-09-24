@@ -1,15 +1,7 @@
 import { stringToNumber } from '~app/utils/converters';
 import { getCommentsElement, getPointsElement, getTimeElement } from '~app/utils/selectors';
 
-export const getPoints = (infoRow: HTMLElement): number => {
-  const pointsElement = getPointsElement(infoRow);
-
-  if (pointsElement) {
-    return stringToNumber(pointsElement.textContent ?? '');
-  }
-
-  return 0;
-};
+export const getPoints = (infoRow: HTMLElement): number => stringToNumber(getPointsElement(infoRow)?.textContent ?? '');
 
 // ISO-ish datetime: date, optional [T or space]time with optional seconds/fraction, optional zone.
 const ISO_LIKE =
@@ -30,12 +22,5 @@ export const parseAgeTitle = (title: string): number => {
 export const getTime = (infoRow: HTMLElement): number =>
   parseAgeTitle(getTimeElement(infoRow)?.getAttribute('title') ?? '');
 
-export const getComments = (infoRow: HTMLElement): number => {
-  const commentsElement = getCommentsElement(infoRow);
-
-  if (commentsElement) {
-    return stringToNumber(commentsElement.textContent ?? '');
-  }
-
-  return 0;
-};
+export const getComments = (infoRow: HTMLElement): number =>
+  stringToNumber(getCommentsElement(infoRow)?.textContent ?? '');

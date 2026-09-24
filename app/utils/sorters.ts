@@ -2,9 +2,6 @@ import { SECONDS_PER_HOUR } from '~app/constants';
 import type { ParsedRow, SortVariant } from '~app/types';
 import { nowInSeconds } from '~app/utils/converters';
 
-type SortableKey = Extract<keyof ParsedRow, 'points' | 'time' | 'comments' | 'originalIndex'>;
-type SortOrder = 'asc' | 'desc';
-
 // Damped velocity denominator, mirroring HN's own gravity formula shape (age + 2).
 const VELOCITY_DAMPING_HOURS = 2;
 // 0-points rows (e.g. job posts) can't yield a real comments/points ratio; a finite
@@ -23,24 +20,18 @@ const heat = (row: ParsedRow): number => (row.points === 0 ? HEAT_ZERO_POINTS_SE
 export const sortRows = (parsedRows: ParsedRow[], sortBy: SortVariant): ParsedRow[] => {
   switch (sortBy) {
     case 'points':
-      return sortByKey(parsedRows, 'points');
+      return sortByValue(parsedRows, (row) => row.points);
     case 'time':
-      return sortByKey(parsedRows, 'time');
+      return sortByValue(parsedRows, (row) => row.time);
     case 'comments':
-      return sortByKey(parsedRows, 'comments');
+      return sortByValue(parsedRows, (row) => row.comments);
     case 'velocity':
       return sortByValue(parsedRows, velocity);
     case 'heat':
       return sortByValue(parsedRows, heat);
     default:
-      return sortByKey(parsedRows, 'originalIndex', 'asc');
+      return sortByValue(parsedRows, (row) => -row.originalIndex);
   }
-};
-
-const sortByKey = (parsedRows: ParsedRow[], key: SortableKey, order: SortOrder = 'desc'): ParsedRow[] => {
-  return [...parsedRows].sort((rowA, rowB) => {
-    return order === 'asc' ? rowA[key] - rowB[key] : rowB[key] - rowA[key];
-  });
 };
 
 const sortByValue = (parsedRows: ParsedRow[], getValue: (row: ParsedRow) => number): ParsedRow[] => {
