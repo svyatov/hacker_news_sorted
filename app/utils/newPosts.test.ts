@@ -264,6 +264,15 @@ describe('trackNewPosts', () => {
       expect(mockSet).not.toHaveBeenCalled();
     });
 
+    it('fades marks that arrive while nothing else is fading', async () => {
+      dispose = await startWithNewPost('post-1');
+
+      emit(POST_IDS_KEY, { 'post-1': Date.now() });
+      vi.advanceTimersByTime(COOLDOWN_MS / 2);
+
+      expect(Number(fadeOf('post-1'))).toBeCloseTo(0.5, 1);
+    });
+
     it('accepts the legacy string[] format', async () => {
       dispose = await startWithNewPost('post-1');
 

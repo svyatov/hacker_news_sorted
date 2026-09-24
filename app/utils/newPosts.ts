@@ -121,11 +121,6 @@ export const trackNewPosts = (): (() => void) => {
 
   const applyShowNew = () => getTableBody()?.classList.toggle(CSS_CLASSES.SHOW_NEW, showNew);
 
-  const remark = (previous: PostTimestamps) => {
-    clearNewPostMarkers();
-    timestamps = markNewPosts(getPostIds(), previous, cooldownMs);
-  };
-
   // The single rule for the fade timer: it runs only while shown, alive, and something is still fading.
   const syncInterval = () => {
     clearInterval(interval);
@@ -133,6 +128,12 @@ export const trackNewPosts = (): (() => void) => {
     if (disposed || !showNew || !Object.values(timestamps).some((ts) => ts > 0)) return;
     const period = Math.max(1000, Math.floor(cooldownMs / 50));
     interval = setInterval(() => updateFadeOpacities(timestamps, cooldownMs), period);
+  };
+
+  const remark = (previous: PostTimestamps) => {
+    clearNewPostMarkers();
+    timestamps = markNewPosts(getPostIds(), previous, cooldownMs);
+    syncInterval();
   };
 
   const init = async () => {
@@ -145,8 +146,6 @@ export const trackNewPosts = (): (() => void) => {
       const stored = await storage.get<string[] | PostTimestamps>(postIdsKey);
       remark(stored ? migratePostIds(stored) : {});
       await storage.set(postIdsKey, timestamps);
-      if (disposed) return;
-      syncInterval();
     }
 
     ready = true;
@@ -156,15 +155,16 @@ export const trackNewPosts = (): (() => void) => {
     [SETTINGS_KEYS.SHOW_NEW]: (change) => {
       showNew = (change.newValue as boolean | undefined) ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.SHOW_NEW];
       applyShowNew();
-      if (!showNew) clearNewPostMarkers();
-      else remark(timestamps);
-      syncInterval();
+      if (showNew) {
+        remark(timestamps);
+      } else {
+        clearNewPostMarkers();
+        syncInterval();
+      }
     },
     [SETTINGS_KEYS.COOLDOWN]: (change) => {
       cooldownMs = ((change.newValue as number | undefined) ?? SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN]) * 1000;
-      if (!showNew) return;
-      remark(timestamps);
-      syncInterval();
+      if (showNew) remark(timestamps);
     },
     [postIdsKey]: (change) => {
       if (!ready) return;
