@@ -110,12 +110,12 @@ export const nextMark = (current: string | null, clicked: string): string | null
 type EnhancementOptions = {
   opEnabled: boolean;
   markEnabled: boolean;
-  onMark?: (username: string) => void;
+  onMark: (username: string) => void;
 };
 
 // Idempotent: clears every extension-added class/badge/dot-state, then re-applies from the current
 // settings + stored mark. Toggle watchers and dot activations both route through this (KTD-6, KTD-8).
-export const applyCommentEnhancements = ({ opEnabled, markEnabled, onMark = () => {} }: EnhancementOptions): void => {
+export const applyCommentEnhancements = ({ opEnabled, markEnabled, onMark }: EnhancementOptions): void => {
   clearHighlights();
 
   // The story author, when identifiable (null on comment-permalink pages — KTD-8).

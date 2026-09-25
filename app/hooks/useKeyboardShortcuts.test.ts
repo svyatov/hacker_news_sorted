@@ -157,14 +157,13 @@ describe('useKeyboardShortcuts', () => {
     document.body.removeChild(div);
   });
 
-  it('should clean up event listener on unmount', () => {
-    const removeEventListenerSpy = vi.spyOn(document, 'removeEventListener');
+  it('ignores key presses after unmount', () => {
     const { unmount } = renderHook(() => useKeyboardShortcuts({ onSort: mockOnSort }));
 
     unmount();
+    simulateKeyPress('p');
 
-    expect(removeEventListenerSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
-    removeEventListenerSpy.mockRestore();
+    expect(mockOnSort).not.toHaveBeenCalled();
   });
 
   describe('conflict detection', () => {

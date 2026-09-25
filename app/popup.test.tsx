@@ -22,7 +22,7 @@ describe('Popup', () => {
     storageValues = { [SETTINGS_KEYS.LAYOUT_OK]: true };
     render(<Popup />);
 
-    expect(screen.queryByText('Sorting temporarily unavailable')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sorting temporarily unavailable :(')).not.toBeInTheDocument();
   });
 
   it('should show warning banner when layout is broken', () => {

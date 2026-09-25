@@ -15,6 +15,7 @@ import {
 } from './comments';
 
 const OP = 'story_author';
+const noop = (): void => {};
 
 const badgesIn = (id: string): number => getRowById(id).querySelectorAll(`.${CSS_CLASSES.OP_BADGE}`).length;
 const isMarked = (id: string): boolean => getRowById(id).classList.contains(CSS_CLASSES.MARKED_COMMENT);
@@ -71,7 +72,7 @@ describe('OP highlighting (AE4)', () => {
   });
 
   it('tints and badges every submitter comment at any depth, incl. collapsed', () => {
-    applyCommentEnhancements({ opEnabled: true, markEnabled: false });
+    applyCommentEnhancements({ opEnabled: true, markEnabled: false, onMark: noop });
 
     for (const id of ['1', '3', '4']) {
       expect(isOp(id), `#${id} should be OP-tinted`).toBe(true);
@@ -84,8 +85,8 @@ describe('OP highlighting (AE4)', () => {
   });
 
   it('does not duplicate the badge when the orchestrator re-runs (idempotent)', () => {
-    applyCommentEnhancements({ opEnabled: true, markEnabled: false });
-    applyCommentEnhancements({ opEnabled: true, markEnabled: false });
+    applyCommentEnhancements({ opEnabled: true, markEnabled: false, onMark: noop });
+    applyCommentEnhancements({ opEnabled: true, markEnabled: false, onMark: noop });
     expect(badgesIn('1')).toBe(1);
     expect(badgesIn('4')).toBe(1);
   });
@@ -129,37 +130,32 @@ describe('marked-user highlighting', () => {
       ],
     });
     // OP highlighting on → author is badged, so no star.
-    applyCommentEnhancements({ opEnabled: true, markEnabled: true });
+    applyCommentEnhancements({ opEnabled: true, markEnabled: true, onMark: noop });
     expect(getRowById('op1').querySelector(`.${CSS_CLASSES.MARK_DOT}`)).toBeNull();
     expect(getRowById('r1').querySelector(`.${CSS_CLASSES.MARK_DOT}`)).not.toBeNull();
 
     // OP highlighting off → author is a regular user and gets a star.
-    applyCommentEnhancements({ opEnabled: false, markEnabled: true });
+    applyCommentEnhancements({ opEnabled: false, markEnabled: true, onMark: noop });
     expect(getRowById('op1').querySelector(`.${CSS_CLASSES.MARK_DOT}`)).not.toBeNull();
   });
 
   it('keeps the marked tint on the OP (without a dot) when OP highlighting turns on after marking them', () => {
     setupCommentThread({ storyAuthor: OP, comments: [{ id: 'op1', author: OP }] });
     setMarkedUser(OP);
-    applyCommentEnhancements({ opEnabled: true, markEnabled: true });
+    applyCommentEnhancements({ opEnabled: true, markEnabled: true, onMark: noop });
     expect(isOp('op1')).toBe(true);
     expect(isMarked('op1')).toBe(true);
     expect(getRowById('op1').querySelector(`.${CSS_CLASSES.MARK_DOT}`)).toBeNull();
   });
 
-  it('does not throw when a dot is clicked without an onMark handler', () => {
-    applyCommentEnhancements({ opEnabled: false, markEnabled: true });
-    expect(() => dotIn('b1').click()).not.toThrow();
-  });
-
   it('moves the single mark from A to B (AE1)', () => {
     setMarkedUser('alice');
-    applyCommentEnhancements({ opEnabled: false, markEnabled: true });
+    applyCommentEnhancements({ opEnabled: false, markEnabled: true, onMark: noop });
     expect(isMarked('a1')).toBe(true);
     expect(dotPressed('a1')).toBe(true);
 
     setMarkedUser('bob');
-    applyCommentEnhancements({ opEnabled: false, markEnabled: true });
+    applyCommentEnhancements({ opEnabled: false, markEnabled: true, onMark: noop });
     expect(getMarkedUser()).toBe('bob');
     expect(isMarked('a1')).toBe(false);
     expect(isMarked('a2')).toBe(false);
@@ -170,10 +166,10 @@ describe('marked-user highlighting', () => {
 
   it('clears the mark when the active user is unmarked (AE2)', () => {
     setMarkedUser('bob');
-    applyCommentEnhancements({ opEnabled: false, markEnabled: true });
+    applyCommentEnhancements({ opEnabled: false, markEnabled: true, onMark: noop });
 
     setMarkedUser(null);
-    applyCommentEnhancements({ opEnabled: false, markEnabled: true });
+    applyCommentEnhancements({ opEnabled: false, markEnabled: true, onMark: noop });
     expect(getMarkedUser()).toBeNull();
     for (const id of ['a1', 'a2', 'b1']) {
       expect(isMarked(id)).toBe(false);
@@ -190,12 +186,12 @@ describe('marked-user highlighting', () => {
       ],
     });
     setMarkedUser('reader');
-    applyCommentEnhancements({ opEnabled: true, markEnabled: true });
+    applyCommentEnhancements({ opEnabled: true, markEnabled: true, onMark: noop });
     // Only the reader gets a dot — the OP comment is badged, not dotted.
     expect(document.querySelectorAll(`.${CSS_CLASSES.MARK_DOT}`).length).toBe(1);
     expect(isMarked('r1')).toBe(true);
 
-    applyCommentEnhancements({ opEnabled: true, markEnabled: false });
+    applyCommentEnhancements({ opEnabled: true, markEnabled: false, onMark: noop });
     expect(document.querySelectorAll(`.${CSS_CLASSES.MARK_DOT}`).length).toBe(0);
     expect(document.querySelectorAll(`.${CSS_CLASSES.MARKED_COMMENT}`).length).toBe(0);
     // OP highlighting is unaffected.
@@ -247,7 +243,7 @@ describe('comment-permalink page (AE6, KTD-8)', () => {
       ],
     });
 
-    applyCommentEnhancements({ opEnabled: true, markEnabled: true });
+    applyCommentEnhancements({ opEnabled: true, markEnabled: true, onMark: noop });
     expect(document.querySelectorAll(`.${CSS_CLASSES.OP_COMMENT}`).length).toBe(0);
     expect(document.querySelectorAll(`.${CSS_CLASSES.OP_BADGE}`).length).toBe(0);
     expect(document.querySelectorAll(`.${CSS_CLASSES.MARK_DOT}`).length).toBe(2);
@@ -264,7 +260,7 @@ describe('clearHighlights', () => {
       ],
     });
     setMarkedUser('reader');
-    applyCommentEnhancements({ opEnabled: true, markEnabled: true });
+    applyCommentEnhancements({ opEnabled: true, markEnabled: true, onMark: noop });
     expect(isOp('1')).toBe(true);
     expect(dotPressed('2')).toBe(true);
 

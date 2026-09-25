@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { FAKE_NOW } from '~app/__fixtures__/testHelpers';
@@ -10,9 +11,10 @@ const NOW_SEC = Math.floor(FAKE_NOW / 1000);
 
 const createMockRow = (overrides: Partial<ParsedRow>): ParsedRow => ({
   originalIndex: 0,
-  title: document.createElement('tr'),
-  info: document.createElement('tr'),
-  spacer: document.createElement('tr'),
+  // sortRows never reads the row elements.
+  title: {} as HTMLElement,
+  info: {} as HTMLElement,
+  spacer: {} as HTMLElement,
   points: 0,
   time: 0,
   comments: 0,
@@ -43,7 +45,7 @@ describe('sorters', () => {
     });
 
     it('should restore original order for default sort', () => {
-      const sorted = sortRows(mockRows, 'default');
+      const sorted = sortRows(sortRows(mockRows, 'points'), 'default');
       expect(sorted.map((r) => r.originalIndex)).toEqual([0, 1, 2]);
     });
 
@@ -65,14 +67,14 @@ describe('sorters', () => {
       expect(sorted[0]!.points).toBe(100);
     });
 
-    it('should handle equal values', () => {
+    it('keeps HN order for equal values', () => {
       const equalRows = [
         createMockRow({ originalIndex: 0, points: 100 }),
         createMockRow({ originalIndex: 1, points: 100 }),
         createMockRow({ originalIndex: 2, points: 100 }),
       ];
       const sorted = sortRows(equalRows, 'points');
-      expect(sorted.map((r) => r.points)).toEqual([100, 100, 100]);
+      expect(sorted.map((r) => r.originalIndex)).toEqual([0, 1, 2]);
     });
   });
 
