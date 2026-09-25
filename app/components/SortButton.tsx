@@ -10,7 +10,7 @@ type SortButtonProps = {
 };
 
 const SortButton = ({ sortOption, activeSort, onSort }: SortButtonProps): ReactElement => {
-  const { sortBy, text, shortcut } = sortOption;
+  const { sortBy, text, shortcut, title } = sortOption;
   const isActive = activeSort === sortBy;
   const cssClasses = `${CSS_CLASSES.BTN}${isActive ? ` ${CSS_CLASSES.ACTIVE}` : ''}`;
 
@@ -21,7 +21,7 @@ const SortButton = ({ sortOption, activeSort, onSort }: SortButtonProps): ReactE
       className={cssClasses}
       data-sort={sortBy}
       aria-pressed={isActive}
-      title={sortBy === 'default' ? 'Original sort order' : `Sort by ${sortBy}`}>
+      title={title}>
       <span className={CSS_CLASSES.BTN_TEXT}>{text}</span>
       <span className={CSS_CLASSES.BTN_SHORTCUT}>{shortcut}</span>
     </button>

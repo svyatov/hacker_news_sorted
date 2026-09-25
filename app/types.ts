@@ -16,6 +16,7 @@ export type SortOption = {
   sortBy: SortVariant;
   text: string;
   shortcut: string;
+  title: string;
   // Present = the user can turn this sort off with that boolean setting (any `hns-*-enabled` key).
   enableKey?: Extract<(typeof SETTINGS_KEYS)[keyof typeof SETTINGS_KEYS], `${string}-enabled`>;
 };

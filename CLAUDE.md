@@ -118,7 +118,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
   - Extension constants (`CONTROL_PANEL_ROOT_ID`, `SORT_COUNT_ATTR` — the `data-sort-count` attribute driving count-aware CSS breakpoints)
   - `CSS_CLASSES` - Extension CSS class names (highlight, buttons, labels, `SHOW_NEW`, `NEW_POST`, `CONFLICT_NOTE`, `BUTTONS_TIER`, `DROPDOWN_TIER`, `DROPDOWN`)
   - `CSS_SELECTORS` - Derived CSS selectors from class names
-  - `SORT_OPTIONS` - Sort option configuration array (sort variant, display text, keyboard shortcut, and an optional `enableKey` naming the boolean setting that turns the sort on or off); order: points, time, comments, velocity, heat, default. To make a sort toggleable, add an `hns-<name>-enabled` key to `SETTINGS_KEYS`/`SETTINGS_DEFAULTS` and set it as the sort's `enableKey` (the `SortOption['enableKey']` type accepts any `*-enabled` settings key); `useSettings` needs no change
+  - `SORT_OPTIONS` - Sort option configuration array (sort variant, display text, keyboard shortcut, `title` tooltip, and an optional `enableKey` naming the boolean setting that turns the sort on or off); order: points, time, comments, velocity, heat, default. To make a sort toggleable, add an `hns-<name>-enabled` key to `SETTINGS_KEYS`/`SETTINGS_DEFAULTS` and set it as the sort's `enableKey` (the `SortOption['enableKey']` type accepts any `*-enabled` settings key); `useSettings` needs no change
   - `SETTINGS_KEYS` - Storage key names for chrome.storage.sync (`SHOW_NEW`, `LAST_ACTIVE_SORT`, `POST_IDS_PREFIX`, `COOLDOWN`, `TRUE_TIME_AGO`, `VELOCITY_ENABLED`, `HEAT_ENABLED`, `OP_HIGHLIGHT`, `MARK_USER_HIGHLIGHT`)
   - `SETTINGS_DEFAULTS` - Default values for settings
   - `COOLDOWN_BOUNDS` - Min/max bounds for cooldown input validation

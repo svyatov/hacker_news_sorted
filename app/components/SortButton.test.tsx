@@ -1,14 +1,14 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CSS_CLASSES } from '~app/constants';
+import { CSS_CLASSES, SORT_OPTIONS } from '~app/constants';
 import type { SortOption } from '~app/types';
 
 import SortButton from './SortButton';
 
 describe('SortButton', () => {
   const mockOnSort = vi.fn();
-  const sortOption: SortOption = { sortBy: 'points', text: 'points', shortcut: 'P' };
+  const sortOption: SortOption = { sortBy: 'points', text: 'points', shortcut: 'P', title: '' };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -47,23 +47,20 @@ describe('SortButton', () => {
     expect(container.querySelector(`.${CSS_CLASSES.ACTIVE}`)).not.toBeInTheDocument();
   });
 
-  it('should have correct title for non-default sort', () => {
-    const { container } = render(<SortButton sortOption={sortOption} activeSort="default" onSort={mockOnSort} />);
+  it.each([
+    ['points', 'Sort by points'],
+    ['velocity', 'Sort by velocity: fastest-rising posts (points per hour)'],
+    ['heat', 'Sort by heat: most-discussed posts (comments per point)'],
+    ['default', 'Original sort order'],
+  ])('should have a descriptive title for %s sort', (sortBy, title) => {
+    const option = SORT_OPTIONS.find((o) => o.sortBy === sortBy)!;
+    const { container } = render(<SortButton sortOption={option} activeSort="time" onSort={mockOnSort} />);
 
-    const button = container.querySelector(`.${CSS_CLASSES.BTN}`);
-    expect(button?.getAttribute('title')).toBe('Sort by points');
-  });
-
-  it('should have correct title for default sort', () => {
-    const defaultOption: SortOption = { sortBy: 'default', text: 'default', shortcut: 'D' };
-    const { container } = render(<SortButton sortOption={defaultOption} activeSort="points" onSort={mockOnSort} />);
-
-    const button = container.querySelector(`.${CSS_CLASSES.BTN}`);
-    expect(button?.getAttribute('title')).toBe('Original sort order');
+    expect(container.querySelector(`.${CSS_CLASSES.BTN}`)?.getAttribute('title')).toBe(title);
   });
 
   it('should render time sort option correctly', () => {
-    const timeOption: SortOption = { sortBy: 'time', text: 'time', shortcut: 'T' };
+    const timeOption: SortOption = { sortBy: 'time', text: 'time', shortcut: 'T', title: '' };
     render(<SortButton sortOption={timeOption} activeSort="default" onSort={mockOnSort} />);
 
     expect(screen.getByText('time')).toBeInTheDocument();
@@ -71,7 +68,7 @@ describe('SortButton', () => {
   });
 
   it('should render comments sort option correctly', () => {
-    const commentsOption: SortOption = { sortBy: 'comments', text: 'comments', shortcut: 'C' };
+    const commentsOption: SortOption = { sortBy: 'comments', text: 'comments', shortcut: 'C', title: '' };
     render(<SortButton sortOption={commentsOption} activeSort="default" onSort={mockOnSort} />);
 
     expect(screen.getByText('comments')).toBeInTheDocument();

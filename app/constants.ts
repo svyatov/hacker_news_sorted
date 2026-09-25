@@ -99,12 +99,24 @@ export const CSS_SELECTORS = {
 //      stays in single-letter mode at all widths / collapses at the wrong width and wraps HN's nav.
 //   2. useKeyboardShortcuts derives its hotkeys from `shortcut` below — keep the letters unique.
 export const SORT_OPTIONS: SortOption[] = [
-  { sortBy: 'points', text: 'points', shortcut: 'P' },
-  { sortBy: 'time', text: 'time', shortcut: 'T' },
-  { sortBy: 'comments', text: 'comments', shortcut: 'C' },
-  { sortBy: 'velocity', text: 'velocity', shortcut: 'V', enableKey: SETTINGS_KEYS.VELOCITY_ENABLED },
-  { sortBy: 'heat', text: 'heat', shortcut: 'H', enableKey: SETTINGS_KEYS.HEAT_ENABLED },
-  { sortBy: 'default', text: 'default', shortcut: 'D' },
+  { sortBy: 'points', text: 'points', shortcut: 'P', title: 'Sort by points' },
+  { sortBy: 'time', text: 'time', shortcut: 'T', title: 'Sort by time' },
+  { sortBy: 'comments', text: 'comments', shortcut: 'C', title: 'Sort by comments' },
+  {
+    sortBy: 'velocity',
+    text: 'velocity',
+    shortcut: 'V',
+    title: 'Sort by velocity: fastest-rising posts (points per hour)',
+    enableKey: SETTINGS_KEYS.VELOCITY_ENABLED,
+  },
+  {
+    sortBy: 'heat',
+    text: 'heat',
+    shortcut: 'H',
+    title: 'Sort by heat: most-discussed posts (comments per point)',
+    enableKey: SETTINGS_KEYS.HEAT_ENABLED,
+  },
+  { sortBy: 'default', text: 'default', shortcut: 'D', title: 'Original sort order' },
 ];
 
 // HN DOM selectors and classes
