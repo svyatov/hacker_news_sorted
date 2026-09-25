@@ -45,7 +45,7 @@ describe('sorters', () => {
     });
 
     it('should restore original order for default sort', () => {
-      const sorted = sortRows(mockRows, 'default');
+      const sorted = sortRows(sortRows(mockRows, 'points'), 'default');
       expect(sorted.map((r) => r.originalIndex)).toEqual([0, 1, 2]);
     });
 
@@ -67,14 +67,14 @@ describe('sorters', () => {
       expect(sorted[0]!.points).toBe(100);
     });
 
-    it('should handle equal values', () => {
+    it('keeps HN order for equal values', () => {
       const equalRows = [
         createMockRow({ originalIndex: 0, points: 100 }),
         createMockRow({ originalIndex: 1, points: 100 }),
         createMockRow({ originalIndex: 2, points: 100 }),
       ];
       const sorted = sortRows(equalRows, 'points');
-      expect(sorted.map((r) => r.points)).toEqual([100, 100, 100]);
+      expect(sorted.map((r) => r.originalIndex)).toEqual([0, 1, 2]);
     });
   });
 
