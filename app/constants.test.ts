@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 
 import { SORT_PANEL_EXCLUDE_MATCHES } from '~app/constants';

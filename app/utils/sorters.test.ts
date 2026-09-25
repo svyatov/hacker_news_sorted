@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { FAKE_NOW } from '~app/__fixtures__/testHelpers';
@@ -10,9 +11,10 @@ const NOW_SEC = Math.floor(FAKE_NOW / 1000);
 
 const createMockRow = (overrides: Partial<ParsedRow>): ParsedRow => ({
   originalIndex: 0,
-  title: document.createElement('tr'),
-  info: document.createElement('tr'),
-  spacer: document.createElement('tr'),
+  // sortRows never reads the row elements.
+  title: {} as HTMLElement,
+  info: {} as HTMLElement,
+  spacer: {} as HTMLElement,
   points: 0,
   time: 0,
   comments: 0,
