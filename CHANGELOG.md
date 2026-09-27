@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Move new-post tracking out of the sort settings into its own module with a single entry point, and derive the Velocity and Heat on/off toggles from the sort option list (internal restructuring with no change to any user-facing feature)
 - Remove duplicated code in the sorters, parsers, new-post marking, settings popup, and the screenshot and demo generators (internal cleanup with no change to any user-facing feature)
 - Find each post on a list page by its own row instead of by row position, so sorting no longer depends on the page ending in exactly two footer rows (internal restructuring with no change to any user-facing feature)
+- Replace simple-git-hooks and lint-staged with lefthook: commits are now scanned for secrets and checked for Conventional Commits messages, and a push runs the same lint, test, and build checks as CI
 
 ### Fixed
 

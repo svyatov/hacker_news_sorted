@@ -143,8 +143,8 @@ Use `~` prefix for imports from project root (e.g., `~app/components/ControlPane
 
 - **Biome**: `biome.json` (recommended ruleset; `noNonNullAssertion` and `noCommaOperator` off)
 - **Prettier**: `.prettierrc.mjs` with single quotes, trailing commas, 120 char width
-- **Pre-commit hook**: `simple-git-hooks` + `lint-staged` runs `biome lint` on `*.{ts,tsx}` and Prettier on all files
-- Run `bun run prepare` after cloning to install git hooks
+- **Git hooks**: `lefthook.yml`. pre-commit runs a betterleaks secret scan, `biome lint`, and Prettier (re-stages its fixes) on staged files; commit-msg enforces Conventional Commits; pre-push runs the CI checks in order: `bun run lint`, `bun run test:coverage`, `bun run build`
+- `bun install` installs the hooks (lefthook's postinstall). The secret scan needs `betterleaks` on PATH (`brew install betterleaks`)
 
 ## Code Style
 

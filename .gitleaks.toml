@@ -1,0 +1,8 @@
+# Read by betterleaks (lefthook pre-commit `secrets` job).
+[extend]
+useDefault = true
+
+# HN snapshots fetched without a cookie carry anonymous per-item `auth=` tokens on their fave links.
+[[allowlists]]
+description = "HN page fixtures"
+paths = ['''^app/__fixtures__/.*\.html$''']
