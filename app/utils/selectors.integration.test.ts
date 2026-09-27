@@ -71,14 +71,12 @@ describe('selectors (integration with live HN HTML)', () => {
       const time = getTime(row);
       expect(time, `age title should parse: "${ageEl.getAttribute('title')}"`).not.toBe(0);
       const unit = UNIT_SECONDS[match![2] as keyof typeof UNIT_SECONDS];
-      if (Math.abs(fetchedAt - time - Number(match![1]) * unit) <= unit) agreeing++;
+      if (match![2] === 'hour' && Math.abs(fetchedAt - time - Number(match![1]) * unit) <= unit) agreeing++;
     }
-    // Second-chance posts show a younger text than their title timestamp (up to ~25% of the front page), and
-    // "N minutes ago" rows miss by the 1-2 minutes HN's anonymous page cache lags the fetch stamp, so only require
-    // a majority. A local-time bug shifts every hour-text row by the runner's UTC offset (5.5h under the pinned TZ)
-    // and still fails this.
-    expect(agreeing, `${agreeing}/${rows.length} rows agree with their age text`).toBeGreaterThanOrEqual(
-      Math.ceil(rows.length * 0.5),
-    );
+    // Second-chance posts show a younger text than their title timestamp (over half the front page on some days),
+    // "N minutes ago" rows miss by the 1-2 minutes HN's anonymous page cache lags the fetch stamp, and "N days ago"
+    // is too coarse to notice a shift, so only count hour rows and require a few, not a share of the page. A
+    // local-time bug shifts every row by the runner's UTC offset (5.5h under the pinned TZ), so no hour row agrees.
+    expect(agreeing, `${agreeing} hour rows agree with their age text`).toBeGreaterThanOrEqual(3);
   });
 });

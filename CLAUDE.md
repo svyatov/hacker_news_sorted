@@ -102,7 +102,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 - HN "second chance" posts show misleading age text (e.g., "7 hours ago" for a 3-day-old resubmission) because the server resets the display text while the title attribute retains the original submission timestamp
 - `formatAge` in `app/utils/presenters.ts` computes correct age from Unix timestamp; `correctAgeTexts`/`restoreAgeTexts` swap the `<a>` text inside `.age` spans, preserving originals via `data-original-age`
 - Toggle in popup (default: on), wired through `useSettings` → `ControlPanel` useEffect
-- The same text-vs-title gap is why the timestamp canary in `selectors.integration.test.ts` only requires an 80% agreement rate
+- The same text-vs-title gap is why the timestamp canary in `selectors.integration.test.ts` only requires 3 agreeing "N hours ago" rows
 
 ### Review Prompt
 
@@ -173,7 +173,7 @@ Use `~` prefix for imports from project root (e.g., `~app/components/ControlPane
 Tests are co-located with source files using `.test.ts` / `.test.tsx` suffix:
 
 - `app/utils/*.test.ts` - Unit tests for utility functions
-- `app/utils/selectors.integration.test.ts` - List-page selectors run against `hn-homepage.html` (breaks if HN markup changes), plus the timestamp canary: every `.age` title must parse, and at least 80% must agree with HN's own "N unit(s) ago" text relative to the `<!-- hns-fetched-at: ... -->` stamp `updateFixture.ts` writes at the top of the fixture (the minority allowance is for second-chance posts, whose text is younger than their title)
+- `app/utils/selectors.integration.test.ts` - List-page selectors run against `hn-homepage.html` (breaks if HN markup changes), plus the timestamp canary: every `.age` title must parse, and at least 3 "N hours ago" rows must agree with their title relative to the `<!-- hns-fetched-at: ... -->` stamp `updateFixture.ts` writes at the top of the fixture (a fixed count, not a share, because second-chance posts, whose text is younger than their title, can fill over half the front page; a local-time parsing bug makes zero hour rows agree)
 - `app/utils/comments.integration.test.ts` - Comment-page selectors run against `hn-item.html` (breaks if HN item markup changes); `bun run test:integration` runs both integration suites
 - `app/components/*.test.tsx` - Component tests
 - `app/hooks/*.test.ts` - Hook tests
