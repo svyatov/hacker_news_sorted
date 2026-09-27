@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://json.schemastore.org/lefthook.json
+pre-commit:
+  parallel: true
+  jobs:
+    - name: secrets
+      run: betterleaks git --pre-commit --staged --redact --verbose
+    - name: biome
+      run: bunx biome lint --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
+    - name: prettier
+      run: bunx prettier --write --ignore-unknown {staged_files}
+      stage_fixed: true
+
+commit-msg:
+  jobs:
+    - name: conventional
+      run: |
+        head -1 {1} | grep -qE '^(feat|fix|perf|refactor|docs|style|test|chore|ci|build|revert)(\(.+\))?!?: .+' || { echo "Use Conventional Commits: type(scope): description"; exit 1; }
+
+pre-push:
+  jobs:
+    - name: lint
+      run: bun run lint
+    - name: test
+      run: bun run test:coverage
+    - name: build
+      run: bun run build
