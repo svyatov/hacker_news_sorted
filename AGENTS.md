@@ -84,7 +84,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 
 ### Settings & New Post Detection
 
-- `app/utils/settingsStorage.ts` - `settingsStorage.get/set/watch`: the one wrapper over WXT `storage` (`sync:` area) for synced settings. It keeps Plasmo's on-disk encoding (`JSON.stringify` on write, `JSON.parse` on read and in watch callbacks; a missing or unparsable value decodes to `undefined`, so callers apply `SETTINGS_DEFAULTS` with `??`), so old and new versions share synced values with no migration (`docs/adr/0001-keep-plasmo-json-encoding-on-wxt-storage.md`). It has no tests of its own; `settings.test.ts`, `newPosts.test.ts`, and `useSettings.test.ts` cover it by seeding Plasmo-format values in `fakeBrowser`
+- `app/utils/settingsStorage.ts` - `settingsStorage.get/set/watch`: the one wrapper over WXT `storage` (`sync:` area) for synced settings. It keeps Plasmo's on-disk encoding (`JSON.stringify` on write, `JSON.parse` on read and in watch callbacks; a missing or unparsable value decodes to `undefined`, so callers apply `SETTINGS_DEFAULTS` with `??`), so old and new versions share synced values with no migration (`docs/adr/0001-keep-plasmo-json-encoding-on-wxt-storage.md`). It has no tests of its own; `settings.test.ts`, `newPosts.test.ts`, `useSettings.test.ts`, and `useReviewPrompt.test.ts` cover it by seeding Plasmo-format values in `fakeBrowser`
 - `app/hooks/useSettings.ts` - Hook for the panel's synced state via `settingsStorage` (chrome.storage.sync):
   - Sort preference (`activeSort` / `setActiveSort`) — syncs across devices, reactive via watchers
   - True time ago toggle (`showTrueTimeAgo`) — exposes reactive boolean for age text correction
@@ -150,7 +150,7 @@ Use `~` prefix for imports from project root (e.g., `~app/components/ControlPane
 - `app/__fixtures__/hn-item.html` - Real HN thread (`item?id=`) snapshot for comment-selector drift testing
 - `app/__fixtures__/loadFixture.ts` - Helper functions to load fixtures
 - `app/__fixtures__/updateFixture.ts` - Script to refresh both fixtures from live HN: stamps `hn-homepage.html` with `<!-- hns-fetched-at: ISO -->`, then saves the most-commented homepage story as `hn-item.html` (`pickTopCommentedItemId`, exported and unit-tested). Network calls run only under `import.meta.main`, so importing the file is safe
-- `app/__fixtures__/testHelpers.ts` - Shared test helpers: `setupTableBody` (HN list DOM builder), `setupCommentThread` (HN item-page DOM builder), `clearBody`, `getRowById`, `FAKE_NOW` constant, `createStorageMock` factory (for `@plasmohq/storage` mocks)
+- `app/__fixtures__/testHelpers.ts` - Shared test helpers: `setupTableBody` (HN list DOM builder), `setupCommentThread` (HN item-page DOM builder), `clearBody`, `getRowById`, `FAKE_NOW` constant
 - Run `bun run fixture:update` to refresh when HN markup changes
 
 ### Test Files
