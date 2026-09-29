@@ -1,5 +1,5 @@
 import { createIntegratedUi, defineContentScript } from '#imports';
-import { createRoot, type Root } from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 
 import ControlPanel from '~app/components/ControlPanel';
 import { CONTROL_PANEL_ROOT_ID, SETTINGS_KEYS, SORT_PANEL_EXCLUDE_MATCHES } from '~app/constants';
@@ -32,7 +32,6 @@ export default defineContentScript({
     setLayoutStatus(true);
     ctx.onInvalidated(trackNewPosts());
 
-    let root: Root | undefined;
     const ui = createIntegratedUi(ctx, {
       position: 'inline',
       anchor: parent,
@@ -43,13 +42,12 @@ export default defineContentScript({
       tag: 'span',
       onMount: (wrapper) => {
         wrapper.id = CONTROL_PANEL_ROOT_ID;
-        root = createRoot(wrapper);
+        const root = createRoot(wrapper);
         root.render(<ControlPanel />);
         return root;
       },
-      onRemove: () => {
+      onRemove: (root) => {
         root?.unmount();
-        root = undefined;
       },
     });
     ui.mount();

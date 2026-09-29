@@ -3,7 +3,7 @@ import { Storage, type StorageCallbackMap } from '@plasmohq/storage';
 import { SETTINGS_DEFAULTS } from '~app/constants';
 
 type SettingKey = keyof typeof SETTINGS_DEFAULTS;
-export type SettingValues<K extends SettingKey> = { [P in K]: (typeof SETTINGS_DEFAULTS)[P] };
+type SettingValues<K extends SettingKey> = { [P in K]: (typeof SETTINGS_DEFAULTS)[P] };
 
 const storage = new Storage();
 

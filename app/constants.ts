@@ -5,7 +5,7 @@ export const CONTROL_PANEL_ROOT_ID = 'hns-control-panel';
 // Enabled-option count (4–6) published on the panel root so count-aware CSS breakpoints
 // can pick the right word↔letter switch point (CSS can't read React state).
 export const SORT_COUNT_ATTR = 'data-sort-count';
-// Comment-page mark control: the attribute holding a star button's target username, and the
+// Comment-page mark control: the attribute holding a mark dot's target username, and the
 // sessionStorage key prefix for the per-thread single mark (KTD-6).
 export const DOT_USER_ATTR = 'data-hns-user';
 export const MARK_STORAGE_PREFIX = 'hns-marked-user:';

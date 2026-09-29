@@ -1,8 +1,8 @@
 import { SETTINGS_KEYS } from '~app/constants';
 
 // Badge logic lives here (framework-agnostic, unit-tested) while entrypoints/background.ts is a thin
-// defineBackground shell that calls initBadge() — mirroring the app/utils + entrypoint split used
-// for the comment script (KTD-2). Behavior is identical to the pre-WXT root background.ts.
+// defineBackground shell that calls initBadge(), mirroring the app/utils + entrypoint split used
+// for the comment script (KTD-2).
 
 function updateBadge(ok: boolean): void {
   chrome.action.setBadgeText({ text: ok ? '' : ':(' });

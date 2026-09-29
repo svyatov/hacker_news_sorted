@@ -16,7 +16,7 @@ const KEY_TO_SORT: Record<string, SortVariant> = Object.fromEntries(
 const TARGET_KEYS = Object.keys(KEY_TO_SORT);
 
 const isTypingInInput = (target: EventTarget | null): boolean => {
-  if (!target || !(target instanceof HTMLElement)) {
+  if (!(target instanceof HTMLElement)) {
     return false;
   }
 
