@@ -120,6 +120,7 @@ const LIST_TABLE = '#hnmain #bigbox > td > table';
 
 export const HN_SELECTORS = {
   // Page structure
+  MAIN: '#hnmain',
   CONTROL_PANEL_PARENT: '#hnmain tr:has(> td > .pagetop > .hnname) > td:last-child',
   LIST_TABLE,
   TABLE_BODY: `${LIST_TABLE} > tbody`,
@@ -135,10 +136,12 @@ export const HN_SELECTORS = {
   COMMENTS: 'td.subtext > span > a[href^="item?id="]',
 
   // Comment/item pages
+  ITEM_TABLE: 'table.fatitem',
+  COMMENT_TREE: 'table.comment-tree',
   STORY_AUTHOR: '.fatitem .hnuser',
   STORY_LINK: '.fatitem .titleline',
   COMMENT_ROWS: 'tr.athing.comtr[id]',
-  COMMENT_AUTHOR: '.hnuser',
+  COMMENT_AUTHOR: '.hnuser', // relative to COMMENT_HEAD
   COMMENT_HEAD: '.comhead',
 } as const;
 
