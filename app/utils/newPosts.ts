@@ -1,13 +1,10 @@
-import { Storage, type StorageCallbackMap } from '@plasmohq/storage';
-
 import { CSS_CLASSES, SETTINGS_DEFAULTS, SETTINGS_KEYS } from '~app/constants';
 import { getPostRows, getTableBody } from '~app/utils/selectors';
 import { watchSettings } from '~app/utils/settings';
+import { settingsStorage } from '~app/utils/settingsStorage';
 
 // Post id -> discovery time (ms), or -1 for a post that was already there on the first visit.
 export type PostTimestamps = Record<string, number>;
-
-const storage = new Storage();
 
 const FADE_PROPERTY = '--hns-fade';
 
@@ -124,9 +121,9 @@ export const trackNewPosts = (): (() => void) => {
 
   const loadPostIds = async () => {
     if (getPostIds().length > 0) {
-      const stored = await storage.get<string[] | PostTimestamps>(postIdsKey);
+      const stored = await settingsStorage.get<string[] | PostTimestamps>(postIdsKey);
       remark(stored ? migratePostIds(stored) : {});
-      await storage.set(postIdsKey, timestamps);
+      await settingsStorage.set(postIdsKey, timestamps);
     }
 
     ready = true;
@@ -153,22 +150,18 @@ export const trackNewPosts = (): (() => void) => {
     }
   });
 
-  const postIdsWatcher: StorageCallbackMap = {
-    [postIdsKey]: (change) => {
-      if (!ready) return;
-      // Never write back: the other tab already stored this value. Merge over our own map, because the
-      // other tab only stores the posts on its page: a post that fell off the list since we loaded is
-      // missing there, not new.
-      const incoming = migratePostIds((change.newValue ?? {}) as string[] | PostTimestamps);
-      remark({ ...timestamps, ...incoming });
-    },
-  };
-  storage.watch(postIdsWatcher);
+  const stopPostIds = settingsStorage.watch<string[] | PostTimestamps>(postIdsKey, (newValue) => {
+    if (!ready) return;
+    // Never write back: the other tab already stored this value. Merge over our own map, because the
+    // other tab only stores the posts on its page: a post that fell off the list since we loaded is
+    // missing there, not new.
+    remark({ ...timestamps, ...migratePostIds(newValue ?? {}) });
+  });
 
   return () => {
     disposed = true;
     syncInterval();
     stopSettings();
-    storage.unwatch(postIdsWatcher);
+    stopPostIds();
   };
 };

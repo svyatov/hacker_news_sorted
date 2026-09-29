@@ -1,12 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { Storage } from '@plasmohq/storage';
-
 import { SETTINGS_DEFAULTS, SETTINGS_KEYS, SORT_OPTIONS } from '~app/constants';
 import type { SortOption, SortVariant } from '~app/types';
 import { watchSettings } from '~app/utils/settings';
-
-const storage = new Storage();
+import { settingsStorage } from '~app/utils/settingsStorage';
 
 type ToggleKey = NonNullable<SortOption['enableKey']>;
 type Toggles = Record<ToggleKey, boolean>;
@@ -41,7 +38,7 @@ export const useSettings = (): UseSettingsReturn => {
 
   const setActiveSort = useCallback((sort: SortVariant) => {
     setActiveSortState(sort);
-    storage.set(SETTINGS_KEYS.LAST_ACTIVE_SORT, sort);
+    settingsStorage.set(SETTINGS_KEYS.LAST_ACTIVE_SORT, sort);
   }, []);
 
   useEffect(

@@ -84,7 +84,8 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 
 ### Settings & New Post Detection
 
-- `app/hooks/useSettings.ts` - Hook for the panel's synced state via `@plasmohq/storage` (chrome.storage.sync):
+- `app/utils/settingsStorage.ts` - `settingsStorage.get/set/watch`: the one wrapper over WXT `storage` (`sync:` area) for synced settings. It keeps Plasmo's on-disk encoding (`JSON.stringify` on write, `JSON.parse` on read and in watch callbacks; a missing or unparsable value decodes to `undefined`, so callers apply `SETTINGS_DEFAULTS` with `??`), so old and new versions share synced values with no migration (`docs/adr/0001-keep-plasmo-json-encoding-on-wxt-storage.md`). It has no tests of its own; `settings.test.ts`, `newPosts.test.ts`, and `useSettings.test.ts` cover it by seeding Plasmo-format values in `fakeBrowser`
+- `app/hooks/useSettings.ts` - Hook for the panel's synced state via `settingsStorage` (chrome.storage.sync):
   - Sort preference (`activeSort` / `setActiveSort`) — syncs across devices, reactive via watchers
   - True time ago toggle (`showTrueTimeAgo`) — exposes reactive boolean for age text correction
   - Sort toggles: every `SORT_OPTIONS` entry with an `enableKey` is toggleable; the hook follows those keys generically (`TOGGLE_KEYS`) through one `watchSettings` call and derives `enabledSortOptions` (the SORT_OPTIONS subset the panel, dropdown, and hotkeys all consume); every snapshot is validated via `resolveActiveSort`, which resolves unknown/disabled sorts to `default` locally without writing back (KTD-6, no ping-pong). A toggle change re-checks the sort on screen, so re-enabling a sort does not bring back the stored one
@@ -140,7 +141,7 @@ Use `~` prefix for imports from project root (e.g., `~app/components/ControlPane
 - **Framework**: Vitest with JSDOM and React Testing Library
 - **Coverage**: `app/**` must stay at 100% statements, branches, functions, and lines (`coverage.thresholds` in `vitest.config.ts`); `bun run test:coverage` fails in CI below that. Cover a new branch with a test, or delete it if no input can reach it. `entrypoints/`, `scripts/`, and `app/__fixtures__/` are outside the gate, which is why entrypoint logic lives in `app/utils`
 - **Config**: `vitest.config.ts` with path aliases and coverage settings; pins `process.env.TZ = 'Asia/Kolkata'` (non-UTC, no DST) so any local-time date parsing fails tests (guarded by a test in `app/utils/parsers.test.ts`)
-- **Setup**: `vitest.setup.ts` loads the jest-dom matchers only; React Testing Library registers its own cleanup in the files that import it
+- **Setup**: `vitest.config.ts` adds WXT's `WxtVitest()` plugin, which resolves `#imports` and points WXT's `browser` at `fakeBrowser` (`wxt/testing/fake-browser`); `vitest.setup.ts` loads the jest-dom matchers and resets `fakeBrowser` before each test. Storage tests seed `fakeBrowser.storage.sync` with Plasmo-format values (JSON strings) and assert the raw values written back. React Testing Library registers its own cleanup in the files that import it
 - **Environment**: jsdom by default; a test file that touches no DOM starts with `// @vitest-environment node` to skip the jsdom setup cost
 
 ### Fixtures
