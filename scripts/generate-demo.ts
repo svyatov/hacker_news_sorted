@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import type { Page } from 'playwright';
 
-import { CONTROL_PANEL_ROOT_ID } from '~app/constants';
+import { CONTROL_PANEL_ROOT_ID, HN_SELECTORS } from '~app/constants';
 
 import { loadWithExtension, setupBrowser, showNewPostIndicators } from './screenshots/browser';
 import { injectCommentsBundle, markUser } from './screenshots/comments';
@@ -174,13 +174,20 @@ async function recordCommentSegment(page: Page, cropX: number, recordingStart: n
   }
 
   // Scroll the marked user's comment to the top so it and the OP comment below it fall in the crop band.
-  await page.evaluate((user) => {
-    const row = Array.from(document.querySelectorAll('tr.athing.comtr[id]')).find(
-      (r) => r.querySelector('.comhead .hnuser')?.textContent?.trim() === user,
-    );
-    row?.scrollIntoView({ block: 'start' });
-    window.scrollBy(0, -30);
-  }, COMMENT_MARK_USER);
+  await page.evaluate(
+    ({ user, rowsSelector, authorSelector }) => {
+      const row = Array.from(document.querySelectorAll(rowsSelector)).find(
+        (r) => r.querySelector(authorSelector)?.textContent?.trim() === user,
+      );
+      row?.scrollIntoView({ block: 'start' });
+      window.scrollBy(0, -30);
+    },
+    {
+      user: COMMENT_MARK_USER,
+      rowsSelector: HN_SELECTORS.COMMENT_ROWS,
+      authorSelector: HN_SELECTORS.COMMENT_AUTHOR,
+    },
+  );
   await page.waitForTimeout(200);
 
   // Pre-apply the mark while still covered, so the reveal already shows the OP badge AND the marked user

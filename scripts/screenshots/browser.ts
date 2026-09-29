@@ -57,14 +57,14 @@ export async function injectExtension(page: Page): Promise<void> {
 
 export async function showNewPostIndicators(page: Page): Promise<void> {
   await page.evaluate(
-    ({ tableBodySelector, showNewClass, newPostClass }) => {
+    ({ tableBodySelector, postRowsSelector, showNewClass, newPostClass }) => {
       const tbody = document.querySelector(tableBodySelector);
       if (!tbody) return;
 
       tbody.classList.add(showNewClass);
 
       // Mark a scattered subset of title rows as new posts
-      const titleRows = tbody.querySelectorAll(':scope > tr:nth-child(3n+1)');
+      const titleRows = tbody.querySelectorAll(postRowsSelector);
       const indices = [0, 2, 3, 6, 8, 11];
       for (const i of indices) {
         titleRows[i]?.classList.add(newPostClass);
@@ -74,6 +74,7 @@ export async function showNewPostIndicators(page: Page): Promise<void> {
       tableBodySelector: HN_SELECTORS.TABLE_BODY,
       showNewClass: CSS_CLASSES.SHOW_NEW,
       newPostClass: CSS_CLASSES.NEW_POST,
+      postRowsSelector: HN_SELECTORS.POST_ROWS,
     },
   );
 }
