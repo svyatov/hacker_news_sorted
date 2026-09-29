@@ -1,4 +1,9 @@
 # yaml-language-server: $schema=https://json.schemastore.org/lefthook.json
+# Print failed jobs and the summary only: passing jobs' output (the wxt build spinner) is noise.
+output:
+  - failure
+  - summary
+
 pre-commit:
   parallel: true
   jobs:
