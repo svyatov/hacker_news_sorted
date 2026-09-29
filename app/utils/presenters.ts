@@ -14,7 +14,7 @@ export const updateTable = (parsedRows: ParsedRow[], activeSort: SortVariant): v
 
 // Only single-column sorts have a highlight target. Variants without an entry here
 // (default, velocity/heat which span two columns, or an unknown value arriving via
-// cross-device sync from a newer version) take the early return below and never crash.
+// cross-device sync from a newer version) are skipped by the optional chaining below and never crash.
 const SORT_TO_ELEMENT_GETTER: Partial<Record<SortVariant, (row: HTMLElement) => HTMLElement | null>> = {
   points: getPointsElement,
   time: getTimeElement,
