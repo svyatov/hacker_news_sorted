@@ -23,6 +23,7 @@ export function pickTopCommentedItemId(homepageHtml: string): string {
 }
 
 // HN 429s blank/bot user agents and concurrent bursts, so send a browser UA and back off on 429.
+// Keep the Chrome version in step with CHROME_MAJOR in scripts/screenshots/constants.ts (importing it would add an app-to-scripts import).
 const USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36';
 
