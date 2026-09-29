@@ -1,13 +1,25 @@
 import { useEffect, useState, type ReactNode } from 'react';
 
-import { useStorage } from '@plasmohq/storage/hook';
-
 import { COOLDOWN_BOUNDS, CWS_REVIEW_URL, SETTINGS_DEFAULTS, SETTINGS_KEYS } from '~app/constants';
+import { watchSettings } from '~app/utils/settings';
+import { settingsStorage } from '~app/utils/settingsStorage';
 
 import './popup.css';
 
 type SettingsKey = keyof typeof SETTINGS_DEFAULTS;
-const useSettingsStorage = <K extends SettingsKey>(key: K) => useStorage(key, SETTINGS_DEFAULTS[key]);
+type SettingsValue<K extends SettingsKey> = (typeof SETTINGS_DEFAULTS)[K];
+
+// Renders the default first, then the stored value, then follows every change. The setter updates state
+// at once and then writes, so a controlled input does not lag behind the async write.
+const useSettingsStorage = <K extends SettingsKey>(key: K) => {
+  const [value, setValue] = useState<SettingsValue<K>>(SETTINGS_DEFAULTS[key]);
+  useEffect(() => watchSettings([key], (values) => setValue(values[key])), [key]);
+  const set = (next: SettingsValue<K>) => {
+    setValue(next);
+    void settingsStorage.set(key, next);
+  };
+  return [value, set] as const;
+};
 
 type ToggleProps = {
   name: string;
@@ -46,7 +58,7 @@ const Popup = () => {
   const [opHighlight, setOpHighlight] = useSettingsStorage(SETTINGS_KEYS.OP_HIGHLIGHT);
   const [markUserHighlight, setMarkUserHighlight] = useSettingsStorage(SETTINGS_KEYS.MARK_USER_HIGHLIGHT);
   const [layoutOk] = useSettingsStorage(SETTINGS_KEYS.LAYOUT_OK);
-  // useStorage renders with the default value first, then async-loads the stored value.
+  // useSettingsStorage renders with the default value first, then async-loads the stored value.
   // When stored !== default, the CSS transition animates the toggle visibly (on→off flash).
   // Suppress transitions for 50ms to let storage settle, then re-enable for user interactions.
   const [isReady, setIsReady] = useState(false);
