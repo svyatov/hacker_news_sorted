@@ -114,25 +114,8 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 
 ### Constants
 
-- `app/constants.ts` - Centralized constants including:
-  - Extension constants: `CONTROL_PANEL_ROOT_ID`, `SORT_COUNT_ATTR` (the `data-sort-count` attribute driving count-aware CSS breakpoints), `DOT_USER_ATTR` (the mark button's `data-hns-user` attribute), `MARK_STORAGE_PREFIX` (per-thread `sessionStorage` key prefix for marks), `CWS_REVIEW_URL` (Chrome Web Store reviews link for the toast and popup), `REVIEW_PROMPT_DAYS`/`REVIEW_PROMPT_SORTS` (review-prompt thresholds, 7 and 20)
-  - `CSS_CLASSES` - Extension CSS class names (`HIGHLIGHT`, `SORT_BY_LABEL`, `BTN`, `BTN_TEXT`, `BTN_SHORTCUT`, `ACTIVE`, `DIVIDER`, `SHOW_NEW`, `NEW_POST`, `CONFLICT_NOTE`, `BUTTONS_TIER`, `DROPDOWN_TIER`, `DROPDOWN`, and the review-toast classes `REVIEW_TOAST`, `REVIEW_LINK`, `REVIEW_SUB`, `REVIEW_CLOSE`)
-  - `SORT_OPTIONS` - Sort option configuration array (sort variant, display text, keyboard shortcut, `title` tooltip, and an optional `enableKey` naming the boolean setting that turns the sort on or off); order: points, time, comments, velocity, heat, default. To make a sort toggleable, add an `hns-<name>-enabled` key to `SETTINGS_KEYS`/`SETTINGS_DEFAULTS` and set it as the sort's `enableKey` (the `SortOption['enableKey']` type accepts any `*-enabled` settings key); `useSettings` needs no change. Adding an option or a toggle also needs: matching count-aware `@media` blocks in `content.css` for the new enabled-option count, a unique `shortcut` letter, and a `Toggle` in `entrypoints/popup/App.tsx` (popup toggles are wired by hand)
-  - `SETTINGS_KEYS` - Storage key names for chrome.storage.sync (`SHOW_NEW`, `LAST_ACTIVE_SORT`, `POST_IDS_PREFIX`, `LAYOUT_OK`, `REVIEW_DISMISSED`, `INSTALL_TIMESTAMP`, `SORT_COUNT`, `COOLDOWN`, `TRUE_TIME_AGO`, `VELOCITY_ENABLED`, `HEAT_ENABLED`, `OP_HIGHLIGHT`, `MARK_USER_HIGHLIGHT`)
-  - `SETTINGS_DEFAULTS` - Default values for settings
-  - `COOLDOWN_BOUNDS` - Min/max bounds for cooldown input validation
-  - `SECONDS_PER_MINUTE`, `SECONDS_PER_HOUR`, `SECONDS_PER_DAY` - Time unit constants (used in presenters, sorters, `COOLDOWN_BOUNDS`, and tests)
-  - `HN_SELECTORS` - DOM selectors for HN page structure (incl. comment-page selectors: `STORY_AUTHOR`, `STORY_LINK`, `COMMENT_ROWS`, `COMMENT_AUTHOR`, `COMMENT_HEAD`)
-  - `HN_CLASSES` - HN CSS class names for building test fixtures (incl. `COMTR`, `COMHEAD`, `HNUSER`, `FATITEM`, `TITLELINE`)
-  - `SORT_PANEL_EXCLUDE_MATCHES` - Chrome match patterns for listless HN pages the sort panel must skip (consumed by `entrypoints/hn-sort.content` as `excludeMatches`)
-  - `CSS_CLASSES` also includes the comment-highlight classes: `OP_COMMENT`, `OP_BADGE`, `MARK_DOT`, `MARK_DOT_ON`, `MARKED_COMMENT`
-
-### Types
-
-- `SortVariant`: 'default' | 'points' | 'time' | 'comments' | 'velocity' | 'heat'
-- `ParsedRow`: `originalIndex` (HN's order, used by the `default` sort), DOM rows (`title`, `info`, `spacer`), and parsed `points`, `time`, `comments`
-- `SortOption`: element type of `SORT_OPTIONS` (`sortBy`, `text`, `shortcut`, `title`, optional `enableKey` limited to `*-enabled` settings keys)
-- `PostTimestamps`: `Record<string, number>` — post ID → discovery timestamp (`Date.now()`), or `-1` for known/never-new posts (exported from `app/utils/newPosts.ts`)
+- `app/constants.ts` holds every constant (storage keys and defaults, CSS class names, HN selectors, `SORT_OPTIONS`); shared types live in `app/types.ts`
+- To make a sort toggleable, add an `hns-<name>-enabled` key to `SETTINGS_KEYS`/`SETTINGS_DEFAULTS` and set it as the sort's `enableKey`; `useSettings` needs no change. Adding an option or a toggle also needs: matching count-aware `@media` blocks in `content.css` for the new enabled-option count, a unique `shortcut` letter, and a `Toggle` in `entrypoints/popup/App.tsx` (popup toggles are wired by hand)
 
 ## Path Aliases
 
