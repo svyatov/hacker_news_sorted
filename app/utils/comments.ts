@@ -124,7 +124,7 @@ export const applyCommentEnhancements = ({ opEnabled, markEnabled, onMark }: Enh
   if (opEnabled && op) applyUserHighlight(op, 'op');
 
   if (markEnabled) {
-    // Skip a star on the OP's comments only while they're badged; with OP highlighting off the
+    // Skip the mark dot on the OP's comments only while they're badged; with OP highlighting off the
     // author is just a regular, markable user.
     injectMarkDots(onMark, opEnabled ? op : null);
     const marked = getMarkedUser();
