@@ -17,7 +17,7 @@ const getPostIds = (): string[] => getPostRows().map((row) => row.id);
 
 const migratePostIds = (stored: string[] | PostTimestamps): PostTimestamps => {
   if (Array.isArray(stored)) {
-    return Object.fromEntries(stored.map((id) => [id, Date.now()]));
+    return Object.fromEntries(stored.map((id) => [id, -1]));
   }
   return stored;
 };

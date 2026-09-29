@@ -99,7 +99,21 @@ describe('trackNewPosts', () => {
       dispose = trackNewPosts();
       await flush();
 
-      expect(await rawValue(POST_IDS_KEY)).toBe(JSON.stringify({ 'post-1': FAKE_NOW, 'post-2': FAKE_NOW }));
+      expect(isMarked('post-1')).toBe(false);
+      expect(isMarked('post-2')).toBe(false);
+      expect(await rawValue(POST_IDS_KEY)).toBe('{"post-1":-1,"post-2":-1}');
+    });
+
+    it('keeps legacy string[] ids known and still marks posts missing from the list', async () => {
+      setupTableBody(['post-1', 'post-2']);
+      await fakeBrowser.storage.sync.set({ [POST_IDS_KEY]: '["post-1"]' });
+      dispose = trackNewPosts();
+      await flush();
+
+      expect(isMarked('post-1')).toBe(false);
+      expect(isMarked('post-2')).toBe(true);
+      expect(fadeOf('post-2')).toBe('1');
+      expect(await savedTimestamps()).toEqual({ 'post-1': -1, 'post-2': FAKE_NOW });
     });
 
     it('re-applies a still-fading post at its remaining opacity', async () => {
@@ -382,12 +396,21 @@ describe('trackNewPosts', () => {
       expect(isMarked('post-1')).toBe(true);
     });
 
-    it('accepts the legacy string[] format', async () => {
+    it('accepts the legacy string[] format and keeps a known post unmarked', async () => {
       dispose = await startWithNewPost('post-1');
 
       await emit(POST_IDS_KEY, ['post-1']);
 
+      expect(isMarked('post-1')).toBe(false);
+    });
+
+    it("clears this tab's mark on a post that a legacy string[] list names", async () => {
+      dispose = await startWithNewPost();
       expect(isMarked('post-1')).toBe(true);
+
+      await emit(POST_IDS_KEY, ['post-1']);
+
+      expect(isMarked('post-1')).toBe(false);
     });
 
     it('ignores the first page of the same list when this is a later page', async () => {
