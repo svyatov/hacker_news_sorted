@@ -7,6 +7,9 @@ output:
 pre-commit:
   parallel: true
   jobs:
+    # Work reaches main through a squash-merged PR. Skip with LEFTHOOK_EXCLUDE=branch for a deliberate direct commit.
+    - name: branch
+      run: '[ "$(git branch --show-current)" != main ] || { echo "Commit on a branch: git switch -c type/kebab-description"; exit 1; }'
     - name: secrets
       run: betterleaks git --pre-commit --staged --redact --verbose
     - name: biome
