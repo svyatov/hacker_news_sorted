@@ -1,34 +1,40 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { fakeBrowser } from 'wxt/testing/fake-browser';
 
-import { clearBody, createStorageMock, FAKE_NOW, getRowById, setupTableBody } from '~app/__fixtures__/testHelpers';
+import { clearBody, FAKE_NOW, getRowById, setupTableBody } from '~app/__fixtures__/testHelpers';
 import { CSS_CLASSES, SETTINGS_DEFAULTS, SETTINGS_KEYS } from '~app/constants';
 
 import type { PostTimestamps } from './newPosts';
+import { trackNewPosts } from './newPosts';
 
 const COOLDOWN = SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN];
 const COOLDOWN_MS = COOLDOWN * 1000;
 const POST_IDS_KEY = `${SETTINGS_KEYS.POST_IDS_PREFIX}/`;
 
-const { store, mockGet, mockSet, mockWatch, mockUnwatch, watcherCallbacks, reset, StorageClass } = createStorageMock();
-vi.mock('@plasmohq/storage', () => ({ Storage: StorageClass }));
-
-const { trackNewPosts } = await import('./newPosts');
-
 // Drain the chained storage reads/writes of the async init.
 const flush = async () => {
-  for (let i = 0; i < 10; i++) await Promise.resolve();
+  for (let i = 0; i < 50; i++) await Promise.resolve();
 };
 
+// Values as Plasmo wrote them: every value a JSON string.
+const store = (key: string, value: unknown) => fakeBrowser.storage.sync.set({ [key]: JSON.stringify(value) });
+const rawValue = async (key: string) => (await fakeBrowser.storage.sync.get(key))[key] as string | undefined;
 const isMarked = (id: string) => getRowById(id).classList.contains(CSS_CLASSES.NEW_POST);
 const fadeOf = (id: string) => getRowById(id).style.getPropertyValue('--hns-fade');
-const savedTimestamps = () =>
-  mockSet.mock.calls.find(([key]) => key === POST_IDS_KEY)?.[1] as PostTimestamps | undefined;
-const emit = (key: string, newValue: unknown) => watcherCallbacks[key]?.({ newValue });
+const savedTimestamps = async () => {
+  const raw = await rawValue(POST_IDS_KEY);
+  return raw === undefined ? undefined : (JSON.parse(raw) as PostTimestamps);
+};
+// A change made by the popup or another tab: a JSON string, or a removal for undefined.
+const emit = async (key: string, newValue: unknown) => {
+  await (newValue === undefined ? fakeBrowser.storage.sync.remove(key) : store(key, newValue));
+  await flush();
+};
 
 // Starts tracking with post-1 new (never seen before) and `known` already stored as -1.
 const startWithNewPost = async (known = 'old-1') => {
   setupTableBody(['post-1']);
-  store[POST_IDS_KEY] = { [known]: -1 };
+  await store(POST_IDS_KEY, { [known]: -1 });
   const dispose = trackNewPosts();
   await flush();
   return dispose;
@@ -43,7 +49,6 @@ describe('trackNewPosts', () => {
     vi.useFakeTimers();
     vi.setSystemTime(FAKE_NOW);
     vi.stubGlobal('location', { pathname: '/', search: '' });
-    reset();
   });
 
   afterEach(() => {
@@ -60,35 +65,46 @@ describe('trackNewPosts', () => {
       dispose = trackNewPosts();
       await flush();
 
-      expect(savedTimestamps()).toEqual({ 'post-1': -1, 'post-2': -1 });
+      expect(await savedTimestamps()).toEqual({ 'post-1': -1, 'post-2': -1 });
       expect(isMarked('post-1')).toBe(false);
       expect(isMarked('post-2')).toBe(false);
     });
 
     it('marks a post missing from the stored set at full opacity and records its discovery time', async () => {
       setupTableBody(['post-1', 'post-2']);
-      store[POST_IDS_KEY] = { 'post-1': -1 };
+      await store(POST_IDS_KEY, { 'post-1': -1 });
       dispose = trackNewPosts();
       await flush();
 
       expect(isMarked('post-1')).toBe(false);
       expect(isMarked('post-2')).toBe(true);
       expect(fadeOf('post-2')).toBe('1');
-      expect(savedTimestamps()).toEqual({ 'post-1': -1, 'post-2': FAKE_NOW });
+      expect(await savedTimestamps()).toEqual({ 'post-1': -1, 'post-2': FAKE_NOW });
     });
 
-    it('migrates the legacy string[] format to timestamps', async () => {
+    it('keeps posts known from a JSON-string timestamp map and writes the map back as a JSON string', async () => {
       setupTableBody(['post-1', 'post-2']);
-      store[POST_IDS_KEY] = ['post-1', 'post-2'];
+      await fakeBrowser.storage.sync.set({ [POST_IDS_KEY]: '{"post-1":-1,"post-2":-1}' });
       dispose = trackNewPosts();
       await flush();
 
-      expect(savedTimestamps()).toEqual({ 'post-1': FAKE_NOW, 'post-2': FAKE_NOW });
+      expect(isMarked('post-1')).toBe(false);
+      expect(isMarked('post-2')).toBe(false);
+      expect(await rawValue(POST_IDS_KEY)).toBe('{"post-1":-1,"post-2":-1}');
+    });
+
+    it('migrates the legacy JSON-string string[] format to a JSON-string timestamp map', async () => {
+      setupTableBody(['post-1', 'post-2']);
+      await fakeBrowser.storage.sync.set({ [POST_IDS_KEY]: '["post-1","post-2"]' });
+      dispose = trackNewPosts();
+      await flush();
+
+      expect(await rawValue(POST_IDS_KEY)).toBe(JSON.stringify({ 'post-1': FAKE_NOW, 'post-2': FAKE_NOW }));
     });
 
     it('re-applies a still-fading post at its remaining opacity', async () => {
       setupTableBody(['post-1']);
-      store[POST_IDS_KEY] = { 'post-1': FAKE_NOW - COOLDOWN_MS / 2 };
+      await store(POST_IDS_KEY, { 'post-1': FAKE_NOW - COOLDOWN_MS / 2 });
       dispose = trackNewPosts();
       await flush();
 
@@ -98,12 +114,12 @@ describe('trackNewPosts', () => {
 
     it('keeps an expired timestamp but shows no mark', async () => {
       setupTableBody(['post-1']);
-      store[POST_IDS_KEY] = { 'post-1': FAKE_NOW - COOLDOWN_MS - 1000 };
+      await store(POST_IDS_KEY, { 'post-1': FAKE_NOW - COOLDOWN_MS - 1000 });
       dispose = trackNewPosts();
       await flush();
 
       expect(isMarked('post-1')).toBe(false);
-      expect(savedTimestamps()).toEqual({ 'post-1': FAKE_NOW - COOLDOWN_MS - 1000 });
+      expect(await savedTimestamps()).toEqual({ 'post-1': FAKE_NOW - COOLDOWN_MS - 1000 });
     });
 
     it('only tracks story rows (tr.athing with an id)', async () => {
@@ -114,7 +130,7 @@ describe('trackNewPosts', () => {
       dispose = trackNewPosts();
       await flush();
 
-      expect(Object.keys(savedTimestamps() ?? {})).toEqual(['post-1']);
+      expect(Object.keys((await savedTimestamps()) ?? {})).toEqual(['post-1']);
     });
 
     it.each([
@@ -122,7 +138,7 @@ describe('trackNewPosts', () => {
       ['off', false],
     ])('sets the show-new class on the table body when the setting is %s', async (_, enabled) => {
       const tbody = setupTableBody(['post-1']);
-      store[SETTINGS_KEYS.SHOW_NEW] = enabled;
+      await store(SETTINGS_KEYS.SHOW_NEW, enabled);
       dispose = trackNewPosts();
       await flush();
 
@@ -132,33 +148,35 @@ describe('trackNewPosts', () => {
     it.each(['?p=2', '?next=123'])('does not track posts on a paginated page (%s)', async (search) => {
       vi.stubGlobal('location', { pathname: '/', search });
       setupTableBody(['post-1']);
-      store[POST_IDS_KEY] = { 'old-1': -1 };
+      await store(POST_IDS_KEY, { 'old-1': -1 });
       dispose = trackNewPosts();
       await flush();
 
       expect(isMarked('post-1')).toBe(false);
-      expect(savedTimestamps()).toBeUndefined();
+      expect(await savedTimestamps()).toEqual({ 'old-1': -1 });
     });
 
     it('does nothing when the table body is missing', async () => {
-      store[POST_IDS_KEY] = { 'old-1': -1 };
+      await store(POST_IDS_KEY, { 'old-1': -1 });
       dispose = trackNewPosts();
       await flush();
 
-      expect(savedTimestamps()).toBeUndefined();
-      expect(() => emit(SETTINGS_KEYS.SHOW_NEW, false)).not.toThrow();
+      await emit(SETTINGS_KEYS.SHOW_NEW, false);
+
+      expect(await savedTimestamps()).toEqual({ 'old-1': -1 });
     });
 
     it('leaves posts unmarked when storage reads reject', async () => {
       // An invalidated extension context fails every read: both settings and the post ids.
-      for (let i = 0; i < 3; i++) mockGet.mockRejectedValueOnce(new Error('Extension context invalidated.'));
+      vi.spyOn(fakeBrowser.storage.sync, 'get').mockRejectedValue(new Error('Extension context invalidated.'));
       setupTableBody(['post-1']);
-      store[POST_IDS_KEY] = { 'old-1': -1 };
+      await store(POST_IDS_KEY, { 'old-1': -1 });
       dispose = trackNewPosts();
       await flush();
 
       expect(isMarked('post-1')).toBe(false);
-      expect(savedTimestamps()).toBeUndefined();
+      vi.restoreAllMocks();
+      expect(await savedTimestamps()).toEqual({ 'old-1': -1 });
     });
   });
 
@@ -183,7 +201,7 @@ describe('trackNewPosts', () => {
 
     it('leaves known posts alone while a new one fades', async () => {
       setupTableBody(['post-1', 'post-2']);
-      store[POST_IDS_KEY] = { 'post-2': -1 };
+      await store(POST_IDS_KEY, { 'post-2': -1 });
       dispose = trackNewPosts();
       await flush();
 
@@ -221,8 +239,18 @@ describe('trackNewPosts', () => {
     it('fades against the new cooldown', async () => {
       dispose = await startWithNewPost();
 
-      emit(SETTINGS_KEYS.COOLDOWN, COOLDOWN * 2);
+      await emit(SETTINGS_KEYS.COOLDOWN, COOLDOWN * 2);
       vi.advanceTimersByTime(COOLDOWN_MS);
+
+      expect(Number(fadeOf('post-1'))).toBeCloseTo(0.5, 1);
+    });
+
+    it('reads a JSON-string cooldown change: "15" as 15 seconds', async () => {
+      dispose = await startWithNewPost();
+
+      await fakeBrowser.storage.sync.set({ [SETTINGS_KEYS.COOLDOWN]: '15' });
+      await flush();
+      vi.advanceTimersByTime(7500);
 
       expect(Number(fadeOf('post-1'))).toBeCloseTo(0.5, 1);
     });
@@ -230,8 +258,8 @@ describe('trackNewPosts', () => {
     it('falls back to the default cooldown when the setting is removed', async () => {
       dispose = await startWithNewPost();
 
-      emit(SETTINGS_KEYS.COOLDOWN, COOLDOWN * 2);
-      emit(SETTINGS_KEYS.COOLDOWN, undefined);
+      await emit(SETTINGS_KEYS.COOLDOWN, COOLDOWN * 2);
+      await emit(SETTINGS_KEYS.COOLDOWN, undefined);
       vi.advanceTimersByTime(COOLDOWN_MS / 2);
 
       expect(Number(fadeOf('post-1'))).toBeCloseTo(0.5, 1);
@@ -242,7 +270,7 @@ describe('trackNewPosts', () => {
       vi.advanceTimersByTime(COOLDOWN_MS + 1000);
       expect(isMarked('post-1')).toBe(false);
 
-      emit(SETTINGS_KEYS.COOLDOWN, COOLDOWN * 2);
+      await emit(SETTINGS_KEYS.COOLDOWN, COOLDOWN * 2);
 
       expect(isMarked('post-1')).toBe(true);
     });
@@ -251,17 +279,17 @@ describe('trackNewPosts', () => {
       dispose = await startWithNewPost('post-1');
       const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
 
-      emit(SETTINGS_KEYS.COOLDOWN, 120);
+      await emit(SETTINGS_KEYS.COOLDOWN, 120);
 
       expect(setIntervalSpy).not.toHaveBeenCalled();
     });
 
     it('does not start a fade timer while show-new is off', async () => {
-      store[SETTINGS_KEYS.SHOW_NEW] = false;
+      await store(SETTINGS_KEYS.SHOW_NEW, false);
       dispose = await startWithNewPost();
       const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
 
-      emit(SETTINGS_KEYS.COOLDOWN, 300);
+      await emit(SETTINGS_KEYS.COOLDOWN, 300);
 
       expect(setIntervalSpy).not.toHaveBeenCalled();
     });
@@ -271,7 +299,7 @@ describe('trackNewPosts', () => {
     it('clears the marks and the class when turned off', async () => {
       dispose = await startWithNewPost();
 
-      emit(SETTINGS_KEYS.SHOW_NEW, false);
+      await emit(SETTINGS_KEYS.SHOW_NEW, false);
       vi.advanceTimersByTime(COOLDOWN_MS / 2);
 
       expect(isMarked('post-1')).toBe(false);
@@ -279,11 +307,18 @@ describe('trackNewPosts', () => {
       expect(document.querySelector(`.${CSS_CLASSES.SHOW_NEW}`)).toBeNull();
     });
 
-    it('falls back to showing marks when the setting is removed', async () => {
-      store[SETTINGS_KEYS.SHOW_NEW] = false;
+    it('reads a stored "false" as show-new off', async () => {
+      await fakeBrowser.storage.sync.set({ [SETTINGS_KEYS.SHOW_NEW]: 'false' });
       dispose = await startWithNewPost();
 
-      emit(SETTINGS_KEYS.SHOW_NEW, undefined);
+      expect(document.querySelector(`.${CSS_CLASSES.SHOW_NEW}`)).toBeNull();
+    });
+
+    it('falls back to showing marks when the setting is removed', async () => {
+      await store(SETTINGS_KEYS.SHOW_NEW, false);
+      dispose = await startWithNewPost();
+
+      await emit(SETTINGS_KEYS.SHOW_NEW, undefined);
 
       expect(isMarked('post-1')).toBe(true);
       expect(document.querySelector(`.${CSS_CLASSES.SHOW_NEW}`)).not.toBeNull();
@@ -292,8 +327,8 @@ describe('trackNewPosts', () => {
     it('re-marks and resumes fading when turned back on', async () => {
       dispose = await startWithNewPost();
 
-      emit(SETTINGS_KEYS.SHOW_NEW, false);
-      emit(SETTINGS_KEYS.SHOW_NEW, true);
+      await emit(SETTINGS_KEYS.SHOW_NEW, false);
+      await emit(SETTINGS_KEYS.SHOW_NEW, true);
       expect(isMarked('post-1')).toBe(true);
 
       vi.advanceTimersByTime(COOLDOWN_MS / 2);
@@ -302,28 +337,30 @@ describe('trackNewPosts', () => {
   });
 
   describe('post ids synced from another tab', () => {
-    it('re-applies marks without writing back', async () => {
+    it('re-applies marks from a JSON-string change without writing back', async () => {
       setupTableBody(['post-1', 'post-2']);
-      store[POST_IDS_KEY] = { 'post-1': -1, 'post-2': -1 };
+      await store(POST_IDS_KEY, { 'post-1': -1, 'post-2': -1 });
       dispose = trackNewPosts();
       await flush();
-      mockSet.mockClear();
+      const setSpy = vi.spyOn(fakeBrowser.storage.sync, 'set');
 
-      emit(POST_IDS_KEY, { 'post-1': Date.now(), 'post-2': -1 });
+      await fakeBrowser.storage.sync.set({ [POST_IDS_KEY]: `{"post-1":${Date.now()},"post-2":-1}` });
+      await flush();
 
       expect(isMarked('post-1')).toBe(true);
       expect(isMarked('post-2')).toBe(false);
-      expect(mockSet).not.toHaveBeenCalled();
+      // The one call is this test's own write above; a write-back from the tracker would make two.
+      expect(setSpy).toHaveBeenCalledOnce();
     });
 
     it('does not mark posts that the other tab no longer lists', async () => {
       setupTableBody(['post-1', 'post-2']);
-      store[POST_IDS_KEY] = { 'post-1': -1, 'post-2': -1 };
+      await store(POST_IDS_KEY, { 'post-1': -1, 'post-2': -1 });
       dispose = trackNewPosts();
       await flush();
 
       // The other tab loaded after post-2 fell off the list, so its stored map lacks post-2.
-      emit(POST_IDS_KEY, { 'post-1': -1, 'post-3': Date.now() });
+      await emit(POST_IDS_KEY, { 'post-1': -1, 'post-3': Date.now() });
 
       expect(isMarked('post-2')).toBe(false);
     });
@@ -331,7 +368,7 @@ describe('trackNewPosts', () => {
     it('fades marks that arrive while nothing else is fading', async () => {
       dispose = await startWithNewPost('post-1');
 
-      emit(POST_IDS_KEY, { 'post-1': Date.now() });
+      await emit(POST_IDS_KEY, { 'post-1': Date.now() });
       vi.advanceTimersByTime(COOLDOWN_MS / 2);
 
       expect(Number(fadeOf('post-1'))).toBeCloseTo(0.5, 1);
@@ -340,7 +377,7 @@ describe('trackNewPosts', () => {
     it('keeps its own marks when another tab clears the key', async () => {
       dispose = await startWithNewPost();
 
-      emit(POST_IDS_KEY, undefined);
+      await emit(POST_IDS_KEY, undefined);
 
       expect(isMarked('post-1')).toBe(true);
     });
@@ -348,7 +385,7 @@ describe('trackNewPosts', () => {
     it('accepts the legacy string[] format', async () => {
       dispose = await startWithNewPost('post-1');
 
-      emit(POST_IDS_KEY, ['post-1']);
+      await emit(POST_IDS_KEY, ['post-1']);
 
       expect(isMarked('post-1')).toBe(true);
     });
@@ -360,17 +397,21 @@ describe('trackNewPosts', () => {
       await flush();
 
       // Loading /news in another tab writes page 1's ids under the same pathname key.
-      emit(`${SETTINGS_KEYS.POST_IDS_PREFIX}/news`, { 'page1-post': -1 });
+      await emit(`${SETTINGS_KEYS.POST_IDS_PREFIX}/news`, { 'page1-post': -1 });
 
       expect(isMarked('page2-post')).toBe(false);
     });
 
     it('ignores changes that arrive before init has stored its own ids', async () => {
       setupTableBody(['post-1']);
-      store[POST_IDS_KEY] = { 'post-1': -1 };
+      await store(POST_IDS_KEY, { 'post-1': -1 });
+      // Another tab's change lands while init's own write is in flight.
+      const initWrite = fakeBrowser.storage.sync.set.bind(fakeBrowser.storage.sync);
+      vi.spyOn(fakeBrowser.storage.sync, 'set').mockImplementationOnce(async (items) => {
+        await store(POST_IDS_KEY, { 'post-1': Date.now() });
+        await initWrite(items);
+      });
       dispose = trackNewPosts();
-
-      emit(POST_IDS_KEY, { 'post-1': Date.now() });
       await flush();
 
       expect(isMarked('post-1')).toBe(false);
@@ -380,15 +421,16 @@ describe('trackNewPosts', () => {
   describe('dispose', () => {
     it('stops watching storage', async () => {
       const stop = await startWithNewPost();
+      expect(fakeBrowser.storage.sync.onChanged.hasListeners()).toBe(true);
+
       stop();
 
-      for (const [watchers] of mockWatch.mock.calls) expect(mockUnwatch).toHaveBeenCalledWith(watchers);
-      expect(mockUnwatch).toHaveBeenCalledTimes(mockWatch.mock.calls.length);
+      expect(fakeBrowser.storage.sync.onChanged.hasListeners()).toBe(false);
     });
 
     it('does not start a fade timer when disposed during init', async () => {
       setupTableBody(['post-1']);
-      store[POST_IDS_KEY] = { 'old-1': -1 };
+      await store(POST_IDS_KEY, { 'old-1': -1 });
       const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
 
       trackNewPosts()();
