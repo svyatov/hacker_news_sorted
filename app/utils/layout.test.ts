@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { fakeBrowser } from 'wxt/testing/fake-browser';
 
 import { clearBody } from '~app/__fixtures__/testHelpers';
+import { SETTINGS_KEYS } from '~app/constants';
 
-import { LAYOUT_TIMEOUT_MS, waitForPanelParent } from './layout';
+import { LAYOUT_TIMEOUT_MS, setLayoutStatus, waitForPanelParent } from './layout';
 
 // Minimal HN header so getControlPanelParentElement's CONTROL_PANEL_PARENT selector resolves.
 // The last header cell (.hns-target) is the element waitForPanelParent should hand back.
@@ -57,5 +59,16 @@ describe('waitForPanelParent', () => {
     await vi.advanceTimersByTimeAsync(LAYOUT_TIMEOUT_MS);
 
     await expect(promise).resolves.toBeNull();
+  });
+});
+
+describe('setLayoutStatus', () => {
+  const rawLayoutOk = async () =>
+    (await fakeBrowser.storage.sync.get(SETTINGS_KEYS.LAYOUT_OK))[SETTINGS_KEYS.LAYOUT_OK];
+
+  it.each([true, false])('stores %s as a raw boolean, not a JSON string', async (ok) => {
+    await setLayoutStatus(ok);
+
+    expect(await rawLayoutOk()).toBe(ok);
   });
 });

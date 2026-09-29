@@ -27,6 +27,10 @@ export const SETTINGS_KEYS = {
   MARK_USER_HIGHLIGHT: 'hns-mark-user-highlight',
 } as const;
 
+// The layout flag is a raw boolean read and written with WXT `storage` directly, bypassing the
+// JSON wrapper in settingsStorage (docs/adr/0001-keep-plasmo-json-encoding-on-wxt-storage.md).
+export const LAYOUT_OK_STORAGE_KEY = `sync:${SETTINGS_KEYS.LAYOUT_OK}` as const;
+
 export const SETTINGS_DEFAULTS = {
   [SETTINGS_KEYS.SHOW_NEW]: true as boolean,
   [SETTINGS_KEYS.LAST_ACTIVE_SORT]: 'points' as SortVariant,

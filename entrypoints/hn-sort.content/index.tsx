@@ -2,16 +2,12 @@ import { createIntegratedUi, defineContentScript } from '#imports';
 import { createRoot } from 'react-dom/client';
 
 import ControlPanel from '~app/components/ControlPanel';
-import { CONTROL_PANEL_ROOT_ID, SETTINGS_KEYS, SORT_PANEL_EXCLUDE_MATCHES } from '~app/constants';
-import { waitForPanelParent } from '~app/utils/layout';
+import { CONTROL_PANEL_ROOT_ID, SORT_PANEL_EXCLUDE_MATCHES } from '~app/constants';
+import { setLayoutStatus, waitForPanelParent } from '~app/utils/layout';
 import { trackNewPosts } from '~app/utils/newPosts';
 import { getTableBody } from '~app/utils/selectors';
 
 import './content.css';
-
-const setLayoutStatus = (ok: boolean) => {
-  chrome.storage.sync.set({ [SETTINGS_KEYS.LAYOUT_OK]: ok });
-};
 
 export default defineContentScript({
   matches: ['*://news.ycombinator.com/*'],
