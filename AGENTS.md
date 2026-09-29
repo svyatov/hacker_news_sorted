@@ -125,7 +125,7 @@ Use `~` prefix for imports from project root (e.g., `~app/components/ControlPane
 
 - **Biome**: `biome.json` (recommended ruleset; `noNonNullAssertion` and `noCommaOperator` off)
 - **Prettier**: `.prettierrc.mjs` with single quotes, trailing commas, 120 char width
-- **Git hooks**: `lefthook.yml`. pre-commit runs a betterleaks secret scan, `biome lint`, and Prettier (re-stages its fixes) on staged files; commit-msg enforces Conventional Commits; pre-push runs the CI checks in order: `bun run lint`, `bun run test:coverage`, `bun run build`
+- **Git hooks**: `lefthook.yml`. pre-commit refuses a commit on `main` (`LEFTHOOK_EXCLUDE=branch` skips it), and runs a betterleaks secret scan, `biome lint`, and Prettier (re-stages its fixes) on staged files; commit-msg enforces Conventional Commits; pre-push runs the CI checks in order: `bun run lint`, `bun run test:coverage`, `bun run build`
 - `bun install` installs the hooks (lefthook's postinstall). The secret scan needs `betterleaks` on PATH (`brew install betterleaks`) and reads `.gitleaks.toml` (default rules; `app/__fixtures__/*.html` allowlisted because HN snapshots carry anonymous `auth=` tokens)
 - `bun install` also runs `wxt prepare`, which generates `.wxt/` (the tsconfig base and `#imports` types). Rerun it if `.wxt/` is missing, or `tsc --noEmit` and the path aliases break
 - CI: `.github/workflows/main.yml` (push and PR to `main`) runs lint, `test:coverage` (uploaded to Codecov), and build. `.github/workflows/monitor.yml` runs daily at 09:00 UTC and on dispatch: it refetches both fixtures from live HN and runs `bun run test:integration`, so a failure means HN markup or timestamps changed. It never commits the refreshed fixtures
@@ -138,7 +138,7 @@ Use `~` prefix for imports from project root (e.g., `~app/components/ControlPane
 ## Testing
 
 - **Framework**: Vitest with JSDOM and React Testing Library
-- **Coverage**: `app/**` must stay at 100% statements, branches, functions, and lines (`coverage.thresholds` in `vitest.config.ts`); `bun run test:coverage` fails in CI below that. Cover a new branch with a test, or delete it if no input can reach it. `entrypoints/` and `scripts/` are outside the gate, which is why entrypoint logic lives in `app/utils`
+- **Coverage**: `app/**` must stay at 100% statements, branches, functions, and lines (`coverage.thresholds` in `vitest.config.ts`); `bun run test:coverage` fails in CI below that. Cover a new branch with a test, or delete it if no input can reach it. `entrypoints/`, `scripts/`, and `app/__fixtures__/` are outside the gate, which is why entrypoint logic lives in `app/utils`
 - **Config**: `vitest.config.ts` with path aliases and coverage settings; pins `process.env.TZ = 'Asia/Kolkata'` (non-UTC, no DST) so any local-time date parsing fails tests (guarded by a test in `app/utils/parsers.test.ts`)
 - **Setup**: `vitest.setup.ts` loads the jest-dom matchers only; React Testing Library registers its own cleanup in the files that import it
 - **Environment**: jsdom by default; a test file that touches no DOM starts with `// @vitest-environment node` to skip the jsdom setup cost
@@ -161,7 +161,7 @@ Tests are co-located with source files using the `.test.ts` / `.test.tsx` suffix
 - `app/content-css-breakpoints.test.ts` - Asserts `content.css` has a word↔letter and a letter↔dropdown `@media` block for every reachable `data-sort-count` (derived from `SORT_OPTIONS`); adding a toggleable sort fails here until the CSS gains the new count's blocks
 - `app/hn-selectors.test.ts` - Fails on any string literal in `app/`, `entrypoints/`, or `scripts/` (tests and `app/constants.ts` aside) that names HN markup (`#hnmain`, `.athing`, `.hnuser`, ...); add the selector to `HN_SELECTORS` and pass it in instead
 - `app/popup.test.tsx` - Popup (`entrypoints/popup/App.tsx`) component tests, with `@plasmohq/storage/hook` mocked
-- `app/__fixtures__/updateFixture.test.ts` - `pickTopCommentedItemId`, including a run against the real homepage fixture
+- `app/__fixtures__/updateFixture.test.ts` - `pickTopCommentedItemId`, including a run against the real homepage fixture, and a check that the updater's user agent sends the Chrome version in `CHROME_MAJOR` (a `CHROME_MAJOR` bump fails here until `updateFixture.ts` follows)
 - `app/utils/selectors.integration.test.ts` - List-page selectors run against `hn-homepage.html` (breaks if HN markup changes), plus the timestamp canary: every `.age` title must parse, and at least 3 "N hours ago" rows must agree with their title relative to the `<!-- hns-fetched-at: ... -->` stamp `updateFixture.ts` writes at the top of the fixture (a fixed count, not a share, because second-chance posts, whose text is younger than their title, can fill over half the front page; a local-time parsing bug makes zero hour rows agree)
 - `app/utils/comments.integration.test.ts` - Comment-page selectors run against `hn-item.html` (breaks if HN item markup changes); `bun run test:integration` runs both integration suites
 - `app/components/*.test.tsx` - Component tests
