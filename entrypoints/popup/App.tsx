@@ -103,7 +103,7 @@ const Popup = () => {
               aria-label="Highlight duration in seconds"
               min={COOLDOWN_BOUNDS.MIN}
               max={COOLDOWN_BOUNDS.MAX}
-              value={cooldown}
+              value={cooldown || ''}
               onChange={(e) => setCooldown(Number(e.target.value))}
               onBlur={(e) =>
                 setCooldown(

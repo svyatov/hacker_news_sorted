@@ -140,6 +140,15 @@ describe('Popup', () => {
     await waitFor(async () => expect(await stored(SETTINGS_KEYS.COOLDOWN)).toBe('45'));
   });
 
+  it('should show an empty input, not a leading 0, after the cooldown is cleared', async () => {
+    await mount();
+    const input = screen.getByLabelText('Highlight duration in seconds') as HTMLInputElement;
+
+    fireEvent.change(input, { target: { value: '' } });
+
+    expect(input.value).toBe('');
+  });
+
   it('should clamp the cooldown into bounds on blur', async () => {
     await mount();
     const input = screen.getByLabelText('Highlight duration in seconds') as HTMLInputElement;
