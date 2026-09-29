@@ -161,8 +161,9 @@ describe('trackNewPosts', () => {
       dispose = trackNewPosts();
       await flush();
 
+      await emit(SETTINGS_KEYS.SHOW_NEW, false);
+
       expect(await savedTimestamps()).toEqual({ 'old-1': -1 });
-      await expect(emit(SETTINGS_KEYS.SHOW_NEW, false)).resolves.not.toThrow();
     });
 
     it('leaves posts unmarked when storage reads reject', async () => {
@@ -348,6 +349,7 @@ describe('trackNewPosts', () => {
 
       expect(isMarked('post-1')).toBe(true);
       expect(isMarked('post-2')).toBe(false);
+      // The one call is this test's own write above; a write-back from the tracker would make two.
       expect(setSpy).toHaveBeenCalledOnce();
     });
 
