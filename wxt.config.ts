@@ -17,7 +17,7 @@ export default defineConfig({
     description:
       'Instantly sort Hacker News by points, time, comments, velocity, or heat, mark new posts, and highlight comment authors.',
     host_permissions: ['https://news.ycombinator.com/*'],
-    // Gates all of chrome.storage — required by every entrypoint's @plasmohq/storage usage.
+    // Gates all of chrome.storage: required by every entrypoint's WXT `storage` usage.
     permissions: ['storage'],
   },
   hooks: {

@@ -134,7 +134,7 @@ Use `~` prefix for imports from project root (e.g., `~app/components/ControlPane
 ## Code Style
 
 - Prettier configured with single quotes, trailing commas, 120 char width
-- Import order: builtins, third-party (incl. WXT's `#imports`), @plasmohq, ~aliases, relative
+- Import order: builtins, third-party (incl. WXT's `#imports`), ~aliases, relative
 
 ## Testing
 
