@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
 
 import Popup from '~/entrypoints/popup/App';
@@ -16,8 +16,6 @@ const mount = async () => {
 };
 
 describe('Popup', () => {
-  afterEach(() => vi.restoreAllMocks());
-
   it('should not show warning when layout is ok', async () => {
     await store({ [SETTINGS_KEYS.LAYOUT_OK]: true });
     await mount();

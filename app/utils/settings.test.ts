@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
 
 import { SETTINGS_DEFAULTS, SETTINGS_KEYS } from '~app/constants';
@@ -14,8 +14,6 @@ const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 const seed = (items: Record<string, unknown>) => fakeBrowser.storage.sync.set(items);
 
 describe('watchSettings', () => {
-  afterEach(() => vi.restoreAllMocks());
-
   it('reads Plasmo JSON strings: "false" as false and "15" as 15', async () => {
     await seed({ [SHOW_NEW]: 'false', [COOLDOWN]: '15' });
     const onChange = vi.fn();

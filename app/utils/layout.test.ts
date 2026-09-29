@@ -16,7 +16,6 @@ const buildHeader = (): HTMLElement => {
 
 afterEach(() => {
   vi.useRealTimers();
-  vi.restoreAllMocks();
   clearBody();
 });
 
