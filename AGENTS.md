@@ -133,7 +133,6 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 - `ParsedRow`: `originalIndex` (HN's order, used by the `default` sort), DOM rows (`title`, `info`, `spacer`), and parsed `points`, `time`, `comments`
 - `SortOption`: element type of `SORT_OPTIONS` (`sortBy`, `text`, `shortcut`, `title`, optional `enableKey` limited to `*-enabled` settings keys)
 - `PostTimestamps`: `Record<string, number>` — post ID → discovery timestamp (`Date.now()`), or `-1` for known/never-new posts (exported from `app/utils/newPosts.ts`)
-- `SettingValues<K>` (`app/utils/settings.ts`): the snapshot `watchSettings` passes, one entry per key, typed from `SETTINGS_DEFAULTS`
 
 ## Path Aliases
 
