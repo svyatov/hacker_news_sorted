@@ -11,7 +11,7 @@ bun dev            # Start WXT dev server (dev build at build/chrome-mv3-dev; lo
 bun run build      # Production build (wxt build → build/chrome-mv3; `outDir` in wxt.config.ts)
 bun run package    # Package extension for distribution (wxt zip)
 bun run release    # Build and package
-bun run test       # Run tests (uses Vitest)
+bun run test       # Run tests (uses Vitest); pass a path to run one file: bun run test app/popup.test.tsx
 bun run test:integration # Run list-page and comment-page selector integration tests against the two HN fixtures
 bun run test:watch # Run tests in watch mode
 bun run test:coverage # Run tests with coverage report
@@ -140,7 +140,7 @@ Use `~` prefix for imports from project root (e.g., `~app/components/ControlPane
 
 - **Framework**: Vitest with JSDOM and React Testing Library
 - **Coverage**: `app/**` must stay at 100% statements, branches, functions, and lines (`coverage.thresholds` in `vitest.config.ts`); `bun run test:coverage` fails in CI below that. Cover a new branch with a test, or delete it if no input can reach it. `entrypoints/`, `scripts/`, and `app/__fixtures__/` are outside the gate, which is why entrypoint logic lives in `app/utils`
-- **Config**: `vitest.config.ts` with path aliases and coverage settings; pins `process.env.TZ = 'Asia/Kolkata'` (non-UTC, no DST) so any local-time date parsing fails tests (guarded by a test in `app/utils/parsers.test.ts`)
+- **Config**: `vitest.config.ts` with path aliases and coverage settings; `restoreMocks: true` restores every `vi.spyOn` before each test, so a test file needs no `afterEach` restore; pins `process.env.TZ = 'Asia/Kolkata'` (non-UTC, no DST) so any local-time date parsing fails tests (guarded by a test in `app/utils/parsers.test.ts`)
 - **Setup**: `vitest.config.ts` adds WXT's `WxtVitest()` plugin, which resolves `#imports` and points WXT's `browser` at `fakeBrowser` (`wxt/testing/fake-browser`); `vitest.setup.ts` loads the jest-dom matchers and resets `fakeBrowser` before each test. Storage tests seed `fakeBrowser.storage.sync` with Plasmo-format values (JSON strings) and assert the raw values written back. React Testing Library registers its own cleanup in the files that import it
 - **Environment**: jsdom by default; a test file that touches no DOM starts with `// @vitest-environment node` to skip the jsdom setup cost
 

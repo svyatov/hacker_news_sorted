@@ -55,7 +55,6 @@ describe('trackNewPosts', () => {
     dispose?.();
     dispose = undefined;
     vi.useRealTimers();
-    vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
 
