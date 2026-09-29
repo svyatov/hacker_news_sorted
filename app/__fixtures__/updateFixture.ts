@@ -23,8 +23,9 @@ export function pickTopCommentedItemId(homepageHtml: string): string {
 }
 
 // HN 429s blank/bot user agents and concurrent bursts, so send a browser UA and back off on 429.
+// Keep the Chrome version in step with CHROME_MAJOR in scripts/screenshots/constants.ts (importing it would add an app-to-scripts import).
 const USER_AGENT =
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36';
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36';
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -43,14 +44,8 @@ async function fetchWithRetry(url: string, retries = 3): Promise<Response> {
   }
 }
 
-async function fetchAndSave({ url, file }: { url: string; file: string }): Promise<void> {
-  console.log(`Fetching ${url}...`);
-
-  const response = await fetchWithRetry(url);
-  const html = await response.text();
-  const path = join(__dirname, file);
-  writeFileSync(path, html, 'utf-8');
-
+function save(file: string, html: string): void {
+  writeFileSync(join(__dirname, file), html, 'utf-8');
   console.log(`Saved ${file} (${(html.length / 1024).toFixed(2)} KB)`);
 }
 
@@ -58,14 +53,13 @@ async function main(): Promise<void> {
   console.log(`Fetching ${HOMEPAGE_URL}...`);
   const homepageHtml = await (await fetchWithRetry(HOMEPAGE_URL)).text();
   // Stamp the fetch instant so the timestamp canary can compare age titles against HN's own age texts.
-  const stamped = `<!-- hns-fetched-at: ${new Date().toISOString()} -->\n${homepageHtml}`;
-  writeFileSync(join(__dirname, 'hn-homepage.html'), stamped, 'utf-8');
-  console.log(`Saved hn-homepage.html (${(homepageHtml.length / 1024).toFixed(2)} KB)`);
+  save('hn-homepage.html', `<!-- hns-fetched-at: ${new Date().toISOString()} -->\n${homepageHtml}`);
 
   // Derive the item target from the homepage we just fetched, so it can never rot.
-  const itemId = pickTopCommentedItemId(homepageHtml);
+  const itemUrl = `${HOMEPAGE_URL}/item?id=${pickTopCommentedItemId(homepageHtml)}`;
   await sleep(2000); // spaced so HN doesn't rate-limit the burst
-  await fetchAndSave({ url: `${HOMEPAGE_URL}/item?id=${itemId}`, file: 'hn-item.html' });
+  console.log(`Fetching ${itemUrl}...`);
+  save('hn-item.html', await (await fetchWithRetry(itemUrl)).text());
 }
 
 // Skip network when imported (self-check/tests); only run as a script.
