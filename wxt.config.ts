@@ -7,6 +7,7 @@ export default defineConfig({
   alias: {
     '~app': resolve(import.meta.dirname, 'app'),
   },
+  outDir: 'build',
   // Package `name` is the typo'd `hacked_news_sorted`; keep the zip filename sane.
   zip: { name: 'hacker-news-sorted' },
   manifest: {

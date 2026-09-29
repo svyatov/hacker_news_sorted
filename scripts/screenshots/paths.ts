@@ -2,7 +2,7 @@ import { readdirSync } from 'node:fs';
 import path from 'node:path';
 
 const ROOT_DIR = path.resolve(import.meta.dirname, '../..');
-const BUILD_DIR = path.join(ROOT_DIR, '.output/chrome-mv3');
+const BUILD_DIR = path.join(ROOT_DIR, 'build/chrome-mv3');
 // WXT emits content scripts under content-scripts/<entrypoint>.{js,css} (verified from a real build, KTD-8).
 const CONTENT_SCRIPTS_DIR = path.join(BUILD_DIR, 'content-scripts');
 
@@ -15,7 +15,7 @@ const cssFile = csFiles.find((f) => f.startsWith('hn-sort.') && f.endsWith('.css
 const commentsJsFile = csFiles.find((f) => f.startsWith('comments.') && f.endsWith('.js'));
 const commentsCssFile = csFiles.find((f) => f.startsWith('comments.') && f.endsWith('.css'));
 if (!cssFile || !jsFile || !commentsCssFile || !commentsJsFile) {
-  throw new Error('Built content-script assets not found in .output/chrome-mv3. Run `bun run build` first.');
+  throw new Error('Built content-script assets not found in build/chrome-mv3. Run `bun run build` first.');
 }
 
 export const CSS_PATH = path.join(CONTENT_SCRIPTS_DIR, cssFile);

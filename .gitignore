@@ -27,8 +27,7 @@ out/
 build/
 dist/
 
-# wxt
-.output
+# wxt (outDir is build/, ignored above)
 .wxt
 
 # typescript
