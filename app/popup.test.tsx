@@ -149,6 +149,16 @@ describe('Popup', () => {
     expect(input.value).toBe('');
   });
 
+  it('should keep the stored cooldown while the input is cleared', async () => {
+    await store({ [SETTINGS_KEYS.COOLDOWN]: 300 });
+    await mount();
+
+    fireEvent.change(screen.getByLabelText('Highlight duration in seconds'), { target: { value: '' } });
+    await flush();
+
+    expect(await stored(SETTINGS_KEYS.COOLDOWN)).toBe('300');
+  });
+
   it('should clamp the cooldown into bounds on blur', async () => {
     await mount();
     const input = screen.getByLabelText('Highlight duration in seconds') as HTMLInputElement;

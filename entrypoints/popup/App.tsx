@@ -52,6 +52,8 @@ const Toggle = ({ name, label, ariaLabel = label, hint, checked, onChange }: Tog
 const Popup = () => {
   const [showNew, setShowNew] = useSettingsStorage(SETTINGS_KEYS.SHOW_NEW);
   const [cooldown, setCooldown] = useSettingsStorage(SETTINGS_KEYS.COOLDOWN);
+  // What the user is typing, while typing: an empty input is not a cooldown, so it is never stored.
+  const [cooldownDraft, setCooldownDraft] = useState<string | null>(null);
   const [trueTimeAgo, setTrueTimeAgo] = useSettingsStorage(SETTINGS_KEYS.TRUE_TIME_AGO);
   const [velocityEnabled, setVelocityEnabled] = useSettingsStorage(SETTINGS_KEYS.VELOCITY_ENABLED);
   const [heatEnabled, setHeatEnabled] = useSettingsStorage(SETTINGS_KEYS.HEAT_ENABLED);
@@ -103,16 +105,20 @@ const Popup = () => {
               aria-label="Highlight duration in seconds"
               min={COOLDOWN_BOUNDS.MIN}
               max={COOLDOWN_BOUNDS.MAX}
-              value={cooldown || ''}
-              onChange={(e) => setCooldown(Number(e.target.value))}
-              onBlur={(e) =>
+              value={cooldownDraft ?? cooldown}
+              onChange={(e) => {
+                setCooldownDraft(e.target.value);
+                if (e.target.value !== '') setCooldown(Number(e.target.value));
+              }}
+              onBlur={(e) => {
+                setCooldownDraft(null);
                 setCooldown(
                   Math.max(
                     COOLDOWN_BOUNDS.MIN,
                     Math.min(COOLDOWN_BOUNDS.MAX, Number(e.target.value) || SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN]),
                   ),
-                )
-              }
+                );
+              }}
               className="hns-number-input"
             />
           </div>
