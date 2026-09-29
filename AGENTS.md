@@ -159,6 +159,7 @@ Tests are co-located with source files using the `.test.ts` / `.test.tsx` suffix
 - `app/utils/*.test.ts` - Unit tests for utility functions
 - `app/constants.test.ts` - `SORT_PANEL_EXCLUDE_MATCHES` coverage
 - `app/content-css-breakpoints.test.ts` - Asserts `content.css` has a word↔letter and a letter↔dropdown `@media` block for every reachable `data-sort-count` (derived from `SORT_OPTIONS`); adding a toggleable sort fails here until the CSS gains the new count's blocks
+- `app/hn-selectors.test.ts` - Fails on any string literal in `app/`, `entrypoints/`, or `scripts/` (tests and `app/constants.ts` aside) that names HN markup (`#hnmain`, `.athing`, `.hnuser`, ...); add the selector to `HN_SELECTORS` and pass it in instead
 - `app/popup.test.tsx` - Popup (`entrypoints/popup/App.tsx`) component tests, with `@plasmohq/storage/hook` mocked
 - `app/__fixtures__/updateFixture.test.ts` - `pickTopCommentedItemId`, including a run against the real homepage fixture
 - `app/utils/selectors.integration.test.ts` - List-page selectors run against `hn-homepage.html` (breaks if HN markup changes), plus the timestamp canary: every `.age` title must parse, and at least 3 "N hours ago" rows must agree with their title relative to the `<!-- hns-fetched-at: ... -->` stamp `updateFixture.ts` writes at the top of the fixture (a fixed count, not a share, because second-chance posts, whose text is younger than their title, can fill over half the front page; a local-time parsing bug makes zero hour rows agree)

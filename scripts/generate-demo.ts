@@ -55,10 +55,10 @@ async function injectExtension(page: Page): Promise<void> {
 
 // getBoundingClientRect() with CSS zoom already returns physical pixel coordinates.
 async function getHnmainX(page: Page): Promise<number | null> {
-  return page.evaluate(() => {
-    const el = document.querySelector('#hnmain');
+  return page.evaluate((mainSelector) => {
+    const el = document.querySelector(mainSelector);
     return el ? Math.floor(el.getBoundingClientRect().x) : null;
-  });
+  }, HN_SELECTORS.MAIN);
 }
 
 // Enlarge content below the header (post list / comment tree) without touching the sort menu, which
@@ -165,12 +165,14 @@ async function recordCommentSegment(page: Page, cropX: number, recordingStart: n
   await gotoCached(page, `https://news.ycombinator.com/item?id=${COMMENT_THREAD_ID}`);
   await applyZoom(page);
   await injectCommentsBundle(page);
-  await enlargeContent(page, ['table.fatitem', 'table.comment-tree']);
+  await enlargeContent(page, [HN_SELECTORS.ITEM_TABLE, HN_SELECTORS.COMMENT_TREE]);
 
   const itemX = await getHnmainX(page);
-  if (itemX === null) throw new Error('#hnmain not found on item page');
+  if (itemX === null) throw new Error(`${HN_SELECTORS.MAIN} not found on item page`);
   if (Math.abs(itemX - cropX) > 40) {
-    throw new Error(`Item-page #hnmain x=${itemX} diverges from homepage crop x=${cropX}; crop cannot be reused`);
+    throw new Error(
+      `Item-page ${HN_SELECTORS.MAIN} x=${itemX} diverges from homepage crop x=${cropX}; crop cannot be reused`,
+    );
   }
 
   // Scroll the marked user's comment to the top so it and the OP comment below it fall in the crop band.
@@ -207,7 +209,7 @@ async function recordCommentSegment(page: Page, cropX: number, recordingStart: n
 
 async function getContentBounds(page: Page): Promise<{ x: number; y: number; w: number; h: number }> {
   const x = await getHnmainX(page);
-  if (x === null) throw new Error('#hnmain not found for crop measurement');
+  if (x === null) throw new Error(`${HN_SELECTORS.MAIN} not found for crop measurement`);
   const { w, h } = CROP;
   if (x + w > VIEWPORT.width || h > VIEWPORT.height) {
     throw new Error(`Crop ${w}x${h} at x=${x} exceeds viewport ${VIEWPORT.width}x${VIEWPORT.height}`);

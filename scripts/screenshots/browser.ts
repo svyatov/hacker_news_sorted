@@ -41,9 +41,9 @@ export async function injectExtension(page: Page): Promise<void> {
   //    and thus the sort-menu tier and the arrow's target button — untouched. The pre-zoom width is
   //    capped to VIEWPORT/zoom so the scaled table lands at exactly 1280px (no horizontal overflow).
   await page.evaluate(
-    ({ listTableSelector, listZoom, viewportWidth }) => {
+    ({ mainSelector, listTableSelector, listZoom, viewportWidth }) => {
       document.body.style.margin = '0';
-      const main = document.querySelector<HTMLElement>('#hnmain');
+      const main = document.querySelector<HTMLElement>(mainSelector);
       if (main) main.style.width = '100%';
       const list = document.querySelector<HTMLElement>(listTableSelector);
       if (list) {
@@ -51,7 +51,12 @@ export async function injectExtension(page: Page): Promise<void> {
         list.style.zoom = String(listZoom);
       }
     },
-    { listTableSelector: HN_SELECTORS.LIST_TABLE, listZoom: 1.3, viewportWidth: SCREENSHOT_VIEWPORT.width },
+    {
+      mainSelector: HN_SELECTORS.MAIN,
+      listTableSelector: HN_SELECTORS.LIST_TABLE,
+      listZoom: 1.3,
+      viewportWidth: SCREENSHOT_VIEWPORT.width,
+    },
   );
 }
 
@@ -117,11 +122,11 @@ async function captureCommentVariant(page: Page, variant: VariantConfig): Promis
 
   // Match the homepage shots: fill the frame width, drop the body margin (no content zoom here —
   // the thread text is already legible and enlarging a nested comment tree risks clipping).
-  await page.evaluate(() => {
+  await page.evaluate((mainSelector) => {
     document.body.style.margin = '0';
-    const main = document.querySelector<HTMLElement>('#hnmain');
+    const main = document.querySelector<HTMLElement>(mainSelector);
     if (main) main.style.width = '100%';
-  });
+  }, HN_SELECTORS.MAIN);
 
   await injectOverlayCard(page, variant.title, variant.subtitle, variant.titleNote);
 
