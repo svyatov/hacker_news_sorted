@@ -1,3 +1,5 @@
+import { storage } from '#imports';
+
 import { SETTINGS_KEYS } from '~app/constants';
 
 // Badge logic lives here (framework-agnostic, unit-tested) while entrypoints/background.ts is a thin
@@ -10,15 +12,16 @@ function updateBadge(ok: boolean): void {
   chrome.action.setBadgeTextColor({ color: '#FFFFFF' });
 }
 
+// The flag is a raw boolean (see setLayoutStatus), so it is read straight from WXT storage, not
+// through the JSON wrapper in settingsStorage.
+const LAYOUT_OK_KEY = `sync:${SETTINGS_KEYS.LAYOUT_OK}` as const;
+
 export function initBadge(): void {
   // Restore badge state on service worker restart.
-  chrome.storage.sync.get(SETTINGS_KEYS.LAYOUT_OK, (result) => {
-    if (result[SETTINGS_KEYS.LAYOUT_OK] === false) updateBadge(false);
+  storage.getItem(LAYOUT_OK_KEY).then((ok) => {
+    if (ok === false) updateBadge(false);
   });
 
   // React to layout status changes.
-  chrome.storage.sync.onChanged.addListener((changes) => {
-    const change = changes[SETTINGS_KEYS.LAYOUT_OK];
-    if (change) updateBadge(change.newValue !== false);
-  });
+  storage.watch(LAYOUT_OK_KEY, (ok) => updateBadge(ok !== false));
 }

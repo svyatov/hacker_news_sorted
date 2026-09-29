@@ -1,6 +1,13 @@
+import { storage } from '#imports';
+
+import { SETTINGS_KEYS } from '~app/constants';
 import { getControlPanelParentElement } from '~app/utils/selectors';
 
 export const LAYOUT_TIMEOUT_MS = 3000;
+
+// The layout-health flag stays a raw boolean, bypassing the JSON wrapper in settingsStorage: an
+// old version on another synced device reads it with `=== false` (docs/adr/0001-...).
+export const setLayoutStatus = (ok: boolean): Promise<void> => storage.setItem(`sync:${SETTINGS_KEYS.LAYOUT_OK}`, ok);
 
 // Resolve HN's header cell (the panel parent), waiting via MutationObserver if it isn't in the DOM
 // yet; resolves null if it never appears within the timeout. Extracted from the entrypoint shell so
