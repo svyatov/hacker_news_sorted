@@ -36,8 +36,8 @@ export async function injectExtension(page: Page): Promise<void> {
   await loadWithExtension(page);
 
   // Fill the frame, then make the list legible in a thumbnail: enlarge ONLY the post-list table
-  // (bigger font, fewer rows) via `zoom`, leaving the header — and thus the sort-menu tier and the
-  // arrow's target button — untouched. The pre-zoom width is capped to VIEWPORT/zoom so the scaled
+  // (bigger font, fewer rows) via `zoom`, leaving the header untouched, so the sort-menu tier and the
+  // arrow's target button stay as they are. The pre-zoom width is capped to VIEWPORT/zoom so the scaled
   // table lands at exactly 1280px (no horizontal overflow).
   await fillFrame(page);
   await page.evaluate(
