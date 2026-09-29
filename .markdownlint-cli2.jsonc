@@ -1,0 +1,6 @@
+{
+  "config": {
+    // CHANGELOG.md repeats Added/Changed/Fixed under every release; flag a repeat only within one section.
+    "MD024": { "siblings_only": true },
+  },
+}
