@@ -116,10 +116,13 @@ export const SORT_OPTIONS: SortOption[] = [
 ];
 
 // HN DOM selectors and classes
+const LIST_TABLE = '#hnmain #bigbox > td > table';
+
 export const HN_SELECTORS = {
   // Page structure
   CONTROL_PANEL_PARENT: '#hnmain tr:has(> td > .pagetop > .hnname) > td:last-child',
-  TABLE_BODY: '#hnmain #bigbox > td > table > tbody',
+  LIST_TABLE,
+  TABLE_BODY: `${LIST_TABLE} > tbody`,
 
   // One row per post (relative to table body); HN follows each with its info row, then a spacer row
   // (comment lists such as favorites?comments=t also use athing rows, but not the submission class)

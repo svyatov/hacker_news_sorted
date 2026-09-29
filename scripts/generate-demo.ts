@@ -50,7 +50,7 @@ async function applyZoom(page: Page): Promise<void> {
 async function injectExtension(page: Page): Promise<void> {
   await loadWithExtension(page);
   await applyZoom(page);
-  await enlargeContent(page, ['#hnmain #bigbox > td > table']);
+  await enlargeContent(page, [HN_SELECTORS.LIST_TABLE]);
 }
 
 // getBoundingClientRect() with CSS zoom already returns physical pixel coordinates.

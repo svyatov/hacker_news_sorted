@@ -41,17 +41,17 @@ export async function injectExtension(page: Page): Promise<void> {
   //    and thus the sort-menu tier and the arrow's target button — untouched. The pre-zoom width is
   //    capped to VIEWPORT/zoom so the scaled table lands at exactly 1280px (no horizontal overflow).
   await page.evaluate(
-    ({ listZoom, viewportWidth }) => {
+    ({ listTableSelector, listZoom, viewportWidth }) => {
       document.body.style.margin = '0';
       const main = document.querySelector<HTMLElement>('#hnmain');
       if (main) main.style.width = '100%';
-      const list = document.querySelector<HTMLElement>('#hnmain #bigbox > td > table');
+      const list = document.querySelector<HTMLElement>(listTableSelector);
       if (list) {
         list.style.width = `${Math.floor(viewportWidth / listZoom)}px`;
         list.style.zoom = String(listZoom);
       }
     },
-    { listZoom: 1.3, viewportWidth: SCREENSHOT_VIEWPORT.width },
+    { listTableSelector: HN_SELECTORS.LIST_TABLE, listZoom: 1.3, viewportWidth: SCREENSHOT_VIEWPORT.width },
   );
 }
 
@@ -72,9 +72,9 @@ export async function showNewPostIndicators(page: Page): Promise<void> {
     },
     {
       tableBodySelector: HN_SELECTORS.TABLE_BODY,
+      postRowsSelector: HN_SELECTORS.POST_ROWS,
       showNewClass: CSS_CLASSES.SHOW_NEW,
       newPostClass: CSS_CLASSES.NEW_POST,
-      postRowsSelector: HN_SELECTORS.POST_ROWS,
     },
   );
 }
