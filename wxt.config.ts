@@ -20,6 +20,17 @@ export default defineConfig({
     // Gates all of chrome.storage — required by every entrypoint's @plasmohq/storage usage.
     permissions: ['storage'],
   },
+  hooks: {
+    // `bun dev` builds use the color-swapped icons in public-dev/ so they are easy to tell from the store version.
+    'build:publicAssets': (wxt, files) => {
+      if (wxt.config.mode !== 'development') return;
+      for (const file of files) {
+        if ('absoluteSrc' in file && file.relativeDest.startsWith('icon/')) {
+          file.absoluteSrc = resolve(import.meta.dirname, 'public-dev', file.relativeDest);
+        }
+      }
+    },
+  },
   // Reuse the already-installed React plugin rather than adding @wxt-dev/module-react.
   vite: () => ({
     plugins: [react()],
