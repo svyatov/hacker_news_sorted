@@ -54,6 +54,10 @@ const Popup = () => {
   const [cooldown, setCooldown] = useSettingsStorage(SETTINGS_KEYS.COOLDOWN);
   // What the user is typing, while typing: an empty input is not a cooldown, so it is never stored.
   const [cooldownDraft, setCooldownDraft] = useState<string | null>(null);
+  // The input can go away without a blur (a synced device turns highlighting off), so drop the draft with it.
+  useEffect(() => {
+    if (!showNew) setCooldownDraft(null);
+  }, [showNew]);
   const [trueTimeAgo, setTrueTimeAgo] = useSettingsStorage(SETTINGS_KEYS.TRUE_TIME_AGO);
   const [velocityEnabled, setVelocityEnabled] = useSettingsStorage(SETTINGS_KEYS.VELOCITY_ENABLED);
   const [heatEnabled, setHeatEnabled] = useSettingsStorage(SETTINGS_KEYS.HEAT_ENABLED);

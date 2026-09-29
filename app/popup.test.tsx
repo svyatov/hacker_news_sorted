@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
 
 import Popup from '~/entrypoints/popup/App';
-import { COOLDOWN_BOUNDS, SETTINGS_KEYS } from '~app/constants';
+import { COOLDOWN_BOUNDS, SETTINGS_DEFAULTS, SETTINGS_KEYS } from '~app/constants';
 
 const flush = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)));
 // Values as Plasmo wrote them: every value a JSON string.
@@ -157,6 +157,32 @@ describe('Popup', () => {
     await flush();
 
     expect(await stored(SETTINGS_KEYS.COOLDOWN)).toBe('300');
+  });
+
+  it('should reset an empty cooldown input to the default on blur', async () => {
+    await store({ [SETTINGS_KEYS.COOLDOWN]: 300 });
+    await mount();
+    const input = screen.getByLabelText('Highlight duration in seconds') as HTMLInputElement;
+
+    fireEvent.change(input, { target: { value: '' } });
+    fireEvent.blur(input);
+    await flush();
+
+    expect(input.value).toBe(String(SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN]));
+    expect(await stored(SETTINGS_KEYS.COOLDOWN)).toBe(String(SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN]));
+  });
+
+  it('should drop a half-typed cooldown when the input goes away without a blur', async () => {
+    await store({ [SETTINGS_KEYS.COOLDOWN]: 300 });
+    await mount();
+    fireEvent.change(screen.getByLabelText('Highlight duration in seconds'), { target: { value: '' } });
+
+    await store({ [SETTINGS_KEYS.SHOW_NEW]: false });
+    await flush();
+    await store({ [SETTINGS_KEYS.SHOW_NEW]: true });
+    await flush();
+
+    expect((screen.getByLabelText('Highlight duration in seconds') as HTMLInputElement).value).toBe('300');
   });
 
   it('should clamp the cooldown into bounds on blur', async () => {
