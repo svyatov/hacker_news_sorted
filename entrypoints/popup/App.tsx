@@ -49,15 +49,48 @@ const Toggle = ({ name, label, ariaLabel = label, hint, checked, onChange }: Tog
   </div>
 );
 
+type CooldownInputProps = { cooldown: number; setCooldown: (cooldown: number) => void };
+
+const CooldownInput = ({ cooldown, setCooldown }: CooldownInputProps) => {
+  // What the user is typing, while typing: an empty input is not a cooldown, so it is never stored.
+  // The draft lives here so it goes away with the input, even without a blur.
+  const [draft, setDraft] = useState<string | null>(null);
+
+  return (
+    <div className="hns-setting hns-setting-child">
+      <div className="hns-setting-label">
+        <span>Highlight duration in seconds</span>
+        <span className="hns-hint">How long the indicator stays visible</span>
+      </div>
+      <input
+        type="number"
+        name="cooldown"
+        aria-label="Highlight duration in seconds"
+        min={COOLDOWN_BOUNDS.MIN}
+        max={COOLDOWN_BOUNDS.MAX}
+        value={draft ?? cooldown}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          if (e.target.value !== '') setCooldown(Number(e.target.value));
+        }}
+        onBlur={(e) => {
+          setDraft(null);
+          setCooldown(
+            Math.max(
+              COOLDOWN_BOUNDS.MIN,
+              Math.min(COOLDOWN_BOUNDS.MAX, Number(e.target.value) || SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN]),
+            ),
+          );
+        }}
+        className="hns-number-input"
+      />
+    </div>
+  );
+};
+
 const Popup = () => {
   const [showNew, setShowNew] = useSettingsStorage(SETTINGS_KEYS.SHOW_NEW);
   const [cooldown, setCooldown] = useSettingsStorage(SETTINGS_KEYS.COOLDOWN);
-  // What the user is typing, while typing: an empty input is not a cooldown, so it is never stored.
-  const [cooldownDraft, setCooldownDraft] = useState<string | null>(null);
-  // The input can go away without a blur (a synced device turns highlighting off), so drop the draft with it.
-  useEffect(() => {
-    if (!showNew) setCooldownDraft(null);
-  }, [showNew]);
   const [trueTimeAgo, setTrueTimeAgo] = useSettingsStorage(SETTINGS_KEYS.TRUE_TIME_AGO);
   const [velocityEnabled, setVelocityEnabled] = useSettingsStorage(SETTINGS_KEYS.VELOCITY_ENABLED);
   const [heatEnabled, setHeatEnabled] = useSettingsStorage(SETTINGS_KEYS.HEAT_ENABLED);
@@ -97,36 +130,7 @@ const Popup = () => {
           onChange={setShowNew}
         />
 
-        {showNew && (
-          <div className="hns-setting hns-setting-child">
-            <div className="hns-setting-label">
-              <span>Highlight duration in seconds</span>
-              <span className="hns-hint">How long the indicator stays visible</span>
-            </div>
-            <input
-              type="number"
-              name="cooldown"
-              aria-label="Highlight duration in seconds"
-              min={COOLDOWN_BOUNDS.MIN}
-              max={COOLDOWN_BOUNDS.MAX}
-              value={cooldownDraft ?? cooldown}
-              onChange={(e) => {
-                setCooldownDraft(e.target.value);
-                if (e.target.value !== '') setCooldown(Number(e.target.value));
-              }}
-              onBlur={(e) => {
-                setCooldownDraft(null);
-                setCooldown(
-                  Math.max(
-                    COOLDOWN_BOUNDS.MIN,
-                    Math.min(COOLDOWN_BOUNDS.MAX, Number(e.target.value) || SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN]),
-                  ),
-                );
-              }}
-              className="hns-number-input"
-            />
-          </div>
-        )}
+        {showNew && <CooldownInput cooldown={cooldown} setCooldown={setCooldown} />}
       </fieldset>
 
       <fieldset className="hns-group">
