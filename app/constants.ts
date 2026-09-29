@@ -87,10 +87,6 @@ export const CSS_CLASSES = {
   MARKED_COMMENT: 'hns-marked-comment',
 } as const;
 
-export const CSS_SELECTORS = {
-  HIGHLIGHT: `.${CSS_CLASSES.HIGHLIGHT}`,
-} as const;
-
 // Sort options configuration. Order matters — the menu and dropdown render in this order.
 // Two couplings to keep in sync when editing this list:
 //   1. content.css has count-aware @media blocks keyed on data-sort-count — one word<->letter block
@@ -146,7 +142,6 @@ export const HN_SELECTORS = {
 // HN CSS classes (for building test fixtures)
 export const HN_CLASSES = {
   SUBTEXT: 'subtext',
-  SUBLINE: 'subline',
   SCORE: 'score',
   AGE: 'age',
   ATHING: 'athing',
