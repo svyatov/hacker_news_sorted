@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove an unused constant, the one-use `CSS_SELECTORS` map, and about 15 lines from the sort-column highlighter (internal cleanup with no change to any user-facing feature)
 - Build output moves from `.output/` to `build/`, so a development build now loads from `build/chrome-mv3-dev`
 - The sort panel, sort toggles, true time ago, new-post highlighting, and comment-highlighting toggles now read settings through WXT storage instead of `@plasmohq/storage`, with the same stored format, so existing settings carry over unchanged (internal restructuring with no change to any user-facing feature)
+- The review prompt now keeps its dismissal, install date, and sort count in WXT storage with the same stored format, so a dismissed prompt stays dismissed and the schedule is unchanged (internal restructuring with no change to any user-facing feature)
 - A development build uses a color-swapped icon (white background, orange mark), so it is easy to tell apart from the store version
 
 ### Fixed
