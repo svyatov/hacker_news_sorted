@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove duplicated code in the sorters, parsers, new-post marking, settings popup, and the screenshot and demo generators (internal cleanup with no change to any user-facing feature)
 - Find each post on a list page by its own row instead of by row position, so sorting no longer depends on the page ending in exactly two footer rows (internal restructuring with no change to any user-facing feature)
 - Replace simple-git-hooks and lint-staged with lefthook: commits are now scanned for secrets and checked for Conventional Commits messages, and a push runs the same lint, test, and build checks as CI
+- Remove an unused constant, the one-use `CSS_SELECTORS` map, and about 15 lines from the sort-column highlighter (internal cleanup with no change to any user-facing feature)
 - Build output moves from `.output/` to `build/`, so a development build now loads from `build/chrome-mv3-dev`
 - A development build uses a color-swapped icon (white background, orange mark), so it is easy to tell apart from the store version
 
