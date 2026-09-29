@@ -49,7 +49,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 - `entrypoints/popup/` - WXT HTML entrypoint: `index.html` (mounts `#app`) + `main.tsx` (`createRoot(...).render(<App/>)`) + `App.tsx` (the popup component) + co-located `popup.css`
 - `entrypoints/popup/App.tsx` - Settings popup UI in four `fieldset.hns-group` groups: new-post toggle + highlight duration (the cooldown input is clamped to `COOLDOWN_BOUNDS` on blur), true time ago, the Velocity and Heat sort toggles, and the two comment-highlighting toggles (OP, marked-user). All toggles default on. Every checkbox renders through the local `Toggle` component (label, `hns-hint` description, optional `ariaLabel`). Shows a warning banner when layout detection fails
 - `entrypoints/popup/popup.css` - Popup styles (toggle switches, setting groups, hints, warning banner); follows system light/dark via `color-scheme: light dark` + semantic CSS custom properties overridden in a `@media (prefers-color-scheme: dark)` block (brand `#ff6600` unchanged across schemes)
-- Uses `useSettingsStorage` helper — a typed wrapper around `useStorage` that auto-resolves defaults from `SETTINGS_DEFAULTS`
+- Uses a local `useSettingsStorage` hook in `App.tsx`: it renders the `SETTINGS_DEFAULTS` value first, follows the stored value through `watchSettings`, and its setter updates state at once, then writes through `settingsStorage` (so the cooldown input does not lag while typing)
 
 ### Component Structure
 
@@ -161,7 +161,7 @@ Tests are co-located with source files using the `.test.ts` / `.test.tsx` suffix
 - `app/constants.test.ts` - `SORT_PANEL_EXCLUDE_MATCHES` coverage
 - `app/content-css-breakpoints.test.ts` - Asserts `content.css` has a word↔letter and a letter↔dropdown `@media` block for every reachable `data-sort-count` (derived from `SORT_OPTIONS`); adding a toggleable sort fails here until the CSS gains the new count's blocks
 - `app/hn-selectors.test.ts` - Fails on any string literal in `app/`, `entrypoints/`, or `scripts/` (tests and `app/constants.ts` aside) that names HN markup (`#hnmain`, `.athing`, `.hnuser`, ...); add the selector to `HN_SELECTORS` and pass it in instead
-- `app/popup.test.tsx` - Popup (`entrypoints/popup/App.tsx`) component tests, with `@plasmohq/storage/hook` mocked
+- `app/popup.test.tsx` - Popup (`entrypoints/popup/App.tsx`) component tests on `fakeBrowser`, seeded with Plasmo-format values
 - `app/__fixtures__/updateFixture.test.ts` - `pickTopCommentedItemId`, including a run against the real homepage fixture, and a check that the updater's user agent sends the Chrome version in `CHROME_MAJOR` (a `CHROME_MAJOR` bump fails here until `updateFixture.ts` follows)
 - `app/utils/selectors.integration.test.ts` - List-page selectors run against `hn-homepage.html` (breaks if HN markup changes), plus the timestamp canary: every `.age` title must parse, and at least 3 "N hours ago" rows must agree with their title relative to the `<!-- hns-fetched-at: ... -->` stamp `updateFixture.ts` writes at the top of the fixture (a fixed count, not a share, because second-chance posts, whose text is younger than their title, can fill over half the front page; a local-time parsing bug makes zero hour rows agree)
 - `app/utils/comments.integration.test.ts` - Comment-page selectors run against `hn-item.html` (breaks if HN item markup changes); `bun run test:integration` runs both integration suites
