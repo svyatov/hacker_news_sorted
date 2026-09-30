@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "baseline-browser-mapping": "^2.11.25",
-    "caniuse-lite": "^1.0.30001810",
+    "caniuse-lite": "^1.0.30001812",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },
@@ -50,6 +50,6 @@
     "wxt": "^0.21.4"
   },
   "overrides": {
-    "caniuse-lite": "^1.0.30001810"
+    "caniuse-lite": "^1.0.30001812"
   }
 }
