@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- New logo: the toolbar icon, the development icon, the Chrome Web Store icon, and the promo tiles use the new rounded-square mark, and the promo tiles add the "Hacker News Sorted" wordmark
 - The Velocity and Heat menu tooltips now say what each sort ranks: "fastest-rising posts (points per hour)" and "most-discussed posts (comments per point)"
 - Rewrite the Chrome Web Store description in plain language with natural search terms and clearer explanations of sorting, comment highlighting, and Chrome sync
 - Move new-post tracking out of the sort settings into its own module with a single entry point, and derive the Velocity and Heat on/off toggles from the sort option list (internal restructuring with no change to any user-facing feature)
