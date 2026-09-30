@@ -25,13 +25,13 @@ export const useReviewPrompt = (): UseReviewPromptReturn => {
 
   const dismissPrompt = useCallback(() => {
     setShowPrompt(false);
-    settingsStorage.set(SETTINGS_KEYS.REVIEW_DISMISSED, true);
+    void settingsStorage.set(SETTINGS_KEYS.REVIEW_DISMISSED, true);
   }, []);
 
   const incrementSortCount = useCallback(() => {
     const newCount = sortCountRef.current + 1;
     sortCountRef.current = newCount;
-    settingsStorage.set(SETTINGS_KEYS.SORT_COUNT, newCount);
+    void settingsStorage.set(SETTINGS_KEYS.SORT_COUNT, newCount);
   }, []);
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export const useReviewPrompt = (): UseReviewPromptReturn => {
         setShowPrompt(true);
       }
     };
-    init();
+    void init();
   }, []);
 
   return { showPrompt, dismissPrompt, incrementSortCount };

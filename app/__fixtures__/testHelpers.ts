@@ -51,18 +51,18 @@ export const clearBody = (): void => {
 
 // ── Comment-thread DOM builder (mirrors HN's item-page markup) ──
 
-export interface CommentSpec {
+export type CommentSpec = {
   id: string;
   author: string;
   collapsed?: boolean;
   indent?: number;
-}
+};
 
-export interface CommentThreadOptions {
+export type CommentThreadOptions = {
   storyAuthor?: string | null; // submitter (story) or permalinked comment author; null → no author node
   isStory?: boolean; // true → .fatitem carries a story titleline; false → comment-permalink page (KTD-8)
   comments?: CommentSpec[];
-}
+};
 
 const userLink = (author: string | null): string =>
   author ? `<a href="user?id=${author}" class="${HN_CLASSES.HNUSER}">${author}</a>` : '';

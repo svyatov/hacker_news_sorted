@@ -22,10 +22,10 @@ export default defineContentScript({
 
     // The list table body must be present too, else flag broken layout and render nothing.
     if (!parent || !getTableBody()) {
-      setLayoutStatus(false);
+      void setLayoutStatus(false);
       return;
     }
-    setLayoutStatus(true);
+    void setLayoutStatus(true);
     ctx.onInvalidated(trackNewPosts());
 
     const ui = createIntegratedUi(ctx, {

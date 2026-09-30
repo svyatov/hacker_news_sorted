@@ -8,14 +8,82 @@
   "assist": { "enabled": false },
   "linter": {
     "enabled": true,
+    "domains": {
+      "project": "all",
+      "test": "all",
+      "types": "all"
+    },
     "rules": {
       "preset": "recommended",
       "complexity": {
         "noCommaOperator": "off"
       },
+      "correctness": {
+        "noUnresolvedImports": "off",
+        "useImportExtensions": "off"
+      },
+      "nursery": {
+        "noBaseToString": "error",
+        "noExtendNative": "error",
+        "noFloatingPromises": "error",
+        "noImpliedEval": "error",
+        "noLoopFunc": "error",
+        "noMisleadingReturnType": "error",
+        "noMisusedPromises": "error",
+        "noReturnInFinally": "error",
+        "noUnmodifiedLoopCondition": "error",
+        "noUnsafePlusOperands": "error",
+        "noUselessTypeConversion": "error",
+        "noXorAsExponentiation": "error",
+        "useArraySome": "error",
+        "useAwaitThenable": "error",
+        "useExhaustiveSwitchCases": "error",
+        "useIncludes": "error",
+        "useNullishCoalescing": "error",
+        "useRegexpExec": "error",
+        "useRegexpTest": "error",
+        "useStringStartsEndsWith": "error"
+      },
+      "performance": {
+        "useTopLevelRegex": "error"
+      },
       "style": {
-        "noNonNullAssertion": "off"
+        "noNonNullAssertion": "off",
+        "useConsistentArrowReturn": "error",
+        "useConsistentTypeDefinitions": { "level": "error", "options": { "style": "type" } },
+        "useNumberNamespace": "error"
+      },
+      "suspicious": {
+        "noReturnAssign": "error",
+        "noUnnecessaryConditions": "off"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.test.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "nursery": {
+            "noConditionalExpect": "error",
+            "noIdenticalTestTitle": "error",
+            "useAwaitThenable": "off",
+            "useExpect": "error",
+            "useTestHooksInOrder": "error",
+            "useTestHooksOnTop": "error"
+          },
+          "performance": { "useTopLevelRegex": "off" }
+        }
+      }
+    },
+    {
+      "includes": ["app/**", "entrypoints/**", "!**/*.test.{ts,tsx}", "!app/__fixtures__/**"],
+      "linter": {
+        "rules": {
+          "correctness": { "noNodejsModules": "error", "noProcessGlobal": "error" },
+          "suspicious": { "noConsole": "error" }
+        }
+      }
+    }
+  ]
 }

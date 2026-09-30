@@ -3,13 +3,16 @@ import { getCommentsElement, getPointsElement, getTimeElement } from '~app/utils
 
 export const getPoints = (infoRow: HTMLElement): number => stringToNumber(getPointsElement(infoRow)?.textContent ?? '');
 
+// Legacy "ISO UNIX" format: exact, zone-free.
+const UNIX_SECONDS = /(?:^|\s)(\d{10})(?:\s|$)/;
+
 // ISO-ish datetime: date, optional [T or space]time with optional seconds/fraction, optional zone.
 const ISO_LIKE =
   /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?)?\s*(?:Z|UTC|GMT|([+-])(\d{2}):?(\d{2}))?$/i;
 
 /** HN `.age` title -> Unix seconds, or 0. HN's clock is UTC, so zone-less datetimes are UTC, never local. */
 export const parseAgeTitle = (title: string): number => {
-  const unix = title.match(/(?:^|\s)(\d{10})(?:\s|$)/); // legacy "ISO UNIX" format: exact, zone-free
+  const unix = UNIX_SECONDS.exec(title);
   if (unix) return Number(unix[1]);
 
   const m = ISO_LIKE.exec(title.trim());

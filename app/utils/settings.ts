@@ -29,7 +29,7 @@ export const watchSettings = <K extends SettingKey>(
     if (!touched.has(key)) values[key] = stored ?? SETTINGS_DEFAULTS[key];
   };
 
-  Promise.all(keys.map(read)).then(() => {
+  void Promise.all(keys.map(read)).then(() => {
     if (disposed) return;
     ready = true;
     onChange({ ...values });

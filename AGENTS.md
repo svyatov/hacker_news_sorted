@@ -124,7 +124,12 @@ Use `~` prefix for imports from project root (e.g., `~app/components/ControlPane
 
 ## Linting
 
-- **Biome**: `biome.json` (recommended ruleset; `noNonNullAssertion` and `noCommaOperator` off)
+- **Biome**: `biome.json` extends the recommended ruleset (`noNonNullAssertion` and `noCommaOperator` off):
+  - The `project`, `test`, and `types` domains are on in full, except `noUnresolvedImports` and `useImportExtensions` (they misread the `~app` and `#imports` aliases; tsc checks imports) and `noUnnecessaryConditions` (it takes the `undefined` defaults of optional regex groups for dead code). A domain set to `all` skips nursery rules, so the useful ones (`noFloatingPromises`, `noMisusedPromises`, `useExhaustiveSwitchCases`, ...) are listed by name. Mark a deliberate fire-and-forget promise with `void`
+  - Also on everywhere: `noReturnAssign`, `useTopLevelRegex`, `useConsistentArrowReturn`, `useConsistentTypeDefinitions` (`type`), `useNumberNamespace`
+  - `overrides`, tests (`*.test.{ts,tsx}`): nursery test rules on (`useExpect`, `noConditionalExpect`, `noIdenticalTestTitle`, hook order); `useTopLevelRegex` off so assertion regexes stay inline; `useAwaitThenable` off (it cannot type React's `act` thenable)
+  - `overrides`, extension code (`app/` and `entrypoints/`, tests and fixtures aside): `noConsole`, `noNodejsModules`, `noProcessGlobal`
+  - Tried and left off because every hit was deliberate: `useConsistentCurlyBraces` (its autofix unwraps `{'×'}`, and JSX text does not decode `\u` escapes), `noShadow` (Playwright `page.evaluate` callbacks), `noEmptyBlockStatements` (noops), `useAwait` (promise-returning polyfills), `noLeakedRender` (boolean `&&`), `noEqualsToNull`, `useSimplifiedLogicExpression`, `useNumericSeparators`
 - **Prettier**: `.prettierrc.mjs` with single quotes, trailing commas, 120 char width
 - **Git hooks**: `lefthook.yml`. pre-commit refuses a commit on `main` (`LEFTHOOK_EXCLUDE=branch` skips it), and runs a betterleaks secret scan, `biome lint`, and Prettier (re-stages its fixes) on staged files; commit-msg enforces Conventional Commits; pre-push runs the CI checks in order: `bun run lint`, `bun run test:coverage`, `bun run build`
 - A fresh `bun install` installs the hooks (lefthook's own postinstall). A repeat install does not, so if a commit runs a hook `lefthook.yml` does not name (such as `lint-staged`), reinstall them with `bunx lefthook install`. The secret scan needs `betterleaks` on PATH (`brew install betterleaks`) and reads `.gitleaks.toml` (default rules; `app/__fixtures__/*.html` allowlisted because HN snapshots carry anonymous `auth=` tokens)

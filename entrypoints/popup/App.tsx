@@ -16,7 +16,7 @@ const useSettingsStorage = <K extends SettingsKey>(key: K) => {
   useEffect(() => watchSettings([key], (values) => setValue(values[key])), [key]);
   const set = (next: SettingsValue<K>) => {
     setValue(next);
-    settingsStorage.set(key, next);
+    void settingsStorage.set(key, next);
   };
   return [value, set] as const;
 };
