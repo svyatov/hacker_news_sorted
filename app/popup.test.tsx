@@ -1,15 +1,14 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
 
 import Popup from '~/entrypoints/popup/App';
+import { flush, stored } from '~app/__fixtures__/testHelpers';
 import { COOLDOWN_BOUNDS, SETTINGS_DEFAULTS, SETTINGS_KEYS } from '~app/constants';
 
-const flush = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)));
 // Values as Plasmo wrote them: every value a JSON string.
 const store = (values: Record<string, unknown>) =>
   fakeBrowser.storage.sync.set(Object.fromEntries(Object.entries(values).map(([k, v]) => [k, JSON.stringify(v)])));
-const stored = async (key: string) => (await fakeBrowser.storage.sync.get(key))[key];
 const mount = async () => {
   render(<Popup />);
   await flush();
@@ -97,6 +96,21 @@ describe('Popup', () => {
     expect(await stored(SETTINGS_KEYS.VELOCITY_ENABLED)).toBe('false');
   });
 
+  it('should flip a toggle at once, before its slow write lands', async () => {
+    await mount();
+    const toggle = screen.getByLabelText('Heat sort') as HTMLInputElement;
+    const realSet = fakeBrowser.storage.sync.set.bind(fakeBrowser.storage.sync);
+    vi.spyOn(fakeBrowser.storage.sync, 'set').mockImplementation(async (items) => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      return realSet(items);
+    });
+
+    fireEvent.click(toggle);
+
+    expect(toggle.checked).toBe(false);
+    await waitFor(async () => expect(await stored(SETTINGS_KEYS.HEAT_ENABLED)).toBe('false'));
+  });
+
   it('should render OP and marked-user toggles checked by default', async () => {
     await mount();
 
@@ -181,6 +195,21 @@ describe('Popup', () => {
     await flush();
 
     expect((screen.getByLabelText('Highlight duration in seconds') as HTMLInputElement).value).toBe('300');
+  });
+
+  it('should show and keep a cooldown synced from another device after a keystroke', async () => {
+    await mount();
+    const input = screen.getByLabelText('Highlight duration in seconds') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: '45' } });
+    await flush();
+
+    await store({ [SETTINGS_KEYS.COOLDOWN]: 120 });
+    await flush();
+    fireEvent.blur(input);
+    await flush();
+
+    expect(input.value).toBe('120');
+    expect(await stored(SETTINGS_KEYS.COOLDOWN)).toBe('120');
   });
 
   it('should clamp the cooldown into bounds on blur', async () => {

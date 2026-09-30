@@ -2,14 +2,11 @@ import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
 
+import { flush, store, stored } from '~app/__fixtures__/testHelpers';
 import { SETTINGS_DEFAULTS, SETTINGS_KEYS, SORT_OPTIONS } from '~app/constants';
 
 import { useSettings } from './useSettings';
 
-const flush = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)));
-// Values as Plasmo wrote them: every value a JSON string.
-const store = (key: string, value: unknown) => fakeBrowser.storage.sync.set({ [key]: JSON.stringify(value) });
-const stored = async (key: string) => (await fakeBrowser.storage.sync.get(key))[key];
 // A change made elsewhere (popup, another tab or device) while the hook is mounted.
 const change = async (key: string, value: unknown) => {
   await store(key, value);

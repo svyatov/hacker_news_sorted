@@ -58,7 +58,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 
 ### Data Flow
 
-1. `useSettings` hook reads sort preference from `chrome.storage.sync`, exposes reactive `activeSort`, the derived `enabledSortOptions` list, and a `settled` first-paint flag; validates `activeSort` against the enabled set (unknown/disabled → `default`, R6)
+1. `useSettings` hook reads sort preference from `chrome.storage.sync` through `settingsStorage`, exposes reactive `activeSort`, the derived `enabledSortOptions` list, and a `settled` first-paint flag; validates `activeSort` against the enabled set (unknown/disabled → `default`, R6)
 2. `useParsedRows` hook extracts post data from HN's DOM on mount: one row set per `getPostRows()` row (title, then the info and spacer rows that follow it)
 3. `sortRows` creates a new sorted array based on active sort option (velocity/heat are computed at sort time, not stored)
 4. `updateTable` prepends the reordered post rows to the table body, so whatever follows the posts (the "More" footer) stays last with no footer detection, and highlights the active sort column (velocity/heat span two columns, so they highlight nothing, KTD-2)
@@ -66,7 +66,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
 ### Key Utils
 
 - `app/utils/selectors.ts` - DOM selectors for HN's table structure. `getPostRows()` is the one definition of a post on a list page (`tr.athing.submission`, followed by its info row, then a spacer row; comment lists such as `favorites?comments=t` have `tr.athing` rows without `submission`, so they yield no posts); `useParsedRows` and `newPosts` read posts through it, and `updateTable` writes back the rows `useParsedRows` found
-- `app/utils/layout.ts` - `waitForPanelParent` (waits for HN's header cell) + `LAYOUT_TIMEOUT_MS`
+- `app/utils/layout.ts` - `waitForPanelParent` (waits for HN's header cell) + `LAYOUT_TIMEOUT_MS`, and `setLayoutStatus` (writes the `hns-layout-ok` flag as a raw boolean through WXT `storage`, not `settingsStorage`)
 - `app/utils/parsers.ts` - Extract numeric values (points, time, comments) from info rows; `getTime` delegates to `parseAgeTitle`, which reads the `.age` title attribute in every format HN has used (legacy `"ISO_DATETIME UNIX_TIMESTAMP"`, `"2026-09-06T07:21:06.000000Z"` from 2026-08-27, zone-less `"2026-09-14T13:00:46"` since 2026-09-13)
 - `app/utils/settings.ts` - `watchSettings(keys, onChange)`: the one way to follow synced settings live (used by `useSettings`, `newPosts`, and `comments.content`)
 - `app/utils/converters.ts` - `stringToNumber` (parseInt wrapper), `nowInSeconds` (current epoch in seconds — use instead of inline `Math.floor(Date.now() / 1000)`)
@@ -94,7 +94,7 @@ bun run demo           # Generate demo video (.mp4) and GIF (requires `bun run b
   - Post timestamps: stores `Record<string, number>` (post ID → discovery timestamp, `-1` for known) per pathname; migrates the old `string[]` format
   - Show-new toggle: applies/removes the `hns-show-new` CSS class on the table body
   - Fade: `markRow` sets `--hns-fade` on new-post rows and a timer (`updateFadeOpacities`) lowers it over the cooldown, removing the class once a row reaches 0. One `syncInterval()` rule governs that timer: it runs only while show-new is on, the tracker is not disposed, and some post is still fading
-  - Follows `hns-show-new` and `hns-cooldown` through `watchSettings`, and watches the page's post-ids key itself; the post-ids watcher stays off until init's own write lands and never writes back (no ping-pong)
+  - Follows `hns-show-new` and `hns-cooldown` through `watchSettings`, and watches the page's post-ids key itself; the post-ids watcher never writes back (no ping-pong), and the echo of init's own write re-marks the same posts
 - All settings sync across devices via `chrome.storage.sync`
 - New-post detection only runs on first pages (skips paginated pages with `?p=...` or `?next=...`)
 
@@ -150,7 +150,7 @@ Use `~` prefix for imports from project root (e.g., `~app/components/ControlPane
 - `app/__fixtures__/hn-item.html` - Real HN thread (`item?id=`) snapshot for comment-selector drift testing
 - `app/__fixtures__/loadFixture.ts` - Helper functions to load fixtures
 - `app/__fixtures__/updateFixture.ts` - Script to refresh both fixtures from live HN: stamps `hn-homepage.html` with `<!-- hns-fetched-at: ISO -->`, then saves the most-commented homepage story as `hn-item.html` (`pickTopCommentedItemId`, exported and unit-tested). Network calls run only under `import.meta.main`, so importing the file is safe
-- `app/__fixtures__/testHelpers.ts` - Shared test helpers: `setupTableBody` (HN list DOM builder), `setupCommentThread` (HN item-page DOM builder), `clearBody`, `getRowById`, `FAKE_NOW` constant
+- `app/__fixtures__/testHelpers.ts` - Shared test helpers: `setupTableBody` (HN list DOM builder), `setupCommentThread` (HN item-page DOM builder), `clearBody`, `getRowById`, `FAKE_NOW` constant, and the storage helpers `store` (seeds a Plasmo-format JSON string in `fakeBrowser`), `stored` (reads the raw value) and `flush` (an `act`-wrapped tick for mounted hooks and components)
 - Run `bun run fixture:update` to refresh when HN markup changes
 
 ### Test Files

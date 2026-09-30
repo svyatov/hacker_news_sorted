@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Posts that dropped off a list are no longer marked as new in an older tab of the same list when the list loads in another tab
 - A setting changed in the popup while a Hacker News page is still loading is no longer lost or overwritten by the older stored value
 - After an update from an old version, posts you had already seen are no longer marked as new
+- Clearing the highlight duration in the popup now leaves the field empty instead of showing 0, and no longer saves a 0-second duration to every synced device before you finish typing
 - Sorting and new-post indicators now leave favorite and upvoted comment lists alone, because their rows are comments, not posts
 - The layout monitor's timestamp canary now requires 3 "N hours ago" rows to match their timestamp, instead of 80% of all rows, so a front page with many second-chance posts or a cache-lagged "minutes ago" row does not fail the scheduled run
 

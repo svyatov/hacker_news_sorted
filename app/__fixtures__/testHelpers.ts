@@ -1,7 +1,19 @@
+import { act } from 'react';
+import { fakeBrowser } from 'wxt/testing/fake-browser';
+
 import { HN_CLASSES } from '~app/constants';
 
 // Fake system time used across newPosts and useSettings tests
 export const FAKE_NOW = 1_000_000_000_000;
+
+// ── Storage helpers ──
+
+// Writes a synced value as Plasmo wrote it: every value a JSON string.
+export const store = (key: string, value: unknown) => fakeBrowser.storage.sync.set({ [key]: JSON.stringify(value) });
+// Reads the raw synced value, still JSON-encoded.
+export const stored = async (key: string) => (await fakeBrowser.storage.sync.get(key))[key];
+// Lets a mounted component or hook apply its pending storage reads.
+export const flush = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)));
 
 // ── DOM helpers ──
 

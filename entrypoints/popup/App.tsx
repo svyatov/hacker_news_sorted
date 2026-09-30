@@ -52,9 +52,10 @@ const Toggle = ({ name, label, ariaLabel = label, hint, checked, onChange }: Tog
 type CooldownInputProps = { cooldown: number; setCooldown: (cooldown: number) => void };
 
 const CooldownInput = ({ cooldown, setCooldown }: CooldownInputProps) => {
-  // What the user is typing, while typing: an empty input is not a cooldown, so it is never stored.
-  // The draft lives here so it goes away with the input, even without a blur.
-  const [draft, setDraft] = useState<string | null>(null);
+  // Set only while the input is empty: an empty input is not a cooldown, so it is never stored. Any
+  // other value is stored at once, so a value synced from another device shows at once too. The draft
+  // lives here so it goes away with the input, even without a blur.
+  const [draft, setDraft] = useState<'' | null>(null);
 
   return (
     <div className="hns-setting hns-setting-child">
@@ -70,8 +71,12 @@ const CooldownInput = ({ cooldown, setCooldown }: CooldownInputProps) => {
         max={COOLDOWN_BOUNDS.MAX}
         value={draft ?? cooldown}
         onChange={(e) => {
-          setDraft(e.target.value);
-          if (e.target.value !== '') setCooldown(Number(e.target.value));
+          if (e.target.value === '') {
+            setDraft('');
+          } else {
+            setDraft(null);
+            setCooldown(Number(e.target.value));
+          }
         }}
         onBlur={(e) => {
           setDraft(null);

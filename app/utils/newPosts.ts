@@ -98,8 +98,6 @@ export const trackNewPosts = (): (() => void) => {
   let showNew: boolean = SETTINGS_DEFAULTS[SETTINGS_KEYS.SHOW_NEW];
   let cooldownMs = SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN] * 1000;
   let interval: ReturnType<typeof setInterval> | undefined;
-  // The postIds watcher stays off until init's own write lands, so it can't react to it (no ping-pong).
-  let ready = false;
   let disposed = false;
 
   const applyShowNew = () => getTableBody()?.classList.toggle(CSS_CLASSES.SHOW_NEW, showNew);
@@ -125,8 +123,6 @@ export const trackNewPosts = (): (() => void) => {
       remark(stored ? migratePostIds(stored) : {});
       await settingsStorage.set(postIdsKey, timestamps);
     }
-
-    ready = true;
   };
 
   const stopSettings = watchSettings([SETTINGS_KEYS.SHOW_NEW, SETTINGS_KEYS.COOLDOWN], (values, changed) => {
@@ -151,8 +147,8 @@ export const trackNewPosts = (): (() => void) => {
   });
 
   const stopPostIds = settingsStorage.watch<string[] | PostTimestamps>(postIdsKey, (newValue) => {
-    if (!ready) return;
-    // Never write back: the other tab already stored this value. Merge over our own map, because the
+    // Never write back: this value is already stored. The echo of init's own write re-marks the same
+    // posts, so it needs no guard. Merge over our own map, because the
     // other tab only stores the posts on its page: a post that fell off the list since we loaded is
     // missing there, not new.
     remark({ ...timestamps, ...migratePostIds(newValue ?? {}) });
