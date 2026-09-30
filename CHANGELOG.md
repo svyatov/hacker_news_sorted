@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Clearing the highlight duration in the popup now leaves the field empty instead of showing 0, and no longer saves a 0-second duration to every synced device before you finish typing
 - Sorting and new-post indicators now leave favorite and upvoted comment lists alone, because their rows are comments, not posts
 - The layout monitor's timestamp canary now requires 3 "N hours ago" rows to match their timestamp, instead of 80% of all rows, so a front page with many second-chance posts or a cache-lagged "minutes ago" row does not fail the scheduled run
+- `bun dev` no longer prints "Failed to run dependency scan" (`UNRESOLVED_ENTRY` on `build/chrome-mv3-dev/popup.html`): Vite now scans only the popup page for dependencies, not every HTML file in the repository (internal tooling with no change to any user-facing feature)
 
 ## [2.6.3] - 2026-09-14
 
