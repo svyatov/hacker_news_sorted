@@ -55,7 +55,7 @@ bun install
 bun dev
 ```
 
-Then load the extension in Chrome: go to `chrome://extensions`, enable "Developer mode", click "Load unpacked", and select the `.output/chrome-mv3-dev` folder.
+Then load the extension in Chrome: go to `chrome://extensions`, enable "Developer mode", click "Load unpacked", and select the `build/chrome-mv3-dev` folder.
 
 ```bash
 bun run test           # Run tests

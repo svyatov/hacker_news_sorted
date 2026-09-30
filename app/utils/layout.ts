@@ -1,6 +1,12 @@
+import { storage } from '#imports';
+
+import { LAYOUT_OK_STORAGE_KEY } from '~app/constants';
 import { getControlPanelParentElement } from '~app/utils/selectors';
 
 export const LAYOUT_TIMEOUT_MS = 3000;
+
+// An old version on another synced device reads the flag with `=== false`, so it stays a raw boolean.
+export const setLayoutStatus = (ok: boolean): Promise<void> => storage.setItem(LAYOUT_OK_STORAGE_KEY, ok);
 
 // Resolve HN's header cell (the panel parent), waiting via MutationObserver if it isn't in the DOM
 // yet; resolves null if it never appears within the timeout. Extracted from the entrypoint shell so

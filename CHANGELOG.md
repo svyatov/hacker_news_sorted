@@ -15,6 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove duplicated code in the sorters, parsers, new-post marking, settings popup, and the screenshot and demo generators (internal cleanup with no change to any user-facing feature)
 - Find each post on a list page by its own row instead of by row position, so sorting no longer depends on the page ending in exactly two footer rows (internal restructuring with no change to any user-facing feature)
 - Replace simple-git-hooks and lint-staged with lefthook: commits are now scanned for secrets and checked for Conventional Commits messages, and a push runs the same lint, test, and build checks as CI
+- Remove an unused constant, the one-use `CSS_SELECTORS` map, and about 15 lines from the sort-column highlighter (internal cleanup with no change to any user-facing feature)
+- Build output moves from `.output/` to `build/`, so a development build now loads from `build/chrome-mv3-dev`
+- The sort panel, sort toggles, true time ago, new-post highlighting, and comment-highlighting toggles now read settings through WXT storage instead of `@plasmohq/storage`, with the same stored format, so existing settings carry over unchanged (internal restructuring with no change to any user-facing feature)
+- The review prompt now keeps its dismissal, install date, and sort count in WXT storage with the same stored format, so a dismissed prompt stays dismissed and the schedule is unchanged (internal restructuring with no change to any user-facing feature)
+- The settings popup now reads and writes its settings through WXT storage with the same stored format, so every stored toggle and the highlight duration show as before (internal restructuring with no change to any user-facing feature)
+- The layout-health flag and the toolbar badge now use WXT storage and keep the flag a raw boolean, so the `:(` badge and the popup warning behave as before, including with an older version on another synced device (internal restructuring with no change to any user-facing feature)
+- A development build uses a color-swapped icon (white background, orange mark), so it is easy to tell apart from the store version
+- Remove the `@plasmohq/storage` dependency: every setting now goes through WXT storage with the same stored format (internal cleanup with no change to any user-facing feature)
+- Update dependencies, including React 19.3, Vite 8.3, and Playwright 1.63 (internal toolchain update with no change to any user-facing feature)
 
 ### Fixed
 
@@ -22,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New-post indicators picked up from a visit in another tab now fade out over the highlight duration instead of staying until the page is reloaded
 - Posts that dropped off a list are no longer marked as new in an older tab of the same list when the list loads in another tab
 - A setting changed in the popup while a Hacker News page is still loading is no longer lost or overwritten by the older stored value
+- After an update from an old version, posts you had already seen are no longer marked as new
+- Clearing the highlight duration in the popup now leaves the field empty instead of showing 0, and no longer saves a 0-second duration to every synced device before you finish typing
 - Sorting and new-post indicators now leave favorite and upvoted comment lists alone, because their rows are comments, not posts
 - The layout monitor's timestamp canary now requires 3 "N hours ago" rows to match their timestamp, instead of 80% of all rows, so a front page with many second-chance posts or a cache-lagged "minutes ago" row does not fail the scheduled run
 

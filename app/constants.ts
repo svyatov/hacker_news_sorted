@@ -5,7 +5,7 @@ export const CONTROL_PANEL_ROOT_ID = 'hns-control-panel';
 // Enabled-option count (4–6) published on the panel root so count-aware CSS breakpoints
 // can pick the right word↔letter switch point (CSS can't read React state).
 export const SORT_COUNT_ATTR = 'data-sort-count';
-// Comment-page mark control: the attribute holding a star button's target username, and the
+// Comment-page mark control: the attribute holding a mark dot's target username, and the
 // sessionStorage key prefix for the per-thread single mark (KTD-6).
 export const DOT_USER_ATTR = 'data-hns-user';
 export const MARK_STORAGE_PREFIX = 'hns-marked-user:';
@@ -26,6 +26,10 @@ export const SETTINGS_KEYS = {
   OP_HIGHLIGHT: 'hns-op-highlight',
   MARK_USER_HIGHLIGHT: 'hns-mark-user-highlight',
 } as const;
+
+// The layout flag is a raw boolean read and written with WXT `storage` directly, bypassing the
+// JSON wrapper in settingsStorage (docs/adr/0001-keep-plasmo-json-encoding-on-wxt-storage.md).
+export const LAYOUT_OK_STORAGE_KEY = `sync:${SETTINGS_KEYS.LAYOUT_OK}` as const;
 
 export const SETTINGS_DEFAULTS = {
   [SETTINGS_KEYS.SHOW_NEW]: true as boolean,
@@ -87,10 +91,6 @@ export const CSS_CLASSES = {
   MARKED_COMMENT: 'hns-marked-comment',
 } as const;
 
-export const CSS_SELECTORS = {
-  HIGHLIGHT: `.${CSS_CLASSES.HIGHLIGHT}`,
-} as const;
-
 // Sort options configuration. Order matters — the menu and dropdown render in this order.
 // Two couplings to keep in sync when editing this list:
 //   1. content.css has count-aware @media blocks keyed on data-sort-count — one word<->letter block
@@ -120,10 +120,14 @@ export const SORT_OPTIONS: SortOption[] = [
 ];
 
 // HN DOM selectors and classes
+const LIST_TABLE = '#hnmain #bigbox > td > table';
+
 export const HN_SELECTORS = {
   // Page structure
+  MAIN: '#hnmain',
   CONTROL_PANEL_PARENT: '#hnmain tr:has(> td > .pagetop > .hnname) > td:last-child',
-  TABLE_BODY: '#hnmain #bigbox > td > table > tbody',
+  LIST_TABLE,
+  TABLE_BODY: `${LIST_TABLE} > tbody`,
 
   // One row per post (relative to table body); HN follows each with its info row, then a spacer row
   // (comment lists such as favorites?comments=t also use athing rows, but not the submission class)
@@ -136,17 +140,18 @@ export const HN_SELECTORS = {
   COMMENTS: 'td.subtext > span > a[href^="item?id="]',
 
   // Comment/item pages
+  ITEM_TABLE: 'table.fatitem',
+  COMMENT_TREE: 'table.comment-tree',
   STORY_AUTHOR: '.fatitem .hnuser',
   STORY_LINK: '.fatitem .titleline',
   COMMENT_ROWS: 'tr.athing.comtr[id]',
-  COMMENT_AUTHOR: '.hnuser',
+  COMMENT_AUTHOR: '.hnuser', // relative to COMMENT_HEAD
   COMMENT_HEAD: '.comhead',
 } as const;
 
 // HN CSS classes (for building test fixtures)
 export const HN_CLASSES = {
   SUBTEXT: 'subtext',
-  SUBLINE: 'subline',
   SCORE: 'score',
   AGE: 'age',
   ATHING: 'athing',

@@ -14,11 +14,11 @@ export const SCREENSHOT_IDS = {
 // genuine TLS/HTTP2 handshake and client hints; the values below strip the headless UA token and keep
 // the sec-ch-ua client hints in agreement with it (a UA/hint mismatch is a classic bot tell). Bump the
 // version together with the installed Chrome. Shared by both generators' launch() + newContext().
-export const CHROME_MAJOR = '149';
+const CHROME_MAJOR = '149';
 
 export const REAL_BROWSER_LAUNCH = { channel: 'chrome' };
 
-export const USER_AGENT = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_MAJOR}.0.0.0 Safari/537.36`;
+const USER_AGENT = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_MAJOR}.0.0.0 Safari/537.36`;
 
 export const REAL_BROWSER_CONTEXT = {
   userAgent: USER_AGENT,

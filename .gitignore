@@ -27,8 +27,7 @@ out/
 build/
 dist/
 
-# wxt
-.output
+# wxt (outDir is build/, ignored above)
 .wxt
 
 # typescript
@@ -40,5 +39,5 @@ scripts/screenshots/.hn-cache/
 .plans/
 .compound-engineering/
 docs/
-CONCEPTS.md
+GLOSSARY.md
 graphify-out/

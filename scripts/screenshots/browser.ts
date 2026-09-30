@@ -35,36 +35,43 @@ export async function loadWithExtension(page: Page): Promise<void> {
 export async function injectExtension(page: Page): Promise<void> {
   await loadWithExtension(page);
 
-  // Fill the 1280×800 frame and make the list legible in a thumbnail:
-  //  - drop HN's 15% side gutters (width="85%") and the body margin so content spans edge-to-edge;
-  //  - enlarge ONLY the post-list table (bigger font, fewer rows) via `zoom`, leaving the header —
-  //    and thus the sort-menu tier and the arrow's target button — untouched. The pre-zoom width is
-  //    capped to VIEWPORT/zoom so the scaled table lands at exactly 1280px (no horizontal overflow).
+  // Fill the frame, then make the list legible in a thumbnail: enlarge ONLY the post-list table
+  // (bigger font, fewer rows) via `zoom`, leaving the header untouched, so the sort-menu tier and the
+  // arrow's target button stay as they are. The pre-zoom width is capped to VIEWPORT/zoom so the scaled
+  // table lands at exactly 1280px (no horizontal overflow).
+  await fillFrame(page);
   await page.evaluate(
-    ({ listZoom, viewportWidth }) => {
-      document.body.style.margin = '0';
-      const main = document.querySelector<HTMLElement>('#hnmain');
-      if (main) main.style.width = '100%';
-      const list = document.querySelector<HTMLElement>('#hnmain #bigbox > td > table');
+    ({ listTableSelector, listZoom, viewportWidth }) => {
+      const list = document.querySelector<HTMLElement>(listTableSelector);
       if (list) {
         list.style.width = `${Math.floor(viewportWidth / listZoom)}px`;
         list.style.zoom = String(listZoom);
       }
     },
-    { listZoom: 1.3, viewportWidth: SCREENSHOT_VIEWPORT.width },
+    { listTableSelector: HN_SELECTORS.LIST_TABLE, listZoom: 1.3, viewportWidth: SCREENSHOT_VIEWPORT.width },
   );
+}
+
+// Fill the 1280×800 frame: drop HN's 15% side gutters (width="85%") and the body margin so content
+// spans edge-to-edge.
+async function fillFrame(page: Page): Promise<void> {
+  await page.evaluate((mainSelector) => {
+    document.body.style.margin = '0';
+    const main = document.querySelector<HTMLElement>(mainSelector);
+    if (main) main.style.width = '100%';
+  }, HN_SELECTORS.MAIN);
 }
 
 export async function showNewPostIndicators(page: Page): Promise<void> {
   await page.evaluate(
-    ({ tableBodySelector, showNewClass, newPostClass }) => {
+    ({ tableBodySelector, postRowsSelector, showNewClass, newPostClass }) => {
       const tbody = document.querySelector(tableBodySelector);
       if (!tbody) return;
 
       tbody.classList.add(showNewClass);
 
       // Mark a scattered subset of title rows as new posts
-      const titleRows = tbody.querySelectorAll(':scope > tr:nth-child(3n+1)');
+      const titleRows = tbody.querySelectorAll(postRowsSelector);
       const indices = [0, 2, 3, 6, 8, 11];
       for (const i of indices) {
         titleRows[i]?.classList.add(newPostClass);
@@ -72,6 +79,7 @@ export async function showNewPostIndicators(page: Page): Promise<void> {
     },
     {
       tableBodySelector: HN_SELECTORS.TABLE_BODY,
+      postRowsSelector: HN_SELECTORS.POST_ROWS,
       showNewClass: CSS_CLASSES.SHOW_NEW,
       newPostClass: CSS_CLASSES.NEW_POST,
     },
@@ -86,21 +94,16 @@ export async function captureVariants(page: Page): Promise<void> {
     await removeOverlays(page);
     await removeNewPostIndicators(page);
 
-    if (variant.commentThreadId) {
-      await captureCommentVariant(page, variant);
-      continue;
-    }
-
-    if (variant.showNewPosts) {
-      await showNewPostIndicators(page);
-    }
-
     const button = `#${CONTROL_PANEL_ROOT_ID} [data-sort="${variant.sort}"]`;
-    await page.click(button);
-    await page.waitForTimeout(100);
+    if (variant.commentThreadId) {
+      await setupCommentVariant(page, variant);
+    } else {
+      if (variant.showNewPosts) await showNewPostIndicators(page);
+      await page.click(button);
+      await page.waitForTimeout(100);
+    }
 
     await injectOverlayCard(page, variant.title, variant.subtitle, variant.titleNote);
-
     if (!variant.hideArrow) await injectArrow(page, button);
 
     const screenshotPath = path.join(SCREENSHOTS_DIR, variant.filename);
@@ -109,24 +112,13 @@ export async function captureVariants(page: Page): Promise<void> {
   }
 }
 
-async function captureCommentVariant(page: Page, variant: VariantConfig): Promise<void> {
+// No content zoom here (unlike the homepage): the thread text is already legible and enlarging a
+// nested comment tree risks clipping.
+async function setupCommentVariant(page: Page, variant: VariantConfig): Promise<void> {
   await gotoCached(page, `https://news.ycombinator.com/item?id=${variant.commentThreadId}`);
   await injectCommentsBundle(page);
   if (variant.markUser) await markUser(page, variant.markUser);
-
-  // Match the homepage shots: fill the frame width, drop the body margin (no content zoom here —
-  // the thread text is already legible and enlarging a nested comment tree risks clipping).
-  await page.evaluate(() => {
-    document.body.style.margin = '0';
-    const main = document.querySelector<HTMLElement>('#hnmain');
-    if (main) main.style.width = '100%';
-  });
-
-  await injectOverlayCard(page, variant.title, variant.subtitle, variant.titleNote);
-
-  const screenshotPath = path.join(SCREENSHOTS_DIR, variant.filename);
-  await page.screenshot({ path: screenshotPath });
-  console.log(`Saved: ${variant.filename}`);
+  await fillFrame(page);
 }
 
 async function removeNewPostIndicators(page: Page): Promise<void> {

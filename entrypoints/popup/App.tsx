@@ -1,13 +1,25 @@
 import { useEffect, useState, type ReactNode } from 'react';
 
-import { useStorage } from '@plasmohq/storage/hook';
-
 import { COOLDOWN_BOUNDS, CWS_REVIEW_URL, SETTINGS_DEFAULTS, SETTINGS_KEYS } from '~app/constants';
+import { watchSettings } from '~app/utils/settings';
+import { settingsStorage } from '~app/utils/settingsStorage';
 
 import './popup.css';
 
 type SettingsKey = keyof typeof SETTINGS_DEFAULTS;
-const useSettingsStorage = <K extends SettingsKey>(key: K) => useStorage(key, SETTINGS_DEFAULTS[key]);
+type SettingsValue<K extends SettingsKey> = (typeof SETTINGS_DEFAULTS)[K];
+
+// Renders the default first, then the stored value, then follows every change. The setter updates state
+// at once and then writes, so a controlled input does not lag behind the async write.
+const useSettingsStorage = <K extends SettingsKey>(key: K) => {
+  const [value, setValue] = useState<SettingsValue<K>>(SETTINGS_DEFAULTS[key]);
+  useEffect(() => watchSettings([key], (values) => setValue(values[key])), [key]);
+  const set = (next: SettingsValue<K>) => {
+    setValue(next);
+    settingsStorage.set(key, next);
+  };
+  return [value, set] as const;
+};
 
 type ToggleProps = {
   name: string;
@@ -37,6 +49,50 @@ const Toggle = ({ name, label, ariaLabel = label, hint, checked, onChange }: Tog
   </div>
 );
 
+type CooldownInputProps = { cooldown: number; setCooldown: (cooldown: number) => void };
+
+const CooldownInput = ({ cooldown, setCooldown }: CooldownInputProps) => {
+  // Set only while the input is empty: an empty input is not a cooldown, so it is never stored. Any
+  // other value is stored at once, so a value synced from another device shows at once too. The draft
+  // lives here so it goes away with the input, even without a blur.
+  const [draft, setDraft] = useState<'' | null>(null);
+
+  return (
+    <div className="hns-setting hns-setting-child">
+      <div className="hns-setting-label">
+        <span>Highlight duration in seconds</span>
+        <span className="hns-hint">How long the indicator stays visible</span>
+      </div>
+      <input
+        type="number"
+        name="cooldown"
+        aria-label="Highlight duration in seconds"
+        min={COOLDOWN_BOUNDS.MIN}
+        max={COOLDOWN_BOUNDS.MAX}
+        value={draft ?? cooldown}
+        onChange={(e) => {
+          if (e.target.value === '') {
+            setDraft('');
+          } else {
+            setDraft(null);
+            setCooldown(Number(e.target.value));
+          }
+        }}
+        onBlur={(e) => {
+          setDraft(null);
+          setCooldown(
+            Math.max(
+              COOLDOWN_BOUNDS.MIN,
+              Math.min(COOLDOWN_BOUNDS.MAX, Number(e.target.value) || SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN]),
+            ),
+          );
+        }}
+        className="hns-number-input"
+      />
+    </div>
+  );
+};
+
 const Popup = () => {
   const [showNew, setShowNew] = useSettingsStorage(SETTINGS_KEYS.SHOW_NEW);
   const [cooldown, setCooldown] = useSettingsStorage(SETTINGS_KEYS.COOLDOWN);
@@ -46,7 +102,7 @@ const Popup = () => {
   const [opHighlight, setOpHighlight] = useSettingsStorage(SETTINGS_KEYS.OP_HIGHLIGHT);
   const [markUserHighlight, setMarkUserHighlight] = useSettingsStorage(SETTINGS_KEYS.MARK_USER_HIGHLIGHT);
   const [layoutOk] = useSettingsStorage(SETTINGS_KEYS.LAYOUT_OK);
-  // useStorage renders with the default value first, then async-loads the stored value.
+  // useSettingsStorage renders with the default value first, then async-loads the stored value.
   // When stored !== default, the CSS transition animates the toggle visibly (on→off flash).
   // Suppress transitions for 50ms to let storage settle, then re-enable for user interactions.
   const [isReady, setIsReady] = useState(false);
@@ -79,32 +135,7 @@ const Popup = () => {
           onChange={setShowNew}
         />
 
-        {showNew && (
-          <div className="hns-setting hns-setting-child">
-            <div className="hns-setting-label">
-              <span>Highlight duration in seconds</span>
-              <span className="hns-hint">How long the indicator stays visible</span>
-            </div>
-            <input
-              type="number"
-              name="cooldown"
-              aria-label="Highlight duration in seconds"
-              min={COOLDOWN_BOUNDS.MIN}
-              max={COOLDOWN_BOUNDS.MAX}
-              value={cooldown}
-              onChange={(e) => setCooldown(Number(e.target.value))}
-              onBlur={(e) =>
-                setCooldown(
-                  Math.max(
-                    COOLDOWN_BOUNDS.MIN,
-                    Math.min(COOLDOWN_BOUNDS.MAX, Number(e.target.value) || SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN]),
-                  ),
-                )
-              }
-              className="hns-number-input"
-            />
-          </div>
-        )}
+        {showNew && <CooldownInput cooldown={cooldown} setCooldown={setCooldown} />}
       </fieldset>
 
       <fieldset className="hns-group">

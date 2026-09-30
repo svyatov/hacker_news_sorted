@@ -1,13 +1,10 @@
-import { Storage, type StorageCallbackMap } from '@plasmohq/storage';
-
 import { CSS_CLASSES, SETTINGS_DEFAULTS, SETTINGS_KEYS } from '~app/constants';
 import { getPostRows, getTableBody } from '~app/utils/selectors';
 import { watchSettings } from '~app/utils/settings';
+import { settingsStorage } from '~app/utils/settingsStorage';
 
 // Post id -> discovery time (ms), or -1 for a post that was already there on the first visit.
 export type PostTimestamps = Record<string, number>;
-
-const storage = new Storage();
 
 const FADE_PROPERTY = '--hns-fade';
 
@@ -20,7 +17,7 @@ const getPostIds = (): string[] => getPostRows().map((row) => row.id);
 
 const migratePostIds = (stored: string[] | PostTimestamps): PostTimestamps => {
   if (Array.isArray(stored)) {
-    return Object.fromEntries(stored.map((id) => [id, Date.now()]));
+    return Object.fromEntries(stored.map((id) => [id, -1]));
   }
   return stored;
 };
@@ -101,8 +98,6 @@ export const trackNewPosts = (): (() => void) => {
   let showNew: boolean = SETTINGS_DEFAULTS[SETTINGS_KEYS.SHOW_NEW];
   let cooldownMs = SETTINGS_DEFAULTS[SETTINGS_KEYS.COOLDOWN] * 1000;
   let interval: ReturnType<typeof setInterval> | undefined;
-  // The postIds watcher stays off until init's own write lands, so it can't react to it (no ping-pong).
-  let ready = false;
   let disposed = false;
 
   const applyShowNew = () => getTableBody()?.classList.toggle(CSS_CLASSES.SHOW_NEW, showNew);
@@ -124,12 +119,10 @@ export const trackNewPosts = (): (() => void) => {
 
   const loadPostIds = async () => {
     if (getPostIds().length > 0) {
-      const stored = await storage.get<string[] | PostTimestamps>(postIdsKey);
+      const stored = await settingsStorage.get<string[] | PostTimestamps>(postIdsKey);
       remark(stored ? migratePostIds(stored) : {});
-      await storage.set(postIdsKey, timestamps);
+      await settingsStorage.set(postIdsKey, timestamps);
     }
-
-    ready = true;
   };
 
   const stopSettings = watchSettings([SETTINGS_KEYS.SHOW_NEW, SETTINGS_KEYS.COOLDOWN], (values, changed) => {
@@ -153,22 +146,18 @@ export const trackNewPosts = (): (() => void) => {
     }
   });
 
-  const postIdsWatcher: StorageCallbackMap = {
-    [postIdsKey]: (change) => {
-      if (!ready) return;
-      // Never write back: the other tab already stored this value. Merge over our own map, because the
-      // other tab only stores the posts on its page: a post that fell off the list since we loaded is
-      // missing there, not new.
-      const incoming = migratePostIds((change.newValue ?? {}) as string[] | PostTimestamps);
-      remark({ ...timestamps, ...incoming });
-    },
-  };
-  storage.watch(postIdsWatcher);
+  const stopPostIds = settingsStorage.watch<string[] | PostTimestamps>(postIdsKey, (newValue) => {
+    // Never write back: this value is already stored. The echo of init's own write re-marks the same
+    // posts, so it needs no guard. Merge over our own map, because the
+    // other tab only stores the posts on its page: a post that fell off the list since we loaded is
+    // missing there, not new.
+    remark({ ...timestamps, ...migratePostIds(newValue ?? {}) });
+  });
 
   return () => {
     disposed = true;
     syncInterval();
     stopSettings();
-    storage.unwatch(postIdsWatcher);
+    stopPostIds();
   };
 };

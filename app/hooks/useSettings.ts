@@ -1,12 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { Storage } from '@plasmohq/storage';
-
 import { SETTINGS_DEFAULTS, SETTINGS_KEYS, SORT_OPTIONS } from '~app/constants';
 import type { SortOption, SortVariant } from '~app/types';
 import { watchSettings } from '~app/utils/settings';
-
-const storage = new Storage();
+import { settingsStorage } from '~app/utils/settingsStorage';
 
 type ToggleKey = NonNullable<SortOption['enableKey']>;
 type Toggles = Record<ToggleKey, boolean>;
@@ -35,13 +32,13 @@ type UseSettingsReturn = {
 
 export const useSettings = (): UseSettingsReturn => {
   const [activeSort, setActiveSortState] = useState<SortVariant>(SETTINGS_DEFAULTS[SETTINGS_KEYS.LAST_ACTIVE_SORT]);
-  const [showTrueTimeAgo, setShowTrueTimeAgoState] = useState(SETTINGS_DEFAULTS[SETTINGS_KEYS.TRUE_TIME_AGO]);
+  const [showTrueTimeAgo, setShowTrueTimeAgo] = useState(SETTINGS_DEFAULTS[SETTINGS_KEYS.TRUE_TIME_AGO]);
   const [toggles, setToggles] = useState(DEFAULT_TOGGLES);
   const [settled, setSettled] = useState(false);
 
   const setActiveSort = useCallback((sort: SortVariant) => {
     setActiveSortState(sort);
-    storage.set(SETTINGS_KEYS.LAST_ACTIVE_SORT, sort);
+    settingsStorage.set(SETTINGS_KEYS.LAST_ACTIVE_SORT, sort);
   }, []);
 
   useEffect(
@@ -49,7 +46,7 @@ export const useSettings = (): UseSettingsReturn => {
       watchSettings(WATCHED_KEYS, (values, changed) => {
         const next = Object.fromEntries(TOGGLE_KEYS.map((key) => [key, values[key]])) as Toggles;
         setToggles(next);
-        setShowTrueTimeAgoState(values[SETTINGS_KEYS.TRUE_TIME_AGO]);
+        setShowTrueTimeAgo(values[SETTINGS_KEYS.TRUE_TIME_AGO]);
         // Resolve locally (revert-on-disable); never write the resolved value back (no ping-pong). A toggle
         // change re-checks the sort on screen, so re-enabling a sort doesn't bring back the stored one.
         setActiveSortState((prev) =>

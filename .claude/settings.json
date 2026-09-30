@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "FILE=$(jq -r '.tool_input.file_path') && case \"$FILE\" in */bun.lockb|*/build/*|*/node_modules/*) printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Generated file — do not edit directly\"}}';; esac"
+            "command": "FILE=$(jq -r '.tool_input.file_path') && case \"$FILE\" in */bun.lock|*/build/*|*/.wxt/*|*/node_modules/*) printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Generated file — do not edit directly\"}}';; esac"
           }
         ]
       }
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "jq -r '.tool_input.file_path' | xargs -I {} bunx prettier --write {} 2>/dev/null || true"
+            "command": "FILE=$(jq -r '.tool_input.file_path') && case \"$FILE\" in \"$CLAUDE_PROJECT_DIR\"/*) bunx prettier --write \"$FILE\" 2>/dev/null;; esac; true"
           }
         ]
       }

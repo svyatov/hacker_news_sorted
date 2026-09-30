@@ -16,14 +16,16 @@ Walk through each step, confirming the version number with the user before start
 
 3. **Finalize changelog**: In `CHANGELOG.md`, rename `## [Unreleased]` to `## [<version>] - <today's date>` (YYYY-MM-DD format). Add a fresh empty `## [Unreleased]` section above it. Make sure changelog contains only changes between releases, not intermediate commits.
 
-4. **Update description.txt**: Add a one-line entry to the `Changelog:` section with the new version, month/year, and a short non-technical summary. Insert it as the first changelog line (below the `Changelog:` header).
+4. **Update description.txt**: Add `YYYY-MM-DD - vX.Y.Z - summary` (today's date, a short non-technical summary) as the first line under `Recent changes:`, and delete the oldest line so 5 remain.
 
 5. **Update README.md**: If the release includes user-facing feature changes, update relevant sections.
 
 6. **Build and package**: Run `bun run release` (builds and packages the extension). Verify it succeeds.
 
-7. **Commit**: Create a single commit with message `chore: release v<version>` containing all changed files.
+7. **Commit**: On a new branch `chore/release-<version>`, create a single commit with message `chore: release v<version>` containing all changed files.
 
-8. **Tag**: Create a git tag `v<version>` on the release commit.
+8. **Pull request**: Push the branch and open a PR titled `chore: release v<version>`. Squash-merge it once CI passes and the user approves.
 
-9. **Push**: Push everything and create GitHub release.
+9. **Tag**: Pull `main`, create a git tag `v<version>` on the squash-merge commit, and push the tag.
+
+10. **GitHub release**: `gh release create v<version> --title v<version>` with notes set to the version's `CHANGELOG.md` section body (its `### ...` categories), followed by `**Full changelog:** https://github.com/svyatov/hacker_news_sorted/blob/v<version>/CHANGELOG.md`.

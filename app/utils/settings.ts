@@ -1,11 +1,8 @@
-import { Storage, type StorageCallbackMap } from '@plasmohq/storage';
-
 import { SETTINGS_DEFAULTS } from '~app/constants';
+import { settingsStorage } from '~app/utils/settingsStorage';
 
 type SettingKey = keyof typeof SETTINGS_DEFAULTS;
-export type SettingValues<K extends SettingKey> = { [P in K]: (typeof SETTINGS_DEFAULTS)[P] };
-
-const storage = new Storage();
+type SettingValues<K extends SettingKey> = { [P in K]: (typeof SETTINGS_DEFAULTS)[P] };
 
 // Calls onChange once every key has loaded (changed undefined), then once per change (changed = that key),
 // always with a full snapshot, defaults applied. A change that lands during the first read wins over it,
@@ -19,20 +16,16 @@ export const watchSettings = <K extends SettingKey>(
   let ready = false;
   let disposed = false;
 
-  const watchers: StorageCallbackMap = Object.fromEntries(
-    keys.map((key) => [
-      key,
-      (change: { newValue?: unknown }) => {
-        touched.add(key);
-        values[key] = (change.newValue as SettingValues<K>[K] | undefined) ?? SETTINGS_DEFAULTS[key];
-        if (ready) onChange({ ...values }, key);
-      },
-    ]),
+  const unwatchers = keys.map((key) =>
+    settingsStorage.watch<SettingValues<K>[K]>(key, (newValue) => {
+      touched.add(key);
+      values[key] = newValue ?? SETTINGS_DEFAULTS[key];
+      if (ready) onChange({ ...values }, key);
+    }),
   );
-  storage.watch(watchers);
 
   const read = async (key: K) => {
-    const stored = await storage.get<SettingValues<K>[K]>(key).catch(() => undefined);
+    const stored = await settingsStorage.get<SettingValues<K>[K]>(key).catch(() => undefined);
     if (!touched.has(key)) values[key] = stored ?? SETTINGS_DEFAULTS[key];
   };
 
@@ -44,6 +37,6 @@ export const watchSettings = <K extends SettingKey>(
 
   return () => {
     disposed = true;
-    storage.unwatch(watchers);
+    for (const unwatch of unwatchers) unwatch();
   };
 };

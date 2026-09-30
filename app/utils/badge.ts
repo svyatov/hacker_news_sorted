@@ -1,8 +1,10 @@
-import { SETTINGS_KEYS } from '~app/constants';
+import { storage } from '#imports';
+
+import { LAYOUT_OK_STORAGE_KEY } from '~app/constants';
 
 // Badge logic lives here (framework-agnostic, unit-tested) while entrypoints/background.ts is a thin
-// defineBackground shell that calls initBadge() — mirroring the app/utils + entrypoint split used
-// for the comment script (KTD-2). Behavior is identical to the pre-WXT root background.ts.
+// defineBackground shell that calls initBadge(), mirroring the app/utils + entrypoint split used
+// for the comment script (KTD-2).
 
 function updateBadge(ok: boolean): void {
   chrome.action.setBadgeText({ text: ok ? '' : ':(' });
@@ -12,13 +14,10 @@ function updateBadge(ok: boolean): void {
 
 export function initBadge(): void {
   // Restore badge state on service worker restart.
-  chrome.storage.sync.get(SETTINGS_KEYS.LAYOUT_OK, (result) => {
-    if (result[SETTINGS_KEYS.LAYOUT_OK] === false) updateBadge(false);
+  storage.getItem(LAYOUT_OK_STORAGE_KEY).then((ok) => {
+    if (ok === false) updateBadge(false);
   });
 
   // React to layout status changes.
-  chrome.storage.sync.onChanged.addListener((changes) => {
-    const change = changes[SETTINGS_KEYS.LAYOUT_OK];
-    if (change) updateBadge(change.newValue !== false);
-  });
+  storage.watch(LAYOUT_OK_STORAGE_KEY, (ok) => updateBadge(ok !== false));
 }

@@ -21,7 +21,6 @@
     "postinstall": "wxt prepare"
   },
   "dependencies": {
-    "@plasmohq/storage": "^1.15.0",
     "baseline-browser-mapping": "^2.11.25",
     "caniuse-lite": "^1.0.30001810",
     "react": "^19.3.0",
