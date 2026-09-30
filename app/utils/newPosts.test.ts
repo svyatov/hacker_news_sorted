@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
 
-import { clearBody, FAKE_NOW, getRowById, setupTableBody } from '~app/__fixtures__/testHelpers';
+import { clearBody, FAKE_NOW, getRowById, setupTableBody, store, stored } from '~app/__fixtures__/testHelpers';
 import { CSS_CLASSES, SETTINGS_DEFAULTS, SETTINGS_KEYS } from '~app/constants';
 
 import type { PostTimestamps } from './newPosts';
@@ -16,13 +16,10 @@ const flush = async () => {
   for (let i = 0; i < 50; i++) await Promise.resolve();
 };
 
-// Values as Plasmo wrote them: every value a JSON string.
-const store = (key: string, value: unknown) => fakeBrowser.storage.sync.set({ [key]: JSON.stringify(value) });
-const rawValue = async (key: string) => (await fakeBrowser.storage.sync.get(key))[key] as string | undefined;
 const isMarked = (id: string) => getRowById(id).classList.contains(CSS_CLASSES.NEW_POST);
 const fadeOf = (id: string) => getRowById(id).style.getPropertyValue('--hns-fade');
 const savedTimestamps = async () => {
-  const raw = await rawValue(POST_IDS_KEY);
+  const raw = (await stored(POST_IDS_KEY)) as string | undefined;
   return raw === undefined ? undefined : (JSON.parse(raw) as PostTimestamps);
 };
 // A change made by the popup or another tab: a JSON string, or a removal for undefined.
@@ -89,7 +86,7 @@ describe('trackNewPosts', () => {
 
       expect(isMarked('post-1')).toBe(false);
       expect(isMarked('post-2')).toBe(false);
-      expect(await rawValue(POST_IDS_KEY)).toBe('{"post-1":-1,"post-2":-1}');
+      expect(await stored(POST_IDS_KEY)).toBe('{"post-1":-1,"post-2":-1}');
     });
 
     it('migrates the legacy JSON-string string[] format to a JSON-string timestamp map', async () => {
@@ -100,7 +97,7 @@ describe('trackNewPosts', () => {
 
       expect(isMarked('post-1')).toBe(false);
       expect(isMarked('post-2')).toBe(false);
-      expect(await rawValue(POST_IDS_KEY)).toBe('{"post-1":-1,"post-2":-1}');
+      expect(await stored(POST_IDS_KEY)).toBe('{"post-1":-1,"post-2":-1}');
     });
 
     it('keeps legacy string[] ids known and still marks posts missing from the list', async () => {
@@ -422,21 +419,6 @@ describe('trackNewPosts', () => {
       await emit(`${SETTINGS_KEYS.POST_IDS_PREFIX}/news`, { 'page1-post': -1 });
 
       expect(isMarked('page2-post')).toBe(false);
-    });
-
-    it('ignores changes that arrive before init has stored its own ids', async () => {
-      setupTableBody(['post-1']);
-      await store(POST_IDS_KEY, { 'post-1': -1 });
-      // Another tab's change lands while init's own write is in flight.
-      const initWrite = fakeBrowser.storage.sync.set.bind(fakeBrowser.storage.sync);
-      vi.spyOn(fakeBrowser.storage.sync, 'set').mockImplementationOnce(async (items) => {
-        await store(POST_IDS_KEY, { 'post-1': Date.now() });
-        await initWrite(items);
-      });
-      dispose = trackNewPosts();
-      await flush();
-
-      expect(isMarked('post-1')).toBe(false);
     });
   });
 

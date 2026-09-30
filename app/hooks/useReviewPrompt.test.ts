@@ -1,17 +1,13 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { fakeBrowser } from 'wxt/testing/fake-browser';
 
+import { flush, store, stored } from '~app/__fixtures__/testHelpers';
 import { REVIEW_PROMPT_DAYS, REVIEW_PROMPT_SORTS, SETTINGS_KEYS } from '~app/constants';
 
 import { shouldPrompt, useReviewPrompt } from './useReviewPrompt';
 
 const MS_PER_DAY = 86_400_000;
 
-const flush = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)));
-// Values as Plasmo wrote them: every value a JSON string.
-const store = (key: string, value: unknown) => fakeBrowser.storage.sync.set({ [key]: JSON.stringify(value) });
-const stored = async (key: string) => (await fakeBrowser.storage.sync.get(key))[key];
 const mount = async () => {
   const hook = renderHook(() => useReviewPrompt());
   await flush();
@@ -58,7 +54,7 @@ describe('useReviewPrompt', () => {
   it('records the install timestamp as a JSON string on first run', async () => {
     await mount();
 
-    expect(JSON.parse((await stored(SETTINGS_KEYS.INSTALL_TIMESTAMP)) as string)).toEqual(expect.any(Number));
+    expect(await stored(SETTINGS_KEYS.INSTALL_TIMESTAMP)).toMatch(/^\d+$/);
   });
 
   it('does not overwrite an existing install timestamp', async () => {
