@@ -38,7 +38,7 @@ export const useSettings = (): UseSettingsReturn => {
 
   const setActiveSort = useCallback((sort: SortVariant) => {
     setActiveSortState(sort);
-    settingsStorage.set(SETTINGS_KEYS.LAST_ACTIVE_SORT, sort);
+    void settingsStorage.set(SETTINGS_KEYS.LAST_ACTIVE_SORT, sort);
   }, []);
 
   useEffect(

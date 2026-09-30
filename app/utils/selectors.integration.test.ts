@@ -59,7 +59,7 @@ describe('selectors (integration with live HN HTML)', () => {
     const html = loadHNHomepage();
     setupDocument(html);
     // Written by updateFixture.ts; the reference "now" the fixture's age texts were rendered against
-    const fetchedAt = Date.parse(html.match(/^<!-- hns-fetched-at: (\S+) -->/)![1]!) / 1000;
+    const fetchedAt = Date.parse(/^<!-- hns-fetched-at: (\S+) -->/.exec(html)![1]!) / 1000;
     const rows = getInfoRows().filter((row) => getTimeElement(row));
 
     let agreeing = 0;

@@ -104,7 +104,9 @@ describe('sorters', () => {
       const recent = createMockRow({ originalIndex: 0, points: 100, time: NOW_SEC - SECONDS_PER_HOUR });
       const noTime = createMockRow({ originalIndex: 1, points: 100, time: 0 });
       let sorted: ParsedRow[] = [];
-      expect(() => (sorted = sortRows([recent, noTime], 'velocity'))).not.toThrow();
+      expect(() => {
+        sorted = sortRows([recent, noTime], 'velocity');
+      }).not.toThrow();
       // huge age → tiny finite velocity → ranks last, never NaN/Infinity
       expect(sorted.map((r) => r.originalIndex)).toEqual([0, 1]);
     });
@@ -114,7 +116,9 @@ describe('sorters', () => {
       const future = createMockRow({ originalIndex: 0, points: 100, time: NOW_SEC + 5 * SECONDS_PER_HOUR });
       const normal = createMockRow({ originalIndex: 1, points: 100, time: NOW_SEC - SECONDS_PER_HOUR });
       let sorted: ParsedRow[] = [];
-      expect(() => (sorted = sortRows([future, normal], 'velocity'))).not.toThrow();
+      expect(() => {
+        sorted = sortRows([future, normal], 'velocity');
+      }).not.toThrow();
       // age clamps to 0 → 100/2 = 50 (finite, positive), above normal's 100/3 ≈ 33.3;
       // without the clamp the denominator would go negative and wrongly sink it last.
       expect(sorted.map((r) => r.originalIndex)).toEqual([0, 1]);

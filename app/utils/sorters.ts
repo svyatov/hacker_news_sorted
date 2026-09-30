@@ -34,6 +34,5 @@ export const sortRows = (parsedRows: ParsedRow[], sortBy: SortVariant): ParsedRo
   }
 };
 
-const sortByValue = (parsedRows: ParsedRow[], getValue: (row: ParsedRow) => number): ParsedRow[] => {
-  return [...parsedRows].sort((rowA, rowB) => getValue(rowB) - getValue(rowA));
-};
+const sortByValue = (parsedRows: ParsedRow[], getValue: (row: ParsedRow) => number): ParsedRow[] =>
+  [...parsedRows].sort((rowA, rowB) => getValue(rowB) - getValue(rowA));

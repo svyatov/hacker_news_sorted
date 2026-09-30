@@ -9,9 +9,11 @@ import type { Page } from 'playwright';
 // against the real page URL, so the page stays fully styled, and those static assets aren't throttled.
 const CACHE_DIR = path.join(import.meta.dirname, '.hn-cache');
 const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 1 day
+const URL_SCHEME = /^https?:\/\//;
+const NON_ALNUM_RUN = /[^a-z0-9]+/gi;
 
 function cacheFileFor(url: string): string {
-  const slug = url.replace(/^https?:\/\//, '').replace(/[^a-z0-9]+/gi, '_');
+  const slug = url.replace(URL_SCHEME, '').replace(NON_ALNUM_RUN, '_');
   return path.join(CACHE_DIR, `${slug}.html`);
 }
 
