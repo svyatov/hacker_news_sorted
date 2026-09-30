@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The layout-health flag and the toolbar badge now use WXT storage and keep the flag a raw boolean, so the `:(` badge and the popup warning behave as before, including with an older version on another synced device (internal restructuring with no change to any user-facing feature)
 - A development build uses a color-swapped icon (white background, orange mark), so it is easy to tell apart from the store version
 - Remove the `@plasmohq/storage` dependency: every setting now goes through WXT storage with the same stored format (internal cleanup with no change to any user-facing feature)
+- Update dependencies, including React 19.3, Vite 8.3, and Playwright 1.63 (internal toolchain update with no change to any user-facing feature)
 
 ### Fixed
 
