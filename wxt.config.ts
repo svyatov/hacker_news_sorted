@@ -34,5 +34,8 @@ export default defineConfig({
   // Reuse the already-installed React plugin rather than adding @wxt-dev/module-react.
   vite: () => ({
     plugins: [react()],
+    // Vite's dev dependency scan defaults to every **/*.html in the repo, and its outDir ignore misses WXT's
+    // absolute outDir, so it crawled build output (rewritten mid-scan: UNRESOLVED_ENTRY), fixtures, and docs.
+    optimizeDeps: { entries: ['entrypoints/**/*.html'] },
   }),
 });
