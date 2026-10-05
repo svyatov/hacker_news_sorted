@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Comment navigator cleanup checks now detect pending or later callback work after disposal; its toolbar class uses the shared constants registry (internal verification and organization, with no user-facing behavior change)
 - Comment highlighting now uses one start/dispose lifecycle: replacing the content script removes its controls and listeners while preserving per-thread marks and live popup settings
 - New logo: the toolbar icon, the development icon, the Chrome Web Store icon, and the promo tiles use the new rounded-square mark, and the promo tiles add the "Hacker News Sorted" wordmark
 - The Velocity and Heat menu tooltips now say what each sort ranks: "fastest-rising posts (points per hour)" and "most-discussed posts (comments per point)"

@@ -28,11 +28,18 @@ beforeEach(() => {
   vi.stubGlobal(
     'ResizeObserver',
     class {
+      private readonly targets = new Set<Element>();
       constructor(callback: () => void) {
-        resize = callback;
+        resize = () => {
+          if (this.targets.size > 0) callback();
+        };
       }
-      observe() {}
-      disconnect() {}
+      observe(target: Element) {
+        this.targets.add(target);
+      }
+      disconnect() {
+        this.targets.clear();
+      }
     },
   );
   vi.stubGlobal('location', { search: '?id=1' });
@@ -54,6 +61,7 @@ beforeEach(() => {
 
 afterEach(() => {
   dispose();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   clearBody();
 });
@@ -241,6 +249,48 @@ describe('comment enhancement lifecycle', () => {
     expect(screen.queryByRole('navigation')).toBeNull();
     next.click();
     expect(scroll).not.toHaveBeenCalled();
+  });
+
+  it('cancels pending navigator work on disposal', async () => {
+    vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'cancelAnimationFrame'] });
+    await start();
+    vi.advanceTimersToNextFrame();
+    const measure = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect');
+    resize();
+    vi.advanceTimersToNextFrame();
+    expect(measure).toHaveBeenCalled();
+    measure.mockClear();
+
+    resize();
+    dispose();
+    await Promise.resolve();
+    vi.advanceTimersToNextFrame();
+    expect(measure).not.toHaveBeenCalled();
+    expect(screen.queryByRole('navigation')).toBeNull();
+  });
+
+  it.each([
+    ['collapse', () => getRowById('op1').classList.toggle('coll')],
+    ['resize', () => resize()],
+  ] as const)('stops navigator work from later %s events after disposal', async (_event, trigger) => {
+    vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'cancelAnimationFrame'] });
+    await start();
+    vi.advanceTimersToNextFrame();
+    const measure = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect');
+    trigger();
+    await Promise.resolve();
+    vi.advanceTimersToNextFrame();
+    expect(measure).toHaveBeenCalled();
+
+    dispose();
+    await Promise.resolve();
+    vi.advanceTimersToNextFrame();
+    measure.mockClear();
+    trigger();
+    await Promise.resolve();
+    vi.advanceTimersToNextFrame();
+    expect(measure).not.toHaveBeenCalled();
+    expect(screen.queryByRole('navigation')).toBeNull();
   });
 
   it('uses only the account on each page load, preserving old self-marks without applying them', async () => {
