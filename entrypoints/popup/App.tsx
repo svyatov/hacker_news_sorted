@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 
 import { COOLDOWN_BOUNDS, CWS_REVIEW_URL, SETTINGS_DEFAULTS, SETTINGS_KEYS } from '~app/constants';
+import type { CommentNavigationOrder } from '~app/types';
 import { watchSettings } from '~app/utils/settings';
 import { settingsStorage } from '~app/utils/settingsStorage';
 
@@ -101,6 +102,8 @@ const Popup = () => {
   const [heatEnabled, setHeatEnabled] = useSettingsStorage(SETTINGS_KEYS.HEAT_ENABLED);
   const [opHighlight, setOpHighlight] = useSettingsStorage(SETTINGS_KEYS.OP_HIGHLIGHT);
   const [markUserHighlight, setMarkUserHighlight] = useSettingsStorage(SETTINGS_KEYS.MARK_USER_HIGHLIGHT);
+  const [commentNavigation, setCommentNavigation] = useSettingsStorage(SETTINGS_KEYS.COMMENT_NAVIGATION);
+  const [navigationOrder, setNavigationOrder] = useSettingsStorage(SETTINGS_KEYS.COMMENT_NAVIGATION_ORDER);
   const [layoutOk] = useSettingsStorage(SETTINGS_KEYS.LAYOUT_OK);
   // useSettingsStorage renders with the default value first, then async-loads the stored value.
   // When stored !== default, the CSS transition animates the toggle visibly (on→off flash).
@@ -193,6 +196,32 @@ const Popup = () => {
           checked={markUserHighlight}
           onChange={setMarkUserHighlight}
         />
+      </fieldset>
+
+      <fieldset className="hns-group">
+        <Toggle
+          name="comment-navigation"
+          label="Comment navigation"
+          hint="Show the sticky bar and enable [ / ] shortcuts"
+          checked={commentNavigation}
+          onChange={setCommentNavigation}
+        />
+        <div className="hns-setting hns-setting-child">
+          <label htmlFor="navigation-order" className="hns-setting-label">
+            <span>Navigation order</span>
+            <span className="hns-hint">Thread order follows the page</span>
+          </label>
+          <select
+            id="navigation-order"
+            aria-label="Navigation order"
+            className="hns-select-input"
+            value={navigationOrder === 'thread' ? 'thread' : 'chronological'}
+            disabled={!commentNavigation}
+            onChange={(e) => setNavigationOrder(e.target.value as CommentNavigationOrder)}>
+            <option value="chronological">Oldest first</option>
+            <option value="thread">Thread order</option>
+          </select>
+        </div>
       </fieldset>
 
       <div className="hns-review-link">

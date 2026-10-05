@@ -210,3 +210,24 @@ h1 {
   outline-offset: 1px;
   border-color: transparent;
 }
+
+.hns-select-input {
+  max-width: 140px;
+  min-height: 28px;
+  margin-left: 12px;
+  padding: 3px 4px;
+  border: 1px solid var(--hns-input-border);
+  border-radius: 4px;
+  background: var(--hns-input-bg);
+  color: var(--hns-text);
+  font: inherit;
+}
+
+.hns-select-input:disabled {
+  opacity: 0.5;
+}
+
+.hns-select-input:focus-visible {
+  outline: 2px solid #ff6600;
+  outline-offset: 1px;
+}

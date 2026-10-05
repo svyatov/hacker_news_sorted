@@ -1,5 +1,7 @@
 import { CSS_CLASSES, DOT_USER_ATTR, HN_SELECTORS, MARK_STORAGE_PREFIX, SETTINGS_KEYS } from '~app/constants';
+import type { CommentNavigationOrder } from '~app/types';
 import { getItemId, isStoryPage } from '~app/utils/pages';
+import { parseAgeTitle } from '~app/utils/parsers';
 import { watchSettings } from '~app/utils/settings';
 
 type HighlightKind = 'op' | 'marked' | 'own';
@@ -122,9 +124,11 @@ const nextMark = (current: string | null, clicked: string): string | null => (cu
 
 type NavigationGroup = 'op' | 'marked' | 'own';
 
-const createNavigator = (signal: AbortSignal) => {
+const createNavigator = () => {
   const tree = document.querySelector<HTMLElement>(HN_SELECTORS.COMMENT_TREE);
   if (!tree) return null;
+  const controller = new AbortController();
+  const { signal } = controller;
   const toolbar = document.createElement('nav');
   toolbar.className = CSS_CLASSES.COMMENT_NAVIGATION;
   toolbar.setAttribute('aria-label', 'Comment navigation');
@@ -138,26 +142,37 @@ const createNavigator = (signal: AbortSignal) => {
   group.append(empty, opOption, markedOption, ownOption);
   const previous = document.createElement('button');
   previous.type = 'button';
-  previous.textContent = 'Previous [';
+  previous.textContent = '[ Prev';
   previous.setAttribute('aria-label', 'Previous');
-  previous.title = 'Previous comment ([). Shortcut conflict detection is best-effort.';
   const next = document.createElement('button');
   next.type = 'button';
   next.textContent = 'Next ]';
   next.setAttribute('aria-label', 'Next');
-  next.title = 'Next comment (]). Shortcut conflict detection is best-effort.';
   const status = document.createElement('span');
   status.setAttribute('role', 'status');
-  toolbar.append(group, previous, next, status);
+  toolbar.append(status, previous, next, group);
   tree.before(toolbar);
   let selected: NavigationGroup | null = null;
+  let order: CommentNavigationOrder = 'chronological';
   let initialized = false;
   let authors: Record<NavigationGroup, string | null> = { op: null, marked: null, own: null };
   let landed: { row: HTMLElement; scroll: number; top: number; anchor: number } | null = null;
   let before: HTMLElement | undefined;
   let after: HTMLElement | undefined;
   let frame = 0;
+  let motionFrame = 0;
   let shortcutsDisabled = false;
+  const stopMotion = (): void => {
+    cancelAnimationFrame(motionFrame);
+    motionFrame = 0;
+    landed = null;
+  };
+  const interruptMotion = (event: Event): void => {
+    if (event.type !== 'wheel' && event.composedPath().some((target) => target === previous || target === next)) return;
+    if (motionFrame) stopMotion();
+  };
+  for (const event of ['wheel', 'touchstart', 'pointerdown'])
+    window.addEventListener(event, interruptMotion, { signal, passive: true });
   const matches = (role: NavigationGroup): HTMLElement[] =>
     getCommentRows().filter(
       (row) =>
@@ -166,7 +181,15 @@ const createNavigator = (signal: AbortSignal) => {
         !row.classList.contains('coll') &&
         row.getClientRects().length > 0,
     );
+  // A 6px gap keeps the preceding reply link fully under the sticky toolbar.
+  const getAnchor = (): number => toolbar.getBoundingClientRect().height + 6;
   const update = (): void => {
+    toolbar.setAttribute(
+      'aria-description',
+      order === 'thread' ? 'Comments ordered as they appear in the thread.' : 'Comments ordered from oldest to newest.',
+    );
+    previous.title = `${order === 'thread' ? 'Previous' : 'Older'} comment ([). Shortcut conflict detection is best-effort.`;
+    next.title = `${order === 'thread' ? 'Next' : 'Newer'} comment (]). Shortcut conflict detection is best-effort.`;
     opOption.disabled = !authors.op;
     markedOption.disabled = !authors.marked;
     ownOption.disabled = !authors.own;
@@ -175,8 +198,20 @@ const createNavigator = (signal: AbortSignal) => {
       initialized = true;
     }
     group.value = selected ?? '';
-    const rows = selected ? matches(selected) : [];
-    const anchor = toolbar.getBoundingClientRect().height + 8;
+    const visibleRows = selected ? matches(selected) : [];
+    const rows =
+      order === 'thread'
+        ? visibleRows
+        : visibleRows
+            .map((row) => ({
+              row,
+              time:
+                parseAgeTitle(row.querySelector(HN_SELECTORS.COMMENT_TIME)?.getAttribute('title') ?? '') ||
+                Number.POSITIVE_INFINITY,
+            }))
+            .sort((a, b) => a.time - b.time)
+            .map(({ row }) => row);
+    const anchor = getAnchor();
     if (
       landed &&
       (landed.scroll !== window.scrollY ||
@@ -184,7 +219,7 @@ const createNavigator = (signal: AbortSignal) => {
         landed.top !== landed.row.getBoundingClientRect().top ||
         landed.anchor !== anchor)
     )
-      landed = null;
+      stopMotion();
     const current = rows.findIndex((row) =>
       landed ? row === landed.row : Math.abs(row.getBoundingClientRect().top - anchor) <= 1,
     );
@@ -193,9 +228,16 @@ const createNavigator = (signal: AbortSignal) => {
       after = rows[current + 1];
       status.textContent = `${current + 1} of ${rows.length} on page`;
     } else {
-      before = rows.filter((row) => row.getBoundingClientRect().top < anchor).at(-1);
-      after = rows.find((row) => row.getBoundingClientRect().top > anchor);
-      const index = before ? rows.indexOf(before) + 1 : 0;
+      // Manual scrolling establishes a reading origin in visual order; navigation
+      // then follows its chronological neighbors, which can be elsewhere on the page.
+      const preceding = visibleRows.filter((row) => row.getBoundingClientRect().top < anchor).at(-1);
+      const index = visibleRows.some((row) => row.getBoundingClientRect().top > anchor)
+        ? preceding
+          ? rows.indexOf(preceding) + 1
+          : 0
+        : rows.length;
+      before = rows[index - 1];
+      after = rows[index];
       status.textContent =
         selected && !authors[selected]
           ? `${group.selectedOptions[0]!.textContent} unavailable`
@@ -207,6 +249,7 @@ const createNavigator = (signal: AbortSignal) => {
                 ? `After ${index} of ${rows.length} on page`
                 : `Between ${index} and ${index + 1} of ${rows.length} on page`;
     }
+    status.title = status.textContent;
     previous.disabled = !before;
     next.disabled = !after;
   };
@@ -228,23 +271,48 @@ const createNavigator = (signal: AbortSignal) => {
     update();
     const row = direction === 'previous' ? before : after;
     if (!row) return;
-    window.scrollTo({
-      top: window.scrollY + row.getBoundingClientRect().top - toolbar.getBoundingClientRect().height - 8,
-      behavior: 'instant',
-    });
-    landed = {
-      row,
-      scroll: window.scrollY,
-      top: row.getBoundingClientRect().top,
-      anchor: toolbar.getBoundingClientRect().height + 8,
+    stopMotion();
+    const origin = window.scrollY;
+    const destination = origin + row.getBoundingClientRect().top - getAnchor();
+    const rememberLanding = (): void => {
+      landed = {
+        row,
+        scroll: window.scrollY,
+        top: row.getBoundingClientRect().top,
+        anchor: getAnchor(),
+      };
+      update();
     };
-    update();
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      window.scrollTo({ top: destination, behavior: 'instant' });
+      rememberLanding();
+      return;
+    }
+    const started = performance.now();
+    const animate = (time: number): void => {
+      // Validate the saved landing before this frame can replace its geometry.
+      update();
+      if (!landed) return;
+      const progress = Math.min((time - started) / 180, 1);
+      const eased = 1 - (1 - progress) ** 3;
+      window.scrollTo({ top: origin + (destination - origin) * eased, behavior: 'instant' });
+      rememberLanding();
+      motionFrame = progress < 1 ? requestAnimationFrame(animate) : 0;
+    };
+    motionFrame = requestAnimationFrame(animate);
+    // Repeated navigation advances from the intended target while it is in flight.
+    rememberLanding();
   };
   previous.addEventListener('click', () => jump('previous'), { signal });
   next.addEventListener('click', () => jump('next'), { signal });
   document.addEventListener(
     'keydown',
     (event) => {
+      if (
+        motionFrame &&
+        ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' ', 'Escape'].includes(event.key)
+      )
+        stopMotion();
       if (event.key !== '[' && event.key !== ']') return;
       if (event.ctrlKey || event.altKey || event.metaKey || event.shiftKey || event.isComposing) return;
       if (
@@ -276,17 +344,26 @@ const createNavigator = (signal: AbortSignal) => {
     'change',
     () => {
       selected = group.value as NavigationGroup;
-      landed = null;
+      stopMotion();
       update();
     },
     { signal },
   );
   return {
-    reconcile: (op: string | null, marked: string | null, own: string | null): void => {
+    reconcile: (
+      op: string | null,
+      marked: string | null,
+      own: string | null,
+      navigationOrder: CommentNavigationOrder,
+    ): void => {
+      stopMotion();
+      order = navigationOrder;
       authors = { op, marked, own };
       update();
     },
     dispose: (): void => {
+      controller.abort();
+      stopMotion();
       observer.disconnect();
       resizeObserver.disconnect();
       cancelAnimationFrame(frame);
@@ -334,22 +411,39 @@ export const startCommentEnhancements = (): (() => void) => {
     setMarkedUser(nextMark(getMarkedUser(), username));
     apply();
   };
-  const unwatch = watchSettings([SETTINGS_KEYS.OP_HIGHLIGHT, SETTINGS_KEYS.MARK_USER_HIGHLIGHT], (values) => {
-    navigator ??= createNavigator(controller.signal);
-    apply = () => {
-      applyCommentEnhancements({
-        opEnabled: values[SETTINGS_KEYS.OP_HIGHLIGHT],
-        markEnabled: values[SETTINGS_KEYS.MARK_USER_HIGHLIGHT],
-        onMark,
-        signal: controller.signal,
-      });
-      const op = values[SETTINGS_KEYS.OP_HIGHLIGHT] && isStoryPage() ? getStoryAuthor() : null;
-      const marked = values[SETTINGS_KEYS.MARK_USER_HIGHLIGHT] ? getMarkedUser() : null;
-      const own = getLoggedInUser();
-      navigator?.reconcile(op, marked === own ? null : marked, own);
-    };
-    apply();
-  });
+  const unwatch = watchSettings(
+    [
+      SETTINGS_KEYS.OP_HIGHLIGHT,
+      SETTINGS_KEYS.MARK_USER_HIGHLIGHT,
+      SETTINGS_KEYS.COMMENT_NAVIGATION,
+      SETTINGS_KEYS.COMMENT_NAVIGATION_ORDER,
+    ],
+    (values) => {
+      if (values[SETTINGS_KEYS.COMMENT_NAVIGATION]) navigator ??= createNavigator();
+      else {
+        navigator?.dispose();
+        navigator = null;
+      }
+      apply = () => {
+        applyCommentEnhancements({
+          opEnabled: values[SETTINGS_KEYS.OP_HIGHLIGHT],
+          markEnabled: values[SETTINGS_KEYS.MARK_USER_HIGHLIGHT],
+          onMark,
+          signal: controller.signal,
+        });
+        const op = values[SETTINGS_KEYS.OP_HIGHLIGHT] && isStoryPage() ? getStoryAuthor() : null;
+        const marked = values[SETTINGS_KEYS.MARK_USER_HIGHLIGHT] ? getMarkedUser() : null;
+        const own = getLoggedInUser();
+        navigator?.reconcile(
+          op,
+          marked === own ? null : marked,
+          own,
+          values[SETTINGS_KEYS.COMMENT_NAVIGATION_ORDER] === 'thread' ? 'thread' : 'chronological',
+        );
+      };
+      apply();
+    },
+  );
 
   return () => {
     if (controller.signal.aborted) return;

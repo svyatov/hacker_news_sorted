@@ -15,6 +15,28 @@ const mount = async () => {
 };
 
 describe('Popup', () => {
+  it('persists navigation settings and follows changes from another popup', async () => {
+    await mount();
+    expect(screen.getByLabelText('Comment navigation')).toBeChecked();
+    expect(screen.getByLabelText('Navigation order')).toHaveValue('chronological');
+    fireEvent.change(screen.getByLabelText('Navigation order'), { target: { value: 'thread' } });
+    await flush();
+    expect(await stored(SETTINGS_KEYS.COMMENT_NAVIGATION_ORDER)).toBe('"thread"');
+    fireEvent.click(screen.getByLabelText('Comment navigation'));
+    await flush();
+    expect(await stored(SETTINGS_KEYS.COMMENT_NAVIGATION)).toBe('false');
+    expect(screen.getByLabelText('Navigation order')).toBeDisabled();
+    expect(screen.getByLabelText('Navigation order')).toHaveValue('thread');
+    await store({
+      [SETTINGS_KEYS.COMMENT_NAVIGATION]: true,
+      [SETTINGS_KEYS.COMMENT_NAVIGATION_ORDER]: 'chronological',
+    });
+    await flush();
+    expect(screen.getByLabelText('Comment navigation')).toBeChecked();
+    expect(screen.getByLabelText('Navigation order')).toBeEnabled();
+    expect(screen.getByLabelText('Navigation order')).toHaveValue('chronological');
+  });
+
   it('should not show warning when layout is ok', async () => {
     await store({ [SETTINGS_KEYS.LAYOUT_OK]: true });
     await mount();

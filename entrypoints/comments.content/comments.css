@@ -77,18 +77,18 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   align-items: center;
-  gap: 4px 6px;
+  gap: 4px;
   box-sizing: border-box;
   max-width: 100%;
-  padding: 6px 0;
+  padding: 8px 12px;
   border-bottom: 1px solid #d9d9d0;
   background: #f6f6ef;
-  color: #828282;
+  color: #6b6b63;
   font:
-    9pt Verdana,
+    8pt Verdana,
     Geneva,
     sans-serif;
 }
@@ -96,14 +96,25 @@
 .hns-comment-navigation select,
 .hns-comment-navigation button {
   box-sizing: border-box;
-  min-height: 28px;
+  min-height: 24px;
   max-width: 100%;
-  padding: 3px 6px;
-  border: 1px solid #b9b9b0;
+  padding: 4px 6px;
+  border: 1px solid transparent;
   border-radius: 3px;
   background: #f6f6ef;
-  color: #000;
+  color: inherit;
   font: inherit;
+}
+
+.hns-comment-navigation select {
+  margin-left: 4px;
+  border-color: #d9d9d0;
+}
+
+.hns-comment-navigation button:enabled:hover {
+  background: #eaeae2;
+  color: #000;
+  cursor: pointer;
 }
 
 .hns-comment-navigation button:disabled {
@@ -116,8 +127,20 @@
 }
 
 .hns-comment-navigation [role='status'] {
-  /* Keep position and conflict messages on their own rows so shorter position text
-     cannot change the toolbar height used as the navigation anchor. */
-  flex-basis: 100%;
+  text-align: right;
+}
+
+.hns-comment-navigation > [role='status']:first-child {
+  /* A single line keeps the scroll anchor stable across every position message.
+     Narrow screens truncate visually; the full status remains accessible and in the title. */
+  min-width: 0;
+  margin-right: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hns-comment-navigation > [role='status']:last-child {
+  grid-column: 1 / -1;
   overflow-wrap: anywhere;
 }

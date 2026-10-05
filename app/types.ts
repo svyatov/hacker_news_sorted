@@ -1,6 +1,7 @@
 import type { SETTINGS_KEYS } from '~app/constants';
 
 export type SortVariant = 'default' | 'points' | 'time' | 'comments' | 'velocity' | 'heat';
+export type CommentNavigationOrder = 'chronological' | 'thread';
 
 export type ParsedRow = {
   originalIndex: number;

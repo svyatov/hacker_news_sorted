@@ -26,6 +26,10 @@ const start = async (): Promise<void> => {
 
 beforeEach(() => {
   vi.stubGlobal(
+    'matchMedia',
+    vi.fn(() => ({ matches: true })),
+  );
+  vi.stubGlobal(
     'ResizeObserver',
     class {
       private readonly targets = new Set<Element>();
@@ -67,6 +71,357 @@ afterEach(() => {
 });
 
 describe('comment enhancement lifecycle', () => {
+  it('disables the bar and shortcuts independently of highlighting and can enable them again', async () => {
+    await store(SETTINGS_KEYS.COMMENT_NAVIGATION, false);
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 100, height: 32 } as DOMRect);
+    const move = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    await start();
+    expect(screen.queryByRole('navigation')).toBeNull();
+    expect(isOp('op1')).toBe(true);
+    dotIn('a1').click();
+    expect(isMarked('a1')).toBe(true);
+    expect(fireEvent.keyDown(document, { key: ']' })).toBe(true);
+    expect(move).not.toHaveBeenCalled();
+    await settingsStorage.set(SETTINGS_KEYS.COMMENT_NAVIGATION, true);
+    await flush();
+    const oldNext = screen.getByRole('button', { name: 'Next' });
+    expect(screen.getAllByRole('navigation')).toHaveLength(1);
+    await settingsStorage.set(SETTINGS_KEYS.COMMENT_NAVIGATION, false);
+    await flush();
+    oldNext.click();
+    expect(fireEvent.keyDown(document, { key: ']' })).toBe(true);
+    expect(move).not.toHaveBeenCalled();
+    expect(screen.queryByRole('navigation')).toBeNull();
+    expect(isOp('op1')).toBe(true);
+    expect(isMarked('a1')).toBe(true);
+    await settingsStorage.set(SETTINGS_KEYS.COMMENT_NAVIGATION, true);
+    await flush();
+    expect(screen.getAllByRole('navigation')).toHaveLength(1);
+    fireEvent.keyDown(document, { key: ']' });
+    expect(move).toHaveBeenCalledTimes(1);
+  });
+
+  it('switches between thread and chronological order live and defaults invalid orders to chronological', async () => {
+    await store(SETTINGS_KEYS.COMMENT_NAVIGATION_ORDER, 'thread');
+    getRowById('op2').classList.remove('coll');
+    getRowById('op2').querySelector('.age')!.setAttribute('title', '2026-07-06T17:00:00Z');
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return { top: this.id === 'op1' ? 100 : 500, height: 32 } as DOMRect;
+    });
+    const move = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    await start();
+    screen.getByRole('button', { name: 'Next' }).click();
+    expect(move).toHaveBeenLastCalledWith({ top: 62, behavior: 'instant' });
+    expect(screen.getByRole('navigation')).toHaveAttribute(
+      'aria-description',
+      'Comments ordered as they appear in the thread.',
+    );
+    await settingsStorage.set(SETTINGS_KEYS.COMMENT_NAVIGATION_ORDER, 'chronological');
+    await flush();
+    screen.getByRole('button', { name: 'Next' }).click();
+    expect(move).toHaveBeenLastCalledWith({ top: 462, behavior: 'instant' });
+    expect(screen.getByRole('navigation')).toHaveAttribute(
+      'aria-description',
+      'Comments ordered from oldest to newest.',
+    );
+    await settingsStorage.set(SETTINGS_KEYS.COMMENT_NAVIGATION_ORDER, 'unknown');
+    await flush();
+    screen.getByRole('button', { name: 'Next' }).click();
+    expect(move).toHaveBeenLastCalledWith({ top: 462, behavior: 'instant' });
+  });
+
+  it.each(['missing element', 'missing title', 'invalid title'])(
+    'keeps a comment with %s reachable after dated comments',
+    async (missing) => {
+      const age = getRowById('op1').querySelector('.age')!;
+      if (missing === 'missing element') age.remove();
+      else if (missing === 'missing title') age.removeAttribute('title');
+      else age.setAttribute('title', 'unknown');
+      getRowById('op2').classList.remove('coll');
+      vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
+      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+        return { top: this.id === 'op1' ? 100 : 500, height: 32 } as DOMRect;
+      });
+      const move = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+      await start();
+      screen.getByRole('button', { name: 'Next' }).click();
+      expect(move).toHaveBeenLastCalledWith({ top: 462, behavior: 'instant' });
+      screen.getByRole('button', { name: 'Next' }).click();
+      expect(move).toHaveBeenLastCalledWith({ top: 62, behavior: 'instant' });
+      expect(screen.getByRole('status')).toHaveTextContent('2 of 2 on page');
+    },
+  );
+
+  it.each(['op', 'marked', 'own'])('navigates %s oldest to newest without changing thread order', async (role) => {
+    setupCommentThread({
+      storyAuthor: 'reader',
+      comments: [
+        { id: 'newest', author: 'reader' },
+        { id: 'middle', author: 'reader' },
+        { id: 'oldest', author: 'reader' },
+      ],
+    });
+    const times = { newest: '2026-07-06T20:00:00Z', middle: '2026-07-06T19:00:00', oldest: '2026-07-06T18:00:00Z' };
+    for (const [id, title] of Object.entries(times)) getRowById(id).querySelector('.age')!.setAttribute('title', title);
+    if (role === 'own')
+      document.body.insertAdjacentHTML(
+        'afterbegin',
+        '<span class="pagetop"><a id="me" href="user?id=reader">reader</a></span>',
+      );
+    if (role === 'marked') {
+      await store(OP_HIGHLIGHT, false);
+      sessionStorage.setItem(`${MARK_STORAGE_PREFIX}1`, 'reader');
+    }
+    let scroll = 0;
+    const tops: Record<string, number> = { newest: 100, middle: 300, oldest: 500 };
+    vi.spyOn(window, 'scrollY', 'get').mockImplementation(() => scroll);
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return { top: (tops[this.id] ?? 0) - scroll, height: 32 } as DOMRect;
+    });
+    vi.spyOn(window, 'scrollTo').mockImplementation((options) => {
+      scroll = (options as ScrollToOptions).top!;
+    });
+    await start();
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: role } });
+    fireEvent.keyDown(document, { key: ']' });
+    expect(scroll).toBe(462);
+    expect(screen.getByRole('status')).toHaveTextContent('1 of 3 on page');
+    fireEvent.keyDown(document, { key: ']' });
+    expect(scroll).toBe(262);
+    fireEvent.keyDown(document, { key: ']' });
+    expect(scroll).toBe(62);
+    expect(screen.getByRole('status')).toHaveTextContent('3 of 3 on page');
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    fireEvent.keyDown(document, { key: '[' });
+    expect(scroll).toBe(262);
+    fireEvent.keyDown(document, { key: '[' });
+    expect(scroll).toBe(462);
+    expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
+    scroll = 350;
+    fireEvent.scroll(window);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    expect(screen.getByRole('status')).toHaveTextContent('Between 2 and 3 of 3 on page');
+    fireEvent.keyDown(document, { key: ']' });
+    expect(scroll).toBe(62);
+    expect([...document.querySelectorAll('tr.comtr')].map((row) => row.id)).toEqual(['newest', 'middle', 'oldest']);
+  });
+
+  it('animates navigation quickly, advances repeated keys, and retains a clamped landing', async () => {
+    await start();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    vi.mocked(window.matchMedia).mockReturnValue({ matches: false } as MediaQueryList);
+    vi.spyOn(performance, 'now').mockReturnValue(0);
+    const frames = new Map<number, FrameRequestCallback>();
+    let id = 0;
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      frames.set(++id, callback);
+      return id;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((frame) => {
+      frames.delete(frame);
+    });
+    const tick = (time: number) => {
+      const pending = [...frames.values()];
+      frames.clear();
+      for (const callback of pending) callback(time);
+    };
+    let scroll = 0;
+    vi.spyOn(window, 'scrollY', 'get').mockImplementation(() => scroll);
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return { top: (this.id === 'op1' ? 100 : 500) - scroll, height: 32 } as DOMRect;
+    });
+    const move = vi.spyOn(window, 'scrollTo').mockImplementation((options) => {
+      scroll = Math.min((options as ScrollToOptions).top!, 300);
+    });
+    getRowById('op2').classList.remove('coll');
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'op' } });
+    fireEvent.keyDown(document, { key: ']' });
+    expect(move).not.toHaveBeenCalled();
+    tick(90);
+    expect(scroll).toBeGreaterThan(0);
+    expect(scroll).toBeLessThan(62);
+    fireEvent.keyDown(document, { key: ']' });
+    tick(180);
+    expect(scroll).toBe(300);
+    expect(screen.getByRole('status')).toHaveTextContent('2 of 2 on page');
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    fireEvent.pointerDown(document.body);
+    fireEvent.scroll(window);
+    tick(180);
+    expect(screen.getByRole('status')).toHaveTextContent('2 of 2 on page');
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Previous' }));
+    fireEvent.keyDown(document, { key: '[' });
+    tick(180);
+    expect(scroll).toBe(62);
+    expect(screen.getByRole('status')).toHaveTextContent('1 of 2 on page');
+    expect(frames.size).toBe(0);
+  });
+
+  it.each([
+    ['pointerdown', 'Next'],
+    ['touchstart', 'Next'],
+    ['pointerdown', 'Previous'],
+    ['touchstart', 'Previous'],
+  ])('advances repeated %s presses on %s during motion', async (event, direction) => {
+    setupCommentThread({
+      storyAuthor: OP,
+      comments: ['first', 'second', 'third'].map((id) => ({ id, author: OP })),
+    });
+    let scroll = direction === 'Previous' ? 1462 : 0;
+    const tops: Record<string, number> = { first: 500, second: 1000, third: 1500 };
+    vi.spyOn(window, 'scrollY', 'get').mockImplementation(() => scroll);
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return { top: (tops[this.id] ?? 0) - scroll, height: 32 } as DOMRect;
+    });
+    vi.spyOn(window, 'scrollTo').mockImplementation((options) => {
+      scroll = (options as ScrollToOptions).top!;
+    });
+    await start();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    vi.mocked(window.matchMedia).mockReturnValue({ matches: false } as MediaQueryList);
+    const now = vi.spyOn(performance, 'now').mockReturnValue(0);
+    const frames = new Map<number, FrameRequestCallback>();
+    let id = 0;
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      frames.set(++id, callback);
+      return id;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((frame) => frames.delete(frame));
+    const tick = (time: number) => {
+      now.mockReturnValue(time);
+      for (const frame of [...frames.keys()]) {
+        const callback = frames.get(frame);
+        frames.delete(frame);
+        callback?.(time);
+      }
+    };
+    const button = screen.getByRole('button', { name: direction });
+    button.dispatchEvent(new Event(event, { bubbles: true }));
+    fireEvent.click(button);
+    tick(90);
+    button.dispatchEvent(new Event(event, { bubbles: true }));
+    fireEvent.click(button);
+    tick(270);
+    expect(scroll).toBe(direction === 'Next' ? 962 : 462);
+    expect(screen.getByRole('status')).toHaveTextContent(direction === 'Next' ? '2 of 3 on page' : '1 of 3 on page');
+    expect(frames.size).toBe(0);
+  });
+
+  it.each(['target', 'anchor'])('cancels motion when the %s shifts before the queued resize update', async (change) => {
+    let scroll = 0;
+    let targetTop = 500;
+    let height = 32;
+    vi.spyOn(window, 'scrollY', 'get').mockImplementation(() => scroll);
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return { top: (this.id === 'op1' ? targetTop : 0) - scroll, height } as DOMRect;
+    });
+    const move = vi.spyOn(window, 'scrollTo').mockImplementation((options) => {
+      scroll = (options as ScrollToOptions).top!;
+    });
+    await start();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    vi.mocked(window.matchMedia).mockReturnValue({ matches: false } as MediaQueryList);
+    const now = vi.spyOn(performance, 'now').mockReturnValue(0);
+    const frames = new Map<number, FrameRequestCallback>();
+    let id = 0;
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      frames.set(++id, callback);
+      return id;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((frame) => frames.delete(frame));
+    const tick = (time: number) => {
+      now.mockReturnValue(time);
+      for (const frame of [...frames.keys()]) {
+        const callback = frames.get(frame);
+        frames.delete(frame);
+        callback?.(time);
+      }
+    };
+    fireEvent.keyDown(document, { key: ']' });
+    tick(40);
+    expect(scroll).toBeGreaterThan(0);
+    expect(scroll).toBeLessThan(462);
+    if (change === 'target') targetTop = 1000;
+    else height = 64;
+    resize();
+    move.mockClear();
+    tick(90);
+    tick(180);
+    expect(move).not.toHaveBeenCalled();
+    expect(screen.getByRole('status')).toHaveTextContent('Before 1 of 1 on page');
+    expect(frames.size).toBe(0);
+    fireEvent.keyDown(document, { key: ']' });
+    tick(360);
+    expect(scroll).toBe(targetTop - height - 6);
+    expect(screen.getByRole('status')).toHaveTextContent('1 of 1 on page');
+  });
+
+  it.each([
+    'wheel',
+    'wheel over navigation',
+    'touchstart',
+    'pointerdown',
+    'keyboard',
+    'group',
+    'settings',
+    'dispose',
+    'scroll',
+  ])('cancels an in-flight scroll after %s', async (action) => {
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 100, height: 32 } as DOMRect);
+    await start();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    vi.mocked(window.matchMedia).mockReturnValue({ matches: false } as MediaQueryList);
+    const frames = new Map<number, FrameRequestCallback>();
+    let id = 0;
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      frames.set(++id, callback);
+      return id;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((frame) => {
+      frames.delete(frame);
+    });
+    const move = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    fireEvent.keyDown(document, { key: ']' });
+    expect(frames.size).toBe(1);
+    switch (action) {
+      case 'wheel over navigation':
+        fireEvent.wheel(screen.getByRole('button', { name: 'Next' }));
+        break;
+      case 'keyboard':
+        fireEvent.keyDown(document, { key: 'ArrowDown' });
+        break;
+      case 'group':
+        fireEvent.change(screen.getByRole('combobox'), { target: { value: 'marked' } });
+        break;
+      case 'settings':
+        await settingsStorage.set(OP_HIGHLIGHT, false);
+        await flush();
+        break;
+      case 'dispose':
+        dispose();
+        break;
+      case 'scroll':
+        vi.spyOn(window, 'scrollY', 'get').mockReturnValue(25);
+        fireEvent.scroll(window);
+        break;
+      default:
+        window.dispatchEvent(new Event(action));
+    }
+    const pending = [...frames.values()];
+    frames.clear();
+    for (const callback of pending) callback(180);
+    expect(frames.size).toBe(0);
+    expect(move).not.toHaveBeenCalled();
+  });
+
   it('keeps You shortcuts, empty states, unrelated keys and remount disposal consistent', async () => {
     document.body.insertAdjacentHTML(
       'afterbegin',
@@ -86,7 +441,7 @@ describe('comment enhancement lifecycle', () => {
     await start();
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'own' } });
     expect(fireEvent.keyDown(document, { key: ']' })).toBe(false);
-    expect(scroll).toBe(60);
+    expect(scroll).toBe(62);
     expect(screen.getByRole('status')).toHaveTextContent('1 of 2 on page');
     dispose();
     move.mockClear();
@@ -96,7 +451,7 @@ describe('comment enhancement lifecycle', () => {
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'own' } });
     fireEvent.keyDown(document, { key: ']' });
     expect(move).toHaveBeenCalledTimes(1);
-    expect(scroll).toBe(460);
+    expect(scroll).toBe(462);
     move.mockClear();
     expect(fireEvent.keyDown(document.body, { key: 'Tab' })).toBe(true);
     expect(fireEvent.keyDown(document.body, { key: 'p' })).toBe(true);
@@ -147,20 +502,20 @@ describe('comment enhancement lifecycle', () => {
     expect(screen.getByRole('navigation')).toHaveTextContent(']');
     expect(fireEvent.keyDown(document.body, { key: ']' })).toBe(true);
     screen.getByRole('button', { name: 'Next' }).click();
-    expect(scroll).toBe(60);
+    expect(scroll).toBe(62);
     dotIn('b1').click();
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'marked' } });
     expect(fireEvent.keyDown(document.body, { key: ']' })).toBe(true);
     expect(fireEvent.keyDown(document.body, { key: '[' })).toBe(true);
-    expect(scroll).toBe(60);
+    expect(scroll).toBe(62);
     screen.getByRole('button', { name: 'Next' }).click();
-    expect(scroll).toBe(460);
+    expect(scroll).toBe(462);
     dispose();
     expect(screen.queryByText(/Navigation shortcuts disabled/)).toBeNull();
     expect(fireEvent.keyDown(document.body, { key: '[' })).toBe(true);
     await start();
     fireEvent.keyDown(document.body, { key: '[' });
-    expect(scroll).toBe(60);
+    expect(scroll).toBe(62);
   });
 
   it.each(['input', 'button', 'summary'])('does not consume bracket interaction with a native %s', async (tag) => {
@@ -238,21 +593,21 @@ describe('comment enhancement lifecycle', () => {
     expect(fireEvent.keyDown(document.body, { key: '[' })).toBe(true);
     expect(scroll).toBe(0);
     expect(fireEvent.keyDown(document.body, { key: ']' })).toBe(false);
-    expect(scroll).toBe(60);
+    expect(scroll).toBe(62);
     expect(screen.getByRole('status')).toHaveTextContent('1 of 1 on page');
     expect(fireEvent.keyDown(document.body, { key: ']' })).toBe(true);
-    expect(scroll).toBe(60);
+    expect(scroll).toBe(62);
     dotIn('b1').click();
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'marked' } });
     fireEvent.keyDown(document.body, { key: ']' });
-    expect(scroll).toBe(460);
+    expect(scroll).toBe(462);
     expect(screen.getByRole('status')).toHaveTextContent('1 of 1 on page');
     scroll = 600;
     fireEvent.keyDown(document.body, { key: '[' });
-    expect(scroll).toBe(460);
+    expect(scroll).toBe(462);
     dotIn('b1').click();
     expect(fireEvent.keyDown(document.body, { key: '[' })).toBe(true);
-    expect(scroll).toBe(460);
+    expect(scroll).toBe(462);
     expect(screen.getByRole('status')).toHaveTextContent('Marked user unavailable');
   });
 
@@ -318,7 +673,7 @@ describe('comment enhancement lifecycle', () => {
 
   it('starts one OP navigator inside the comment surface, excluding collapsed matches', async () => {
     vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{ height: 20 }] as unknown as DOMRectList);
-    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 40, height: 32 } as DOMRect);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 38, height: 32 } as DOMRect);
     await start();
     const toolbar = screen.getByRole('navigation', { name: 'Comment navigation' });
     expect(toolbar.parentElement).toBe(document.querySelector('table.comment-tree')!.parentElement);
@@ -359,14 +714,14 @@ describe('comment enhancement lifecycle', () => {
       const previous = screen.getByRole('button', { name: 'Previous' });
       expect(screen.getByRole('status')).toHaveTextContent('Before 1 of 2 on page');
       next.click();
-      expect(scroll).toBe(60);
+      expect(scroll).toBe(62);
       expect(screen.getByRole('status')).toHaveTextContent('1 of 2 on page');
       next.click();
       expect(scroll).toBe(300);
       expect(screen.getByRole('status')).toHaveTextContent('2 of 2 on page');
       expect(next).toBeDisabled();
       previous.click();
-      expect(scroll).toBe(60);
+      expect(scroll).toBe(62);
       expect(previous).toBeDisabled();
       scroll = 200;
       fireEvent.scroll(window);
@@ -375,7 +730,7 @@ describe('comment enhancement lifecycle', () => {
       expect(previous).toBeEnabled();
       expect(next).toBeEnabled();
       previous.click();
-      expect(scroll).toBe(60);
+      expect(scroll).toBe(62);
       firstTop = 200;
       resize();
       await new Promise((resolve) => requestAnimationFrame(resolve));

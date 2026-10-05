@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Popup settings to disable the comment navigation bar and bracket shortcuts independently of highlighting, and to choose Oldest first or Thread order. The order preference is retained while navigation is off
 - Comment navigation shortcuts: `[` for Previous and `]` for Next in the selected OP, Marked user or You group, with visible key hints. Typing, native controls, composition and modified presses are left alone. Detected shortcut interception disables both keys for the page with an explanation while toolbar controls remain usable; conflict detection is best-effort
 
 - A sticky comment navigator for OP and Marked user, with Previous/Next and page-local visible counts. It follows the current reading position, skips collapsed branches, stops at both ends, and preserves the selected role through live marks and settings
@@ -17,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Comment navigation follows chronological order by default without rearranging HN's discussion, with quick, smooth scrolling that respects reduced motion
+- The comment toolbar uses a compact, right-aligned row with consistent padding, position text before the controls, and a bottom separator
 - Comment navigator cleanup checks now detect pending or later callback work after disposal; its toolbar class uses the shared constants registry (internal verification and organization, with no user-facing behavior change)
 - Comment highlighting now uses one start/dispose lifecycle: replacing the content script removes its controls and listeners while preserving per-thread marks and live popup settings
 - New logo: the toolbar icon, the development icon, the Chrome Web Store icon, and the promo tiles use the new rounded-square mark, and the promo tiles add the "Hacker News Sorted" wordmark
@@ -39,6 +42,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Repeated navigation clicks and taps during scrolling advance from the intended target instead of repeating it
+- Comment navigation cancels motion when the target or toolbar geometry changes, before an animation frame can overwrite the saved landing
+- Comment navigation stops with enough clearance to hide the preceding comment's reply-link fragment under the toolbar
 - Comment navigation status and boundary controls stay stable on narrow screens, including after a shortcut conflict
 - Posts on page 2 and later of a list no longer all show the new-post indicator (at full strength, without fading) when the first page of the same list loads in another tab
 - New-post indicators picked up from a visit in another tab now fade out over the highlight duration instead of staying until the page is reloaded
