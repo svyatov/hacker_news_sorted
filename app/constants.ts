@@ -83,7 +83,8 @@ export const CSS_CLASSES = {
   REVIEW_LINK: 'hns-review-link',
   REVIEW_SUB: 'hns-review-sub',
   REVIEW_CLOSE: 'hns-review-close',
-  // Comment-page highlighting (entrypoints/comments.content + comments.css)
+  // Comment-page enhancements (entrypoints/comments.content + comments.css)
+  COMMENT_NAVIGATION: 'hns-comment-navigation',
   OP_COMMENT: 'hns-op-comment',
   OP_BADGE: 'hns-op-badge',
   OWN_BADGE: 'hns-own-badge',

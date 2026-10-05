@@ -126,7 +126,7 @@ const createNavigator = (signal: AbortSignal) => {
   const tree = document.querySelector<HTMLElement>(HN_SELECTORS.COMMENT_TREE);
   if (!tree) return null;
   const toolbar = document.createElement('nav');
-  toolbar.className = 'hns-comment-navigation';
+  toolbar.className = CSS_CLASSES.COMMENT_NAVIGATION;
   toolbar.setAttribute('aria-label', 'Comment navigation');
   const group = document.createElement('select');
   group.setAttribute('aria-label', 'Comment group');
