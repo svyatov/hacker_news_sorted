@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.0] - 2026-10-05
+
 ### Added
 
 - A compact, right-aligned sticky comment navigator for OP, Marked user, and You, with Previous/Next, page-local visible counts, consistent padding, and a bottom separator. It starts with the first group with visible matches in that priority order, follows the current reading position, skips collapsed branches, stops at both ends, and preserves the selected role through live marks and settings. You is available for signed-in readers independently of highlight switches and shares OP destinations when you are the submitter
