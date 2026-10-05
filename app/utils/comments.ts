@@ -138,7 +138,7 @@ const createNavigator = (signal: AbortSignal) => {
   group.append(empty, opOption, markedOption, ownOption);
   const previous = document.createElement('button');
   previous.type = 'button';
-  previous.textContent = 'Previous [';
+  previous.textContent = '[ Prev';
   previous.setAttribute('aria-label', 'Previous');
   previous.title = 'Previous comment ([). Shortcut conflict detection is best-effort.';
   const next = document.createElement('button');
@@ -148,7 +148,7 @@ const createNavigator = (signal: AbortSignal) => {
   next.title = 'Next comment (]). Shortcut conflict detection is best-effort.';
   const status = document.createElement('span');
   status.setAttribute('role', 'status');
-  toolbar.append(group, previous, next, status);
+  toolbar.append(status, previous, next, group);
   tree.before(toolbar);
   let selected: NavigationGroup | null = null;
   let initialized = false;
@@ -207,6 +207,7 @@ const createNavigator = (signal: AbortSignal) => {
                 ? `After ${index} of ${rows.length} on page`
                 : `Between ${index} and ${index + 1} of ${rows.length} on page`;
     }
+    status.title = status.textContent;
     previous.disabled = !before;
     next.disabled = !after;
   };
