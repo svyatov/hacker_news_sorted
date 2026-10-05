@@ -150,6 +150,7 @@ export const HN_SELECTORS = {
   COMMENT_ROWS: 'tr.athing.comtr[id]',
   COMMENT_AUTHOR: '.hnuser', // relative to COMMENT_HEAD
   COMMENT_HEAD: '.comhead',
+  COMMENT_TIME: '.comhead .age',
 } as const;
 
 // HN CSS classes (for building test fixtures)

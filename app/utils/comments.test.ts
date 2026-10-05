@@ -71,6 +71,83 @@ afterEach(() => {
 });
 
 describe('comment enhancement lifecycle', () => {
+  it.each(['missing element', 'missing title', 'invalid title'])(
+    'keeps a comment with %s reachable after dated comments',
+    async (missing) => {
+      const age = getRowById('op1').querySelector('.age')!;
+      if (missing === 'missing element') age.remove();
+      else if (missing === 'missing title') age.removeAttribute('title');
+      else age.setAttribute('title', 'unknown');
+      getRowById('op2').classList.remove('coll');
+      vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
+      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+        return { top: this.id === 'op1' ? 100 : 500, height: 32 } as DOMRect;
+      });
+      const move = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+      await start();
+      screen.getByRole('button', { name: 'Next' }).click();
+      expect(move).toHaveBeenLastCalledWith({ top: 462, behavior: 'instant' });
+      screen.getByRole('button', { name: 'Next' }).click();
+      expect(move).toHaveBeenLastCalledWith({ top: 62, behavior: 'instant' });
+      expect(screen.getByRole('status')).toHaveTextContent('2 of 2 on page');
+    },
+  );
+
+  it.each(['op', 'marked', 'own'])('navigates %s oldest to newest without changing thread order', async (role) => {
+    setupCommentThread({
+      storyAuthor: 'reader',
+      comments: [
+        { id: 'newest', author: 'reader' },
+        { id: 'middle', author: 'reader' },
+        { id: 'oldest', author: 'reader' },
+      ],
+    });
+    const times = { newest: '2026-07-06T20:00:00Z', middle: '2026-07-06T19:00:00', oldest: '2026-07-06T18:00:00Z' };
+    for (const [id, title] of Object.entries(times)) getRowById(id).querySelector('.age')!.setAttribute('title', title);
+    if (role === 'own')
+      document.body.insertAdjacentHTML(
+        'afterbegin',
+        '<span class="pagetop"><a id="me" href="user?id=reader">reader</a></span>',
+      );
+    if (role === 'marked') {
+      await store(OP_HIGHLIGHT, false);
+      sessionStorage.setItem(`${MARK_STORAGE_PREFIX}1`, 'reader');
+    }
+    let scroll = 0;
+    const tops: Record<string, number> = { newest: 100, middle: 300, oldest: 500 };
+    vi.spyOn(window, 'scrollY', 'get').mockImplementation(() => scroll);
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return { top: (tops[this.id] ?? 0) - scroll, height: 32 } as DOMRect;
+    });
+    vi.spyOn(window, 'scrollTo').mockImplementation((options) => {
+      scroll = (options as ScrollToOptions).top!;
+    });
+    await start();
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: role } });
+    fireEvent.keyDown(document, { key: ']' });
+    expect(scroll).toBe(462);
+    expect(screen.getByRole('status')).toHaveTextContent('1 of 3 on page');
+    fireEvent.keyDown(document, { key: ']' });
+    expect(scroll).toBe(262);
+    fireEvent.keyDown(document, { key: ']' });
+    expect(scroll).toBe(62);
+    expect(screen.getByRole('status')).toHaveTextContent('3 of 3 on page');
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    fireEvent.keyDown(document, { key: '[' });
+    expect(scroll).toBe(262);
+    fireEvent.keyDown(document, { key: '[' });
+    expect(scroll).toBe(462);
+    expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
+    scroll = 350;
+    fireEvent.scroll(window);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    expect(screen.getByRole('status')).toHaveTextContent('Between 2 and 3 of 3 on page');
+    fireEvent.keyDown(document, { key: ']' });
+    expect(scroll).toBe(62);
+    expect([...document.querySelectorAll('tr.comtr')].map((row) => row.id)).toEqual(['newest', 'middle', 'oldest']);
+  });
+
   it('animates navigation quickly, advances repeated keys, and retains a clamped landing', async () => {
     await start();
     await new Promise((resolve) => requestAnimationFrame(resolve));

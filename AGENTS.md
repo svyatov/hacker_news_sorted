@@ -45,6 +45,8 @@ Comment navigator position text stays on one line before Previous, Next, and the
 
 Navigation animates for 180 ms with cubic ease-out, or moves instantly for reduced motion. Repeated bracket keys advance from the in-flight target. Manual scrolling, pointer/touch input, group/settings changes, layout invalidation, and disposal cancel the animation; completion retains the existing clamped-bottom landing behavior.
 
+Navigation orders each group's visible comments oldest to newest using the comment header's `.age` title and `parseAgeTitle`; equal timestamps retain DOM order, and missing/invalid timestamps sort last. HN's DOM order is unchanged. After manual scrolling, the preceding visible match establishes the reading origin, then Previous/Next follow chronological neighbors. Before or after the entire group in page geometry, navigation starts at the oldest or newest comment respectively.
+
 ### Background Service Worker
 
 - `entrypoints/background.ts` - Thin `defineBackground` shell that calls `initBadge()` from `app/utils/badge.ts` (badge logic lives in `app/` so it stays unit-testable, mirroring the comment script's app/utils + entrypoint split)

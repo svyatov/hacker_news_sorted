@@ -1,5 +1,6 @@
 import { CSS_CLASSES, DOT_USER_ATTR, HN_SELECTORS, MARK_STORAGE_PREFIX, SETTINGS_KEYS } from '~app/constants';
 import { getItemId, isStoryPage } from '~app/utils/pages';
+import { parseAgeTitle } from '~app/utils/parsers';
 import { watchSettings } from '~app/utils/settings';
 
 type HighlightKind = 'op' | 'marked' | 'own';
@@ -128,6 +129,7 @@ const createNavigator = (signal: AbortSignal) => {
   const toolbar = document.createElement('nav');
   toolbar.className = CSS_CLASSES.COMMENT_NAVIGATION;
   toolbar.setAttribute('aria-label', 'Comment navigation');
+  toolbar.setAttribute('aria-description', 'Comments ordered from oldest to newest.');
   const group = document.createElement('select');
   group.setAttribute('aria-label', 'Comment group');
   const empty = new Option('Choose group', '');
@@ -140,12 +142,12 @@ const createNavigator = (signal: AbortSignal) => {
   previous.type = 'button';
   previous.textContent = '[ Prev';
   previous.setAttribute('aria-label', 'Previous');
-  previous.title = 'Previous comment ([). Shortcut conflict detection is best-effort.';
+  previous.title = 'Older comment ([). Shortcut conflict detection is best-effort.';
   const next = document.createElement('button');
   next.type = 'button';
   next.textContent = 'Next ]';
   next.setAttribute('aria-label', 'Next');
-  next.title = 'Next comment (]). Shortcut conflict detection is best-effort.';
+  next.title = 'Newer comment (]). Shortcut conflict detection is best-effort.';
   const status = document.createElement('span');
   status.setAttribute('role', 'status');
   toolbar.append(status, previous, next, group);
@@ -188,7 +190,16 @@ const createNavigator = (signal: AbortSignal) => {
       initialized = true;
     }
     group.value = selected ?? '';
-    const rows = selected ? matches(selected) : [];
+    const visibleRows = selected ? matches(selected) : [];
+    const rows = visibleRows
+      .map((row) => ({
+        row,
+        time:
+          parseAgeTitle(row.querySelector(HN_SELECTORS.COMMENT_TIME)?.getAttribute('title') ?? '') ||
+          Number.POSITIVE_INFINITY,
+      }))
+      .sort((a, b) => a.time - b.time)
+      .map(({ row }) => row);
     const anchor = getAnchor();
     if (
       landed &&
@@ -206,9 +217,16 @@ const createNavigator = (signal: AbortSignal) => {
       after = rows[current + 1];
       status.textContent = `${current + 1} of ${rows.length} on page`;
     } else {
-      before = rows.filter((row) => row.getBoundingClientRect().top < anchor).at(-1);
-      after = rows.find((row) => row.getBoundingClientRect().top > anchor);
-      const index = before ? rows.indexOf(before) + 1 : 0;
+      // Manual scrolling establishes a reading origin in visual order; navigation
+      // then follows its chronological neighbors, which can be elsewhere on the page.
+      const preceding = visibleRows.filter((row) => row.getBoundingClientRect().top < anchor).at(-1);
+      const index = visibleRows.some((row) => row.getBoundingClientRect().top > anchor)
+        ? preceding
+          ? rows.indexOf(preceding) + 1
+          : 0
+        : rows.length;
+      before = rows[index - 1];
+      after = rows[index];
       status.textContent =
         selected && !authors[selected]
           ? `${group.selectedOptions[0]!.textContent} unavailable`
