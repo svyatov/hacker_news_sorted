@@ -43,6 +43,8 @@ The comment lifecycle also owns one native OP/Marked user/You navigator before `
 
 Comment navigator position text stays on one line before Previous, Next, and the group selector in a right-aligned grid. Narrow layouts truncate the position text, with the full message in its title; shortcut conflict messages use a separate full-width row. Keep the toolbar height stable across position changes because it is the navigation anchor. Browser regression checks must sample successive animation frames, since one snapshot can miss alternating status and button availability.
 
+Navigation animates for 180 ms with cubic ease-out, or moves instantly for reduced motion. Repeated bracket keys advance from the in-flight target. Manual scrolling, pointer/touch input, group/settings changes, layout invalidation, and disposal cancel the animation; completion retains the existing clamped-bottom landing behavior.
+
 ### Background Service Worker
 
 - `entrypoints/background.ts` - Thin `defineBackground` shell that calls `initBadge()` from `app/utils/badge.ts` (badge logic lives in `app/` so it stays unit-testable, mirroring the comment script's app/utils + entrypoint split)

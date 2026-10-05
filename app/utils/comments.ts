@@ -157,7 +157,18 @@ const createNavigator = (signal: AbortSignal) => {
   let before: HTMLElement | undefined;
   let after: HTMLElement | undefined;
   let frame = 0;
+  let motionFrame = 0;
   let shortcutsDisabled = false;
+  const stopMotion = (): void => {
+    cancelAnimationFrame(motionFrame);
+    motionFrame = 0;
+    landed = null;
+  };
+  const interruptMotion = (): void => {
+    if (motionFrame) stopMotion();
+  };
+  for (const event of ['wheel', 'touchstart', 'pointerdown'])
+    window.addEventListener(event, interruptMotion, { signal, passive: true });
   const matches = (role: NavigationGroup): HTMLElement[] =>
     getCommentRows().filter(
       (row) =>
@@ -166,6 +177,8 @@ const createNavigator = (signal: AbortSignal) => {
         !row.classList.contains('coll') &&
         row.getClientRects().length > 0,
     );
+  // A 6px gap keeps the preceding reply link fully under the sticky toolbar.
+  const getAnchor = (): number => toolbar.getBoundingClientRect().height + 6;
   const update = (): void => {
     opOption.disabled = !authors.op;
     markedOption.disabled = !authors.marked;
@@ -176,7 +189,7 @@ const createNavigator = (signal: AbortSignal) => {
     }
     group.value = selected ?? '';
     const rows = selected ? matches(selected) : [];
-    const anchor = toolbar.getBoundingClientRect().height + 8;
+    const anchor = getAnchor();
     if (
       landed &&
       (landed.scroll !== window.scrollY ||
@@ -184,7 +197,7 @@ const createNavigator = (signal: AbortSignal) => {
         landed.top !== landed.row.getBoundingClientRect().top ||
         landed.anchor !== anchor)
     )
-      landed = null;
+      stopMotion();
     const current = rows.findIndex((row) =>
       landed ? row === landed.row : Math.abs(row.getBoundingClientRect().top - anchor) <= 1,
     );
@@ -229,23 +242,50 @@ const createNavigator = (signal: AbortSignal) => {
     update();
     const row = direction === 'previous' ? before : after;
     if (!row) return;
-    window.scrollTo({
-      top: window.scrollY + row.getBoundingClientRect().top - toolbar.getBoundingClientRect().height - 8,
-      behavior: 'instant',
-    });
-    landed = {
-      row,
-      scroll: window.scrollY,
-      top: row.getBoundingClientRect().top,
-      anchor: toolbar.getBoundingClientRect().height + 8,
+    stopMotion();
+    const origin = window.scrollY;
+    const destination = origin + row.getBoundingClientRect().top - getAnchor();
+    const rememberLanding = (): void => {
+      landed = {
+        row,
+        scroll: window.scrollY,
+        top: row.getBoundingClientRect().top,
+        anchor: getAnchor(),
+      };
+      update();
     };
-    update();
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      window.scrollTo({ top: destination, behavior: 'instant' });
+      rememberLanding();
+      return;
+    }
+    const started = performance.now();
+    const animate = (time: number): void => {
+      if (window.scrollY !== landed?.scroll) {
+        stopMotion();
+        update();
+        return;
+      }
+      const progress = Math.min((time - started) / 180, 1);
+      const eased = 1 - (1 - progress) ** 3;
+      window.scrollTo({ top: origin + (destination - origin) * eased, behavior: 'instant' });
+      rememberLanding();
+      motionFrame = progress < 1 ? requestAnimationFrame(animate) : 0;
+    };
+    motionFrame = requestAnimationFrame(animate);
+    // Repeated navigation advances from the intended target while it is in flight.
+    rememberLanding();
   };
   previous.addEventListener('click', () => jump('previous'), { signal });
   next.addEventListener('click', () => jump('next'), { signal });
   document.addEventListener(
     'keydown',
     (event) => {
+      if (
+        motionFrame &&
+        ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' ', 'Escape'].includes(event.key)
+      )
+        stopMotion();
       if (event.key !== '[' && event.key !== ']') return;
       if (event.ctrlKey || event.altKey || event.metaKey || event.shiftKey || event.isComposing) return;
       if (
@@ -277,17 +317,19 @@ const createNavigator = (signal: AbortSignal) => {
     'change',
     () => {
       selected = group.value as NavigationGroup;
-      landed = null;
+      stopMotion();
       update();
     },
     { signal },
   );
   return {
     reconcile: (op: string | null, marked: string | null, own: string | null): void => {
+      stopMotion();
       authors = { op, marked, own };
       update();
     },
     dispose: (): void => {
+      stopMotion();
       observer.disconnect();
       resizeObserver.disconnect();
       cancelAnimationFrame(frame);

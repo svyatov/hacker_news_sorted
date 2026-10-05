@@ -26,6 +26,10 @@ const start = async (): Promise<void> => {
 
 beforeEach(() => {
   vi.stubGlobal(
+    'matchMedia',
+    vi.fn(() => ({ matches: true })),
+  );
+  vi.stubGlobal(
     'ResizeObserver',
     class {
       private readonly targets = new Set<Element>();
@@ -67,6 +71,103 @@ afterEach(() => {
 });
 
 describe('comment enhancement lifecycle', () => {
+  it('animates navigation quickly, advances repeated keys, and retains a clamped landing', async () => {
+    await start();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    vi.mocked(window.matchMedia).mockReturnValue({ matches: false } as MediaQueryList);
+    vi.spyOn(performance, 'now').mockReturnValue(0);
+    const frames = new Map<number, FrameRequestCallback>();
+    let id = 0;
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      frames.set(++id, callback);
+      return id;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((frame) => {
+      frames.delete(frame);
+    });
+    const tick = (time: number) => {
+      const pending = [...frames.values()];
+      frames.clear();
+      for (const callback of pending) callback(time);
+    };
+    let scroll = 0;
+    vi.spyOn(window, 'scrollY', 'get').mockImplementation(() => scroll);
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return { top: (this.id === 'op1' ? 100 : 500) - scroll, height: 32 } as DOMRect;
+    });
+    const move = vi.spyOn(window, 'scrollTo').mockImplementation((options) => {
+      scroll = Math.min((options as ScrollToOptions).top!, 300);
+    });
+    getRowById('op2').classList.remove('coll');
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'op' } });
+    fireEvent.keyDown(document, { key: ']' });
+    expect(move).not.toHaveBeenCalled();
+    tick(90);
+    expect(scroll).toBeGreaterThan(0);
+    expect(scroll).toBeLessThan(62);
+    fireEvent.keyDown(document, { key: ']' });
+    tick(180);
+    expect(scroll).toBe(300);
+    expect(screen.getByRole('status')).toHaveTextContent('2 of 2 on page');
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Previous' }));
+    fireEvent.keyDown(document, { key: '[' });
+    tick(180);
+    expect(scroll).toBe(62);
+    expect(screen.getByRole('status')).toHaveTextContent('1 of 2 on page');
+    expect(frames.size).toBe(0);
+  });
+
+  it.each(['wheel', 'touchstart', 'pointerdown', 'keyboard', 'group', 'settings', 'dispose', 'scroll'])(
+    'cancels an in-flight scroll after %s',
+    async (action) => {
+      vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
+      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 100, height: 32 } as DOMRect);
+      await start();
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      vi.mocked(window.matchMedia).mockReturnValue({ matches: false } as MediaQueryList);
+      const frames = new Map<number, FrameRequestCallback>();
+      let id = 0;
+      vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+        frames.set(++id, callback);
+        return id;
+      });
+      vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((frame) => {
+        frames.delete(frame);
+      });
+      const move = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+      fireEvent.keyDown(document, { key: ']' });
+      expect(frames.size).toBe(1);
+      switch (action) {
+        case 'keyboard':
+          fireEvent.keyDown(document, { key: 'ArrowDown' });
+          break;
+        case 'group':
+          fireEvent.change(screen.getByRole('combobox'), { target: { value: 'marked' } });
+          break;
+        case 'settings':
+          await settingsStorage.set(OP_HIGHLIGHT, false);
+          await flush();
+          break;
+        case 'dispose':
+          dispose();
+          break;
+        case 'scroll':
+          vi.spyOn(window, 'scrollY', 'get').mockReturnValue(25);
+          fireEvent.scroll(window);
+          break;
+        default:
+          window.dispatchEvent(new Event(action));
+      }
+      const pending = [...frames.values()];
+      frames.clear();
+      for (const callback of pending) callback(180);
+      expect(frames.size).toBe(0);
+      expect(move).not.toHaveBeenCalled();
+    },
+  );
+
   it('keeps You shortcuts, empty states, unrelated keys and remount disposal consistent', async () => {
     document.body.insertAdjacentHTML(
       'afterbegin',
@@ -86,7 +187,7 @@ describe('comment enhancement lifecycle', () => {
     await start();
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'own' } });
     expect(fireEvent.keyDown(document, { key: ']' })).toBe(false);
-    expect(scroll).toBe(60);
+    expect(scroll).toBe(62);
     expect(screen.getByRole('status')).toHaveTextContent('1 of 2 on page');
     dispose();
     move.mockClear();
@@ -96,7 +197,7 @@ describe('comment enhancement lifecycle', () => {
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'own' } });
     fireEvent.keyDown(document, { key: ']' });
     expect(move).toHaveBeenCalledTimes(1);
-    expect(scroll).toBe(460);
+    expect(scroll).toBe(462);
     move.mockClear();
     expect(fireEvent.keyDown(document.body, { key: 'Tab' })).toBe(true);
     expect(fireEvent.keyDown(document.body, { key: 'p' })).toBe(true);
@@ -147,20 +248,20 @@ describe('comment enhancement lifecycle', () => {
     expect(screen.getByRole('navigation')).toHaveTextContent(']');
     expect(fireEvent.keyDown(document.body, { key: ']' })).toBe(true);
     screen.getByRole('button', { name: 'Next' }).click();
-    expect(scroll).toBe(60);
+    expect(scroll).toBe(62);
     dotIn('b1').click();
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'marked' } });
     expect(fireEvent.keyDown(document.body, { key: ']' })).toBe(true);
     expect(fireEvent.keyDown(document.body, { key: '[' })).toBe(true);
-    expect(scroll).toBe(60);
+    expect(scroll).toBe(62);
     screen.getByRole('button', { name: 'Next' }).click();
-    expect(scroll).toBe(460);
+    expect(scroll).toBe(462);
     dispose();
     expect(screen.queryByText(/Navigation shortcuts disabled/)).toBeNull();
     expect(fireEvent.keyDown(document.body, { key: '[' })).toBe(true);
     await start();
     fireEvent.keyDown(document.body, { key: '[' });
-    expect(scroll).toBe(60);
+    expect(scroll).toBe(62);
   });
 
   it.each(['input', 'button', 'summary'])('does not consume bracket interaction with a native %s', async (tag) => {
@@ -238,21 +339,21 @@ describe('comment enhancement lifecycle', () => {
     expect(fireEvent.keyDown(document.body, { key: '[' })).toBe(true);
     expect(scroll).toBe(0);
     expect(fireEvent.keyDown(document.body, { key: ']' })).toBe(false);
-    expect(scroll).toBe(60);
+    expect(scroll).toBe(62);
     expect(screen.getByRole('status')).toHaveTextContent('1 of 1 on page');
     expect(fireEvent.keyDown(document.body, { key: ']' })).toBe(true);
-    expect(scroll).toBe(60);
+    expect(scroll).toBe(62);
     dotIn('b1').click();
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'marked' } });
     fireEvent.keyDown(document.body, { key: ']' });
-    expect(scroll).toBe(460);
+    expect(scroll).toBe(462);
     expect(screen.getByRole('status')).toHaveTextContent('1 of 1 on page');
     scroll = 600;
     fireEvent.keyDown(document.body, { key: '[' });
-    expect(scroll).toBe(460);
+    expect(scroll).toBe(462);
     dotIn('b1').click();
     expect(fireEvent.keyDown(document.body, { key: '[' })).toBe(true);
-    expect(scroll).toBe(460);
+    expect(scroll).toBe(462);
     expect(screen.getByRole('status')).toHaveTextContent('Marked user unavailable');
   });
 
@@ -318,7 +419,7 @@ describe('comment enhancement lifecycle', () => {
 
   it('starts one OP navigator inside the comment surface, excluding collapsed matches', async () => {
     vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{ height: 20 }] as unknown as DOMRectList);
-    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 40, height: 32 } as DOMRect);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 38, height: 32 } as DOMRect);
     await start();
     const toolbar = screen.getByRole('navigation', { name: 'Comment navigation' });
     expect(toolbar.parentElement).toBe(document.querySelector('table.comment-tree')!.parentElement);
@@ -359,14 +460,14 @@ describe('comment enhancement lifecycle', () => {
       const previous = screen.getByRole('button', { name: 'Previous' });
       expect(screen.getByRole('status')).toHaveTextContent('Before 1 of 2 on page');
       next.click();
-      expect(scroll).toBe(60);
+      expect(scroll).toBe(62);
       expect(screen.getByRole('status')).toHaveTextContent('1 of 2 on page');
       next.click();
       expect(scroll).toBe(300);
       expect(screen.getByRole('status')).toHaveTextContent('2 of 2 on page');
       expect(next).toBeDisabled();
       previous.click();
-      expect(scroll).toBe(60);
+      expect(scroll).toBe(62);
       expect(previous).toBeDisabled();
       scroll = 200;
       fireEvent.scroll(window);
@@ -375,7 +476,7 @@ describe('comment enhancement lifecycle', () => {
       expect(previous).toBeEnabled();
       expect(next).toBeEnabled();
       previous.click();
-      expect(scroll).toBe(60);
+      expect(scroll).toBe(62);
       firstTop = 200;
       resize();
       await new Promise((resolve) => requestAnimationFrame(resolve));
