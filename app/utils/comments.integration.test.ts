@@ -1,13 +1,33 @@
 import { describe, expect, it } from 'vitest';
 
-import { loadAndSetupFixture } from '~app/__fixtures__/loadFixture';
-import { HN_SELECTORS } from '~app/constants';
+import { loadAndSetupFixture, loadFixture } from '~app/__fixtures__/loadFixture';
+import { flush, setupCommentThread } from '~app/__fixtures__/testHelpers';
+import { CSS_CLASSES, HN_SELECTORS } from '~app/constants';
 
-import { getCommentAuthor, getCommentRows, getStoryAuthor } from './comments';
+import { getCommentAuthor, getCommentRows, getStoryAuthor, startCommentEnhancements } from './comments';
 
 // Guards against HN markup drift on item pages: every comment-page selector must still resolve
 // against a real story thread. Refresh with `bun run fixture:update`.
 describe('comment selectors (integration with live HN item HTML)', () => {
+  it('identifies own comments from sanitized authentic account markup and stops after sign-out', async () => {
+    setupCommentThread({ comments: [{ id: 'own', author: 'reader' }] });
+    document.body.insertAdjacentHTML('afterbegin', loadFixture('hn-account-signed-in.html'));
+    const dispose = startCommentEnhancements();
+    await flush();
+    expect(getCommentRows()[0]).toHaveTextContent('You');
+    expect(getCommentRows()[0]?.querySelector(`.${CSS_CLASSES.MARK_DOT}`)).toBeNull();
+    dispose();
+    setupCommentThread({ comments: [{ id: 'own', author: 'reader' }] });
+    document.body.insertAdjacentHTML('afterbegin', loadFixture('hn-account-signed-out.html'));
+    const disposeAnonymous = startCommentEnhancements();
+    await flush();
+    expect(getCommentRows()[0]).not.toHaveTextContent('You');
+    expect(getCommentRows()[0]?.querySelector(`.${CSS_CLASSES.MARK_DOT}`)).toHaveAccessibleName(
+      'Highlight comments by reader',
+    );
+    disposeAnonymous();
+  });
+
   it('matches every item-page HN_SELECTOR against real markup', () => {
     loadAndSetupFixture('hn-item.html');
 

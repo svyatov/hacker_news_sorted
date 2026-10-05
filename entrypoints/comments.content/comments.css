@@ -18,7 +18,8 @@
 }
 
 /* "OP" badge — small filled orange pill beside the author name. */
-.hns-op-badge {
+.hns-op-badge,
+.hns-own-badge {
   display: inline-block;
   padding: 1px 4px;
   border-radius: 3px;

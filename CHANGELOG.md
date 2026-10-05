@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Signed-in readers' loaded thread replies automatically receive a lighter tint and a "You" badge, independently of popup toggles. OP appearance takes precedence while enabled; own comments have no mark button
+
 ### Changed
 
 - Comment highlighting now uses one start/dispose lifecycle: replacing the content script removes its controls and listeners while preserving per-thread marks and live popup settings

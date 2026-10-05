@@ -86,6 +86,7 @@ export const CSS_CLASSES = {
   // Comment-page highlighting (entrypoints/comments.content + comments.css)
   OP_COMMENT: 'hns-op-comment',
   OP_BADGE: 'hns-op-badge',
+  OWN_BADGE: 'hns-own-badge',
   MARK_DOT: 'hns-mark-dot',
   MARK_DOT_ON: 'hns-mark-dot-on',
   MARKED_COMMENT: 'hns-marked-comment',
@@ -140,6 +141,7 @@ export const HN_SELECTORS = {
   COMMENTS: 'td.subtext > span > a[href^="item?id="]',
 
   // Comment/item pages
+  ACCOUNT: '.pagetop > a#me[href^="user?id="]',
   ITEM_TABLE: 'table.fatitem',
   COMMENT_TREE: 'table.comment-tree',
   STORY_AUTHOR: '.fatitem .hnuser',

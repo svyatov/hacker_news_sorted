@@ -47,6 +47,137 @@ afterEach(() => {
 });
 
 describe('comment enhancement lifecycle', () => {
+  it('uses only the account on each page load, preserving old self-marks without applying them', async () => {
+    document.body.insertAdjacentHTML(
+      'afterbegin',
+      '<span class="pagetop"><a id="me" href="user?id=alice">alice</a></span>',
+    );
+    sessionStorage.setItem(`${MARK_STORAGE_PREFIX}1`, 'alice');
+    await start();
+    expect(getRowById('a1')).toHaveTextContent('You');
+    expect(getRowById('a1').querySelector(`.${CSS_CLASSES.MARK_DOT}`)).toBeNull();
+    expect(mark()).toBe('alice');
+    dispose();
+    const account = document.querySelector<HTMLAnchorElement>('#me')!;
+    account.textContent = 'bob';
+    account.href = 'user?id=bob';
+    await start();
+    expect(getRowById('a1')).not.toHaveTextContent('You');
+    expect(isMarked('a1')).toBe(true);
+    expect(dotPressed('a1')).toBe(true);
+    expect(getRowById('b1')).toHaveTextContent('You');
+    dispose();
+    account.remove();
+    await start();
+    expect(document.querySelectorAll(`.${CSS_CLASSES.OWN_BADGE}`)).toHaveLength(0);
+    expect(dotIn('b1')).toHaveAccessibleName('Highlight comments by bob');
+  });
+
+  it('keeps own highlighting on permalink replies without enhancing the top item', async () => {
+    setupCommentThread({ isStory: false, storyAuthor: 'alice', comments: [{ id: 'a1', author: 'alice' }] });
+    document.body.insertAdjacentHTML(
+      'afterbegin',
+      '<span class="pagetop"><a id="me" href="user?id=alice">alice</a></span>',
+    );
+    await start();
+    expect(isOp('a1')).toBe(false);
+    expect(getRowById('a1')).toHaveTextContent('You');
+    expect(document.querySelectorAll(`.${CSS_CLASSES.OWN_BADGE}`)).toHaveLength(1);
+  });
+
+  it.each([
+    '<a id="me" href="user?id=alice">alice</a>',
+    '<span class="pagetop"><a href="user?id=alice">alice</a></span>',
+    '<span class="pagetop"><a id="me" href="user?id="> </a></span>',
+    '<span class="pagetop"><a id="me" href="user?id=Alice">alice</a></span>',
+  ])('does not guess identity from incomplete or misplaced markup: %s', async (markup) => {
+    document.body.insertAdjacentHTML('afterbegin', markup);
+    await start();
+    expect(document.querySelectorAll(`.${CSS_CLASSES.OWN_BADGE}`)).toHaveLength(0);
+    expect(dotIn('a1')).toHaveAccessibleName('Highlight comments by alice');
+  });
+
+  it('does not identify an account from an unrecognized profile link', async () => {
+    document.body.insertAdjacentHTML(
+      'afterbegin',
+      '<span class="pagetop"><a id="me" href="user?id=bob">alice</a></span>',
+    );
+    await start();
+    expect(getRowById('a1')).not.toHaveTextContent('You');
+    expect(getRowById('b1')).not.toHaveTextContent('You');
+    expect(dotIn('a1')).toHaveAccessibleName('Highlight comments by alice');
+  });
+
+  it('gives OP appearance precedence over own appearance and an old self-mark', async () => {
+    document.body.insertAdjacentHTML(
+      'afterbegin',
+      `<span class="pagetop"><a id="me" href="user?id=${OP}">${OP}</a></span>`,
+    );
+    sessionStorage.setItem(`${MARK_STORAGE_PREFIX}1`, OP);
+    await start();
+    expect(isOp('op1')).toBe(true);
+    expect(isMarked('op1')).toBe(false);
+    expect(getRowById('op1')).not.toHaveTextContent('You');
+    expect(badgesIn('op1')).toBe(1);
+    await settingsStorage.set(OP_HIGHLIGHT, false);
+    await flush();
+    expect(isOp('op1')).toBe(false);
+    expect(isMarked('op1')).toBe(true);
+    expect(getRowById('op1')).toHaveTextContent('You');
+    expect(getRowById('op2')).toHaveClass('coll');
+    expect(getRowById('op1').querySelector(`.${CSS_CLASSES.MARK_DOT}`)).toBeNull();
+    await settingsStorage.set(OP_HIGHLIGHT, true);
+    await flush();
+    expect(getRowById('op1')).not.toHaveTextContent('You');
+    expect(isMarked('op1')).toBe(false);
+    expect(mark()).toBe(OP);
+  });
+
+  it('keeps own comments unmarkable and preserves another author through live settings', async () => {
+    document.body.insertAdjacentHTML(
+      'afterbegin',
+      '<span class="pagetop"><a id="me" href="user?id=alice">alice</a></span>',
+    );
+    sessionStorage.setItem(`${MARK_STORAGE_PREFIX}1`, 'bob');
+    await start();
+    expect(getRowById('a1').querySelector(`.${CSS_CLASSES.MARK_DOT}`)).toBeNull();
+    expect(isMarked('b1')).toBe(true);
+    dotIn('case').click();
+    expect(mark()).toBe('Alice');
+    expect(isMarked('a1')).toBe(true);
+    expect(isMarked('case')).toBe(true);
+    await settingsStorage.set(MARK_USER_HIGHLIGHT, false);
+    await flush();
+    expect(getRowById('a1')).toHaveTextContent('You');
+    expect(isMarked('a1')).toBe(true);
+    expect(isMarked('case')).toBe(false);
+    await settingsStorage.set(MARK_USER_HIGHLIGHT, true);
+    await flush();
+    expect(getRowById('a1').querySelectorAll(`.${CSS_CLASSES.OWN_BADGE}`)).toHaveLength(1);
+    expect(getRowById('a1').querySelector(`.${CSS_CLASSES.MARK_DOT}`)).toBeNull();
+    expect(mark()).toBe('Alice');
+  });
+
+  it('automatically identifies exact own comments without either enhancement switch', async () => {
+    document.body.insertAdjacentHTML(
+      'afterbegin',
+      '<span class="pagetop"><a id="me" href="user?id=alice">alice</a></span>',
+    );
+    await store(OP_HIGHLIGHT, false);
+    await store(MARK_USER_HIGHLIGHT, false);
+    await start();
+    for (const id of ['a1', 'a2']) {
+      expect(getRowById(id)).toHaveTextContent('You');
+      expect(isMarked(id)).toBe(true);
+      expect(getRowById(id).querySelector(`.${CSS_CLASSES.MARK_DOT}`)).toBeNull();
+    }
+    expect(getRowById('case')).not.toHaveTextContent('You');
+    expect(isMarked('case')).toBe(false);
+    dispose();
+    expect(getRowById('a1')).not.toHaveTextContent('You');
+    expect(isMarked('a1')).toBe(false);
+  });
+
   it('highlights the exact OP at every depth without changing collapsed rows', async () => {
     await start();
     expect(getStoryAuthor()).toBe(OP);
@@ -203,6 +334,10 @@ describe('comment enhancement lifecycle', () => {
   });
 
   it('ignores delayed initialization after disposal and replacement', async () => {
+    document.body.insertAdjacentHTML(
+      'afterbegin',
+      '<span class="pagetop"><a id="me" href="user?id=Alice">Alice</a></span>',
+    );
     const get = (key: string) => fakeBrowser.storage.sync.get(key);
     let release = (): void => {};
     const pending = new Promise<void>((resolve) => {
@@ -222,9 +357,11 @@ describe('comment enhancement lifecycle', () => {
     expect(mark()).toBe('alice');
     expect(isMarked('a1')).toBe(true);
     expect(badgesIn('op1')).toBe(1);
+    expect(getRowById('case').querySelectorAll(`.${CSS_CLASSES.OWN_BADGE}`)).toHaveLength(1);
     dispose();
     await settingsStorage.set(OP_HIGHLIGHT, false);
     await flush();
     expect(document.querySelectorAll(`.${CSS_CLASSES.MARK_DOT}, .${CSS_CLASSES.OP_BADGE}`)).toHaveLength(0);
+    expect(document.querySelectorAll(`.${CSS_CLASSES.OWN_BADGE}`)).toHaveLength(0);
   });
 });
