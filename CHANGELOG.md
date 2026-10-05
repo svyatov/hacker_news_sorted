@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Comment navigation shortcuts: `[` for Previous and `]` for Next in the selected OP, Marked user or You group, with visible key hints. Typing, native controls, composition and modified presses are left alone. Detected shortcut interception disables both keys for the page with an explanation while toolbar controls remain usable; conflict detection is best-effort
+
 - A sticky comment navigator for OP and Marked user, with Previous/Next and page-local visible counts. It follows the current reading position, skips collapsed branches, stops at both ends, and preserves the selected role through live marks and settings
 - You joins the comment navigator for signed-in readers, with initial selection in OP, Marked user, You order among groups with visible comments. Own navigation stays available when highlighting switches are off, and shares OP destinations when you are the submitter
 - Signed-in readers' loaded thread replies automatically receive a lighter tint and a "You" badge, independently of popup toggles. OP appearance takes precedence while enabled; own comments have no mark button
@@ -37,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Comment navigation status and boundary controls stay stable on narrow screens, including after a shortcut conflict
 - Posts on page 2 and later of a list no longer all show the new-post indicator (at full strength, without fading) when the first page of the same list loads in another tab
 - New-post indicators picked up from a visit in another tab now fade out over the highlight duration instead of staying until the page is reloaded
 - Posts that dropped off a list are no longer marked as new in an older tab of the same list when the list loads in another tab

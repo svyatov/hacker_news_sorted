@@ -138,10 +138,14 @@ const createNavigator = (signal: AbortSignal) => {
   group.append(empty, opOption, markedOption, ownOption);
   const previous = document.createElement('button');
   previous.type = 'button';
-  previous.textContent = 'Previous';
+  previous.textContent = 'Previous [';
+  previous.setAttribute('aria-label', 'Previous');
+  previous.title = 'Previous comment ([). Shortcut conflict detection is best-effort.';
   const next = document.createElement('button');
   next.type = 'button';
-  next.textContent = 'Next';
+  next.textContent = 'Next ]';
+  next.setAttribute('aria-label', 'Next');
+  next.title = 'Next comment (]). Shortcut conflict detection is best-effort.';
   const status = document.createElement('span');
   status.setAttribute('role', 'status');
   toolbar.append(group, previous, next, status);
@@ -153,6 +157,7 @@ const createNavigator = (signal: AbortSignal) => {
   let before: HTMLElement | undefined;
   let after: HTMLElement | undefined;
   let frame = 0;
+  let shortcutsDisabled = false;
   const matches = (role: NavigationGroup): HTMLElement[] =>
     getCommentRows().filter(
       (row) =>
@@ -237,6 +242,36 @@ const createNavigator = (signal: AbortSignal) => {
   };
   previous.addEventListener('click', () => jump('previous'), { signal });
   next.addEventListener('click', () => jump('next'), { signal });
+  document.addEventListener(
+    'keydown',
+    (event) => {
+      if (event.key !== '[' && event.key !== ']') return;
+      if (event.ctrlKey || event.altKey || event.metaKey || event.shiftKey || event.isComposing) return;
+      if (
+        event.target instanceof Element &&
+        event.target.closest(
+          'input, textarea, select, button, summary, [contenteditable]:not([contenteditable="false"])',
+        )
+      )
+        return;
+      // Best-effort detection, as on list pages: earlier preventDefault is observable,
+      // but handlers that stop propagation or run later cannot always be detected.
+      if (event.defaultPrevented && !shortcutsDisabled) {
+        shortcutsDisabled = true;
+        const conflict = document.createElement('span');
+        conflict.setAttribute('role', 'status');
+        conflict.textContent = `Navigation shortcuts disabled: ${event.key} was intercepted. Use Previous/Next controls. Conflict detection is best-effort.`;
+        toolbar.append(conflict);
+      }
+      if (shortcutsDisabled) return;
+      update();
+      const control = event.key === '[' ? previous : next;
+      if (control.disabled) return;
+      event.preventDefault();
+      jump(event.key === '[' ? 'previous' : 'next');
+    },
+    { signal },
+  );
   group.addEventListener(
     'change',
     () => {
