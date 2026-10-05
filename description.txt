@@ -8,13 +8,15 @@ If you check HN throughout the day, orange dots help you spot posts that appeare
 
 The True Time Ago option shows each story's age from its original submission timestamp. That helps with HN's "second chance" posts: a story submitted three days ago can show a much younger age when it returns to the front page. With this option on, it reads "3 days ago." It's on by default and can be turned off.
 
-In comment threads, the story author's replies get a light orange background and an OP badge. To follow someone else through a long discussion, click the diamond next to their name to highlight their comments. Click it again to clear the highlight, or pick another person. Your choice stays with that thread when you reload the tab. Both highlighting features have their own settings.
+In comment threads, the story author's replies get a light orange background and an OP badge. Click the diamond next to another person's name to highlight their comments. Click it again to clear the highlight, or pick someone else. Your choice stays with that thread across reloads for the browser session. OP and marked-user highlights each have a settings switch. When you're signed in to HN, your own replies get a lighter highlight and a You badge automatically. If you're the story author, the OP appearance takes priority while enabled.
 
-Prefer the keyboard? Use P for points, T for time, C for comments, V for velocity, H for heat, and D for the default order. Shortcuts stay inactive while you type in a text field. If the extension detects a key conflict with Vimium or another extension, it disables its sorting shortcuts.
+Follow one person's replies with the sticky comment navigation bar. Choose OP, Marked user, or You, then use Previous/Next or the [ and ] keys. Navigation follows visible comments loaded on the current page, skips collapsed branches, and stops at either end. Oldest first is the default; choose Thread order in settings to follow comments as they appear on HN. The discussion itself stays in place. Scrolling is quick and smooth, or instant if you prefer reduced motion. You can turn off the bar and its shortcuts without changing highlights, and your chosen order is kept.
 
-Click the extension icon to adjust the settings. Your sort preference, settings, and new-post history use Chrome's built-in sync storage, so they can follow you across devices when Chrome sync is enabled. No separate account is needed. If the extension can't find the page elements it needs for sorting, it shows a warning on the icon and in the settings popup.
+Prefer the keyboard for sorting? Use P for points, T for time, C for comments, V for velocity, H for heat, and D for the default order. Shortcuts stay inactive while you type in a text field. If the extension detects a key conflict with Vimium or another extension, it disables the affected set of sorting or comment-navigation shortcuts and explains the conflict. The controls still work with a click.
 
-Hacker News Sorted is open source. It reads the HN page you're viewing and processes the story data in your browser. There are no analytics, tracking, or external API calls. Saved settings and new-post history can sync through Chrome.
+The sorting menu adapts to the space available, from full names to compact labels or a dropdown. Click the extension icon to adjust settings in a popup that follows your system's light or dark appearance. Your sort preference, settings, and new-post history use Chrome's built-in sync storage, so they can follow you across devices when Chrome sync is enabled. No separate account is needed. If the extension can't find the page elements it needs for sorting, it shows a warning on the icon and in the settings popup.
+
+Hacker News Sorted is open source. It reads the HN page you're viewing and processes the data in your browser. There are no analytics, tracking, or external API calls.
 
 Source code: https://github.com/svyatov/hacker_news_sorted
 
