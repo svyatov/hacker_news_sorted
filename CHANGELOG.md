@@ -9,34 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Popup settings to disable the comment navigation bar and bracket shortcuts independently of highlighting, and to choose Oldest first or Thread order. The order preference is retained while navigation is off
-- Comment navigation shortcuts: `[` for Previous and `]` for Next in the selected OP, Marked user or You group, with visible key hints. Typing, native controls, composition and modified presses are left alone. Detected shortcut interception disables both keys for the page with an explanation while toolbar controls remain usable; conflict detection is best-effort
-
-- A sticky comment navigator for OP and Marked user, with Previous/Next and page-local visible counts. It follows the current reading position, skips collapsed branches, stops at both ends, and preserves the selected role through live marks and settings
-- You joins the comment navigator for signed-in readers, with initial selection in OP, Marked user, You order among groups with visible comments. Own navigation stays available when highlighting switches are off, and shares OP destinations when you are the submitter
+- A compact, right-aligned sticky comment navigator for OP, Marked user, and You, with Previous/Next, page-local visible counts, consistent padding, and a bottom separator. It starts with the first group with visible matches in that priority order, follows the current reading position, skips collapsed branches, stops at both ends, and preserves the selected role through live marks and settings. You is available for signed-in readers independently of highlight switches and shares OP destinations when you are the submitter
+- Popup settings to disable the comment navigation bar and bracket shortcuts independently of highlighting, and to choose Oldest first (the default) or Thread order without rearranging the discussion. The order preference is retained while navigation is off; jumps scroll smoothly and respect reduced motion
+- Comment navigation shortcuts: `[` for Previous and `]` for Next in the selected group, with visible key hints. Typing, native controls, composition and modified presses are left alone. Detected shortcut interception disables both keys until navigation is restarted, with an explanation while toolbar controls remain usable; conflict detection is best-effort
 - Signed-in readers' loaded thread replies automatically receive a lighter tint and a "You" badge, independently of popup toggles. OP appearance takes precedence while enabled; own comments have no mark button
 
 ### Changed
 
-- Comment navigation follows chronological order by default without rearranging HN's discussion, with quick, smooth scrolling that respects reduced motion
-- The comment toolbar uses a compact, right-aligned row with consistent padding, position text before the controls, and a bottom separator
-- Comment navigator cleanup checks now detect pending or later callback work after disposal; its toolbar class uses the shared constants registry (internal verification and organization, with no user-facing behavior change)
-- Comment highlighting now uses one start/dispose lifecycle: replacing the content script removes its controls and listeners while preserving per-thread marks and live popup settings
+- Comment highlighting now uses one start/dispose lifecycle: replacing the content script removes its controls and listeners while preserving per-thread marks and live popup settings. Navigator cleanup checks detect pending or later callback work after disposal, and its toolbar class uses the shared constants registry
 - New logo: the toolbar icon, the development icon, the Chrome Web Store icon, and the promo tiles use the new rounded-square mark, and the promo tiles add the "Hacker News Sorted" wordmark
 - The Velocity and Heat menu tooltips now say what each sort ranks: "fastest-rising posts (points per hour)" and "most-discussed posts (comments per point)"
-- Rewrite the Chrome Web Store description in plain language with natural search terms and clearer explanations of sorting, comment highlighting, and Chrome sync
+- Refresh the README and Chrome Web Store description with current sorting, own-comment highlighting, navigation settings, and Chrome sync behavior; align the README's contribution steps with the required checks
 - Move new-post tracking out of the sort settings into its own module with a single entry point, and derive the Velocity and Heat on/off toggles from the sort option list (internal restructuring with no change to any user-facing feature)
-- Remove duplicated code in the sorters, parsers, new-post marking, settings popup, and the screenshot and demo generators (internal cleanup with no change to any user-facing feature)
+- Remove duplicated code in the sorters, parsers, new-post marking, settings popup, and the screenshot and demo generators, plus an unused constant, the one-use `CSS_SELECTORS` map, and redundant sort-highlighter code (internal cleanup with no change to any user-facing feature)
 - Find each post on a list page by its own row instead of by row position, so sorting no longer depends on the page ending in exactly two footer rows (internal restructuring with no change to any user-facing feature)
 - Replace simple-git-hooks and lint-staged with lefthook: commits are now scanned for secrets and checked for Conventional Commits messages, and a push runs the same lint, test, and build checks as CI
-- Remove an unused constant, the one-use `CSS_SELECTORS` map, and about 15 lines from the sort-column highlighter (internal cleanup with no change to any user-facing feature)
 - Build output moves from `.output/` to `build/`, so a development build now loads from `build/chrome-mv3-dev`
-- The sort panel, sort toggles, true time ago, new-post highlighting, and comment-highlighting toggles now read settings through WXT storage instead of `@plasmohq/storage`, with the same stored format, so existing settings carry over unchanged (internal restructuring with no change to any user-facing feature)
-- The review prompt now keeps its dismissal, install date, and sort count in WXT storage with the same stored format, so a dismissed prompt stays dismissed and the schedule is unchanged (internal restructuring with no change to any user-facing feature)
-- The settings popup now reads and writes its settings through WXT storage with the same stored format, so every stored toggle and the highlight duration show as before (internal restructuring with no change to any user-facing feature)
-- The layout-health flag and the toolbar badge now use WXT storage and keep the flag a raw boolean, so the `:(` badge and the popup warning behave as before, including with an older version on another synced device (internal restructuring with no change to any user-facing feature)
+- Replace `@plasmohq/storage` with WXT storage throughout the sort panel, popup, highlighting, review prompt, and layout-health badge. Existing settings, review dismissal, and prompt timing retain their stored formats; the layout-health flag remains a raw boolean for compatibility with older synced versions. Remove the unused dependency (internal restructuring with no change to any user-facing feature)
 - A development build uses a color-swapped icon (white background, orange mark), so it is easy to tell apart from the store version
-- Remove the `@plasmohq/storage` dependency: every setting now goes through WXT storage with the same stored format (internal cleanup with no change to any user-facing feature)
 - Biome now also checks for unhandled promises, import cycles, undeclared dependencies, and assertion-free tests, and keeps `console`, Node modules, and `process` out of the extension code (internal tooling with no change to any user-facing feature)
 - Update dependencies, including React 19.3, Vite 8.3, and Playwright 1.63 (internal toolchain update with no change to any user-facing feature)
 

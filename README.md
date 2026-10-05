@@ -27,21 +27,21 @@ Instantly sort [Hacker News](https://news.ycombinator.com) by points, time, comm
 - **Restore Default**: Return to HN's original ranking
 - **New Post Indicators**: Orange dot marks posts that appeared since your last visit, fading out over a configurable period
 - **True Time Ago**: Corrects misleading ages on resurfaced "second chance" posts
-- **Comment Author Highlighting**: On thread pages, the story author's comments get a subtle tint and an "OP" badge; click the marker next to another commenter's name to highlight that user's comments for the thread (persists across reloads). Two independent toggles in the popup. When signed in, your loaded replies automatically get the lighter tint and a "You" badge, with no setting or self-mark button. If you are OP, the OP appearance wins while its toggle is on. Identity comes only from the current page
-- **Keyboard Shortcuts**: Press `P`, `T`, `C`, `V`, `H`, or `D` to sort instantly
-- **Comment Navigation**: Choose OP, Marked user, or You in the compact, right-aligned sticky toolbar, then use Previous/Next to follow their visible, loaded comments on this page. Navigation defaults to **Oldest first**; select **Thread order** in the popup to follow comments as they appear on HN. This does not rearrange the discussion. Turn off **Comment navigation** in the popup to hide the bar and disable its bracket shortcuts while keeping highlighting and your order preference. While navigation is enabled, You is available when the current page identifies your signed-in account, independently of highlight switches. The initial group is the first with visible matches in OP, Marked user, You order. Collapsed branches are skipped, and navigation stops at both ends. Jumps scroll smoothly in 180 ms, or instantly with reduced motion. Repeated button presses and bracket keys advance from the intended target; manual scrolling or a layout change cancels motion. Scrolling manually or changing groups uses your current reading position. Popup highlight switches control OP and Marked user availability; replacing or clearing a mark keeps your selected group. Empty or unavailable groups disable navigation. When you are OP, either eligible group follows the same comments. Use `[` for Previous and `]` for Next outside typing and native controls. Composition and modified presses are ignored. Detected interception disables both shortcuts for that navigator instance and explains the conflict; controls still support clicks, Tab and Enter/Space. Conflict detection is best-effort and cannot detect every competing handler
+- **Comment Author Highlighting**: On thread pages, the story author's comments get a subtle tint and an "OP" badge. Click another commenter's diamond to highlight their comments, click it again to clear the mark, or choose someone else. The mark survives reloads within the tab's session. OP and marked-user highlights have independent popup toggles. When signed in, your loaded replies automatically get a lighter tint and a "You" badge; enabled OP highlighting takes priority if you are the author. Your account is identified from the current page
+- **Keyboard Shortcuts**: Press `P`, `T`, `C`, `V`, `H`, or `D` to sort instantly. Shortcuts stay inactive while you type
+- **Comment Navigation**: Choose OP, Marked user, or You in the compact sticky toolbar, then use Previous/Next or `[` / `]` to follow visible, loaded comments. **Oldest first** is the default; select **Thread order** in the popup to follow HN's page order without rearranging the discussion. Collapsed branches are skipped, and navigation stops at both ends. Jumps scroll smoothly, or instantly with reduced motion. Repeated presses advance from the intended target; manual scrolling establishes a new reading position. Highlight switches control OP and Marked user availability; You requires a signed-in account. Turn off **Comment navigation** to hide the bar and disable its shortcuts while keeping highlights and your order preference. Bracket shortcuts ignore native controls, composition, and modified presses; toolbar controls also support Tab and Enter/Space
 - **Responsive Menu**: Full sort names on wide screens, single-letter labels on medium screens, and a compact dropdown on narrow screens, always collapsing before it would crowd Hacker News's own header links
-- **Persistent Preference**: Your last sort choice is remembered across sessions
+- **Synced Preferences**: Your sort choice, settings, and new-post history can follow you across devices when Chrome sync is enabled
 - **Visual Highlighting**: Active sort column is highlighted for clarity
 - **Layout Change Detection**: Warning badge and popup banner if HN changes break sorting
-- **Vimium Compatible**: Shortcuts auto-disable if Vimium or similar extensions are detected, with a note naming the conflicting keys
+- **Shortcut Conflict Detection**: If another handler intercepts a sort or navigation key, the affected set of shortcuts is disabled with an explanation; clickable controls remain available. Detection is best-effort and cannot catch every competing handler
 - **Dark Mode**: Settings popup follows your system light/dark color scheme
 
-**Compatibility:** Sorting works on any HN page with a post list (front page, Newest, Ask, Show, etc.); comment author highlighting works on thread (`item?id=`) pages.
+**Compatibility:** Sorting works on HN story lists (front page, Newest, Ask, Show, etc.); comment highlighting and navigation work on thread (`item?id=`) pages. OP highlighting is available only when the top item is a story.
 
 ## Privacy
 
-No data collection, no external requests. It works entirely in your browser.
+No analytics, tracking, or external API calls. The extension reads the HN page you are viewing and processes its data in your browser.
 
 ## Tech Stack
 
@@ -50,7 +50,7 @@ WXT · React 19 · TypeScript · Vitest · Bun
 ## Development
 
 ```bash
-git clone git://github.com/svyatov/hacker_news_sorted.git
+git clone https://github.com/svyatov/hacker_news_sorted.git
 cd hacker_news_sorted
 bun install
 bun dev
@@ -63,6 +63,7 @@ bun run test           # Run tests
 bun run test:watch     # Run tests in watch mode
 bun run test:coverage  # Run tests with coverage report
 bun run lint           # Run Biome, Prettier, and TypeScript checks
+bun run build          # Build production extension in build/chrome-mv3
 bun run fixture:update # Fetch fresh HN HTML for test fixtures
 bun run screenshots    # Generate Chrome Web Store screenshots (requires build first)
 ```
@@ -74,10 +75,10 @@ Found a bug or have a suggestion? [Open an issue](https://github.com/svyatov/hac
 ## Contributing
 
 1. Fork it
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Make your changes and run tests (`bun run test`)
+2. Create your feature branch (`git switch -c feat/my-new-feature`)
+3. Make your changes and run the required checks (`bun run lint`, `bun run test:coverage`, and `bun run build`). Keep test coverage at 100% and update affected documentation and the Unreleased changelog
 4. Commit using [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) format (`git commit -m 'feat: add some feature'`)
-5. Push to the branch (`git push origin my-new-feature`)
+5. Push to the branch (`git push -u origin feat/my-new-feature`)
 6. Create new Pull Request
 
 ## Changelog
