@@ -249,6 +249,11 @@ describe('comment enhancement lifecycle', () => {
     expect(scroll).toBe(300);
     expect(screen.getByRole('status')).toHaveTextContent('2 of 2 on page');
     expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    fireEvent.pointerDown(document.body);
+    fireEvent.scroll(window);
+    tick(180);
+    expect(screen.getByRole('status')).toHaveTextContent('2 of 2 on page');
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
     fireEvent.pointerDown(screen.getByRole('button', { name: 'Previous' }));
     fireEvent.keyDown(document, { key: '[' });
     tick(180);
@@ -257,54 +262,165 @@ describe('comment enhancement lifecycle', () => {
     expect(frames.size).toBe(0);
   });
 
-  it.each(['wheel', 'touchstart', 'pointerdown', 'keyboard', 'group', 'settings', 'dispose', 'scroll'])(
-    'cancels an in-flight scroll after %s',
-    async (action) => {
-      vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
-      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 100, height: 32 } as DOMRect);
-      await start();
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-      vi.mocked(window.matchMedia).mockReturnValue({ matches: false } as MediaQueryList);
-      const frames = new Map<number, FrameRequestCallback>();
-      let id = 0;
-      vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
-        frames.set(++id, callback);
-        return id;
-      });
-      vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((frame) => {
+  it.each([
+    ['pointerdown', 'Next'],
+    ['touchstart', 'Next'],
+    ['pointerdown', 'Previous'],
+    ['touchstart', 'Previous'],
+  ])('advances repeated %s presses on %s during motion', async (event, direction) => {
+    setupCommentThread({
+      storyAuthor: OP,
+      comments: ['first', 'second', 'third'].map((id) => ({ id, author: OP })),
+    });
+    let scroll = direction === 'Previous' ? 1462 : 0;
+    const tops: Record<string, number> = { first: 500, second: 1000, third: 1500 };
+    vi.spyOn(window, 'scrollY', 'get').mockImplementation(() => scroll);
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return { top: (tops[this.id] ?? 0) - scroll, height: 32 } as DOMRect;
+    });
+    vi.spyOn(window, 'scrollTo').mockImplementation((options) => {
+      scroll = (options as ScrollToOptions).top!;
+    });
+    await start();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    vi.mocked(window.matchMedia).mockReturnValue({ matches: false } as MediaQueryList);
+    const now = vi.spyOn(performance, 'now').mockReturnValue(0);
+    const frames = new Map<number, FrameRequestCallback>();
+    let id = 0;
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      frames.set(++id, callback);
+      return id;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((frame) => frames.delete(frame));
+    const tick = (time: number) => {
+      now.mockReturnValue(time);
+      for (const frame of [...frames.keys()]) {
+        const callback = frames.get(frame);
         frames.delete(frame);
-      });
-      const move = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
-      fireEvent.keyDown(document, { key: ']' });
-      expect(frames.size).toBe(1);
-      switch (action) {
-        case 'keyboard':
-          fireEvent.keyDown(document, { key: 'ArrowDown' });
-          break;
-        case 'group':
-          fireEvent.change(screen.getByRole('combobox'), { target: { value: 'marked' } });
-          break;
-        case 'settings':
-          await settingsStorage.set(OP_HIGHLIGHT, false);
-          await flush();
-          break;
-        case 'dispose':
-          dispose();
-          break;
-        case 'scroll':
-          vi.spyOn(window, 'scrollY', 'get').mockReturnValue(25);
-          fireEvent.scroll(window);
-          break;
-        default:
-          window.dispatchEvent(new Event(action));
+        callback?.(time);
       }
-      const pending = [...frames.values()];
-      frames.clear();
-      for (const callback of pending) callback(180);
-      expect(frames.size).toBe(0);
-      expect(move).not.toHaveBeenCalled();
-    },
-  );
+    };
+    const button = screen.getByRole('button', { name: direction });
+    button.dispatchEvent(new Event(event, { bubbles: true }));
+    fireEvent.click(button);
+    tick(90);
+    button.dispatchEvent(new Event(event, { bubbles: true }));
+    fireEvent.click(button);
+    tick(270);
+    expect(scroll).toBe(direction === 'Next' ? 962 : 462);
+    expect(screen.getByRole('status')).toHaveTextContent(direction === 'Next' ? '2 of 3 on page' : '1 of 3 on page');
+    expect(frames.size).toBe(0);
+  });
+
+  it.each(['target', 'anchor'])('cancels motion when the %s shifts before the queued resize update', async (change) => {
+    let scroll = 0;
+    let targetTop = 500;
+    let height = 32;
+    vi.spyOn(window, 'scrollY', 'get').mockImplementation(() => scroll);
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return { top: (this.id === 'op1' ? targetTop : 0) - scroll, height } as DOMRect;
+    });
+    const move = vi.spyOn(window, 'scrollTo').mockImplementation((options) => {
+      scroll = (options as ScrollToOptions).top!;
+    });
+    await start();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    vi.mocked(window.matchMedia).mockReturnValue({ matches: false } as MediaQueryList);
+    const now = vi.spyOn(performance, 'now').mockReturnValue(0);
+    const frames = new Map<number, FrameRequestCallback>();
+    let id = 0;
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      frames.set(++id, callback);
+      return id;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((frame) => frames.delete(frame));
+    const tick = (time: number) => {
+      now.mockReturnValue(time);
+      for (const frame of [...frames.keys()]) {
+        const callback = frames.get(frame);
+        frames.delete(frame);
+        callback?.(time);
+      }
+    };
+    fireEvent.keyDown(document, { key: ']' });
+    tick(40);
+    expect(scroll).toBeGreaterThan(0);
+    expect(scroll).toBeLessThan(462);
+    if (change === 'target') targetTop = 1000;
+    else height = 64;
+    resize();
+    move.mockClear();
+    tick(90);
+    tick(180);
+    expect(move).not.toHaveBeenCalled();
+    expect(screen.getByRole('status')).toHaveTextContent('Before 1 of 1 on page');
+    expect(frames.size).toBe(0);
+    fireEvent.keyDown(document, { key: ']' });
+    tick(360);
+    expect(scroll).toBe(targetTop - height - 6);
+    expect(screen.getByRole('status')).toHaveTextContent('1 of 1 on page');
+  });
+
+  it.each([
+    'wheel',
+    'wheel over navigation',
+    'touchstart',
+    'pointerdown',
+    'keyboard',
+    'group',
+    'settings',
+    'dispose',
+    'scroll',
+  ])('cancels an in-flight scroll after %s', async (action) => {
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 100, height: 32 } as DOMRect);
+    await start();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    vi.mocked(window.matchMedia).mockReturnValue({ matches: false } as MediaQueryList);
+    const frames = new Map<number, FrameRequestCallback>();
+    let id = 0;
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      frames.set(++id, callback);
+      return id;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((frame) => {
+      frames.delete(frame);
+    });
+    const move = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    fireEvent.keyDown(document, { key: ']' });
+    expect(frames.size).toBe(1);
+    switch (action) {
+      case 'wheel over navigation':
+        fireEvent.wheel(screen.getByRole('button', { name: 'Next' }));
+        break;
+      case 'keyboard':
+        fireEvent.keyDown(document, { key: 'ArrowDown' });
+        break;
+      case 'group':
+        fireEvent.change(screen.getByRole('combobox'), { target: { value: 'marked' } });
+        break;
+      case 'settings':
+        await settingsStorage.set(OP_HIGHLIGHT, false);
+        await flush();
+        break;
+      case 'dispose':
+        dispose();
+        break;
+      case 'scroll':
+        vi.spyOn(window, 'scrollY', 'get').mockReturnValue(25);
+        fireEvent.scroll(window);
+        break;
+      default:
+        window.dispatchEvent(new Event(action));
+    }
+    const pending = [...frames.values()];
+    frames.clear();
+    for (const callback of pending) callback(180);
+    expect(frames.size).toBe(0);
+    expect(move).not.toHaveBeenCalled();
+  });
 
   it('keeps You shortcuts, empty states, unrelated keys and remount disposal consistent', async () => {
     document.body.insertAdjacentHTML(

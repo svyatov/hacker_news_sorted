@@ -167,7 +167,8 @@ const createNavigator = () => {
     motionFrame = 0;
     landed = null;
   };
-  const interruptMotion = (): void => {
+  const interruptMotion = (event: Event): void => {
+    if (event.type !== 'wheel' && event.composedPath().some((target) => target === previous || target === next)) return;
     if (motionFrame) stopMotion();
   };
   for (const event of ['wheel', 'touchstart', 'pointerdown'])
@@ -289,11 +290,9 @@ const createNavigator = () => {
     }
     const started = performance.now();
     const animate = (time: number): void => {
-      if (window.scrollY !== landed?.scroll) {
-        stopMotion();
-        update();
-        return;
-      }
+      // Validate the saved landing before this frame can replace its geometry.
+      update();
+      if (!landed) return;
       const progress = Math.min((time - started) / 180, 1);
       const eased = 1 - (1 - progress) ** 3;
       window.scrollTo({ top: origin + (destination - origin) * eased, behavior: 'instant' });
