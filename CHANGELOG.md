@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Comment navigation status and boundary controls stay stable on narrow screens, including after a shortcut conflict
 - Posts on page 2 and later of a list no longer all show the new-post indicator (at full strength, without fading) when the first page of the same list loads in another tab
 - New-post indicators picked up from a visit in another tab now fade out over the highlight duration instead of staying until the page is reloaded
 - Posts that dropped off a list are no longer marked as new in an older tab of the same list when the list loads in another tab

@@ -116,5 +116,8 @@
 }
 
 .hns-comment-navigation [role='status'] {
+  /* Keep position and conflict messages on their own rows so shorter position text
+     cannot change the toolbar height used as the navigation anchor. */
+  flex-basis: 100%;
   overflow-wrap: anywhere;
 }
