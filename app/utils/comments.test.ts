@@ -1,3 +1,4 @@
+import { fireEvent, screen } from '@testing-library/dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
 
@@ -16,6 +17,7 @@ const dotIn = (id: string): HTMLButtonElement => getRowById(id).querySelector(`.
 const dotPressed = (id: string): boolean => dotIn(id).getAttribute('aria-pressed') === 'true';
 const mark = (): string | null => sessionStorage.getItem(`${MARK_STORAGE_PREFIX}1`);
 let dispose: () => void;
+let resize: () => void;
 
 const start = async (): Promise<void> => {
   dispose = startCommentEnhancements();
@@ -23,6 +25,23 @@ const start = async (): Promise<void> => {
 };
 
 beforeEach(() => {
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      private readonly targets = new Set<Element>();
+      constructor(callback: () => void) {
+        resize = () => {
+          if (this.targets.size > 0) callback();
+        };
+      }
+      observe(target: Element) {
+        this.targets.add(target);
+      }
+      disconnect() {
+        this.targets.clear();
+      }
+    },
+  );
   vi.stubGlobal('location', { search: '?id=1' });
   sessionStorage.clear();
   dispose = () => {};
@@ -42,11 +61,238 @@ beforeEach(() => {
 
 afterEach(() => {
   dispose();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   clearBody();
 });
 
 describe('comment enhancement lifecycle', () => {
+  it('leaves pages without a comment surface alone', async () => {
+    document.querySelector('table.comment-tree')!.remove();
+    await start();
+    await settingsStorage.set(OP_HIGHLIGHT, false);
+    await flush();
+    expect(screen.queryByRole('navigation')).toBeNull();
+    dispose();
+    expect(screen.queryByRole('navigation')).toBeNull();
+  });
+
+  it('starts one OP navigator inside the comment surface, excluding collapsed matches', async () => {
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{ height: 20 }] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 40, height: 32 } as DOMRect);
+    await start();
+    const toolbar = screen.getByRole('navigation', { name: 'Comment navigation' });
+    expect(toolbar.parentElement).toBe(document.querySelector('table.comment-tree')!.parentElement);
+    expect(screen.getByRole('combobox', { name: 'Comment group' })).toHaveValue('op');
+    expect(toolbar).toHaveTextContent('1 of 1 on page');
+    expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    dotIn('a1').click();
+    expect(screen.getAllByRole('navigation')).toHaveLength(1);
+    expect(screen.getByRole('combobox')).toHaveValue('op');
+    dispose();
+    expect(screen.queryByRole('navigation')).toBeNull();
+  });
+
+  it('navigates from the reading position without wrapping, including clamped bottom jumps', async () => {
+    getRowById('op2').classList.remove('coll');
+    let scroll = 0;
+    let firstTop = 100;
+    let toolbarHeight = 32;
+    vi.spyOn(window, 'scrollY', 'get').mockImplementation(() => scroll);
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{ height: 20 }] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return { top: (this.id === 'op1' ? firstTop : 500) - scroll, height: toolbarHeight } as DOMRect;
+    });
+    vi.spyOn(window, 'scrollTo').mockImplementation((options) => {
+      scroll = Math.min((options as ScrollToOptions).top!, 300);
+      window.dispatchEvent(new Event('scroll'));
+    });
+    await start();
+    const next = screen.getByRole('button', { name: 'Next' });
+    const previous = screen.getByRole('button', { name: 'Previous' });
+    expect(screen.getByRole('status')).toHaveTextContent('Before 1 of 2 on page');
+    next.click();
+    expect(scroll).toBe(60);
+    expect(screen.getByRole('status')).toHaveTextContent('1 of 2 on page');
+    next.click();
+    expect(scroll).toBe(300);
+    expect(screen.getByRole('status')).toHaveTextContent('2 of 2 on page');
+    expect(next).toBeDisabled();
+    previous.click();
+    expect(scroll).toBe(60);
+    expect(previous).toBeDisabled();
+    scroll = 200;
+    fireEvent.scroll(window);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    expect(screen.getByRole('status')).toHaveTextContent('Between 1 and 2 of 2 on page');
+    expect(previous).toBeEnabled();
+    expect(next).toBeEnabled();
+    previous.click();
+    expect(scroll).toBe(60);
+    firstTop = 200;
+    resize();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    expect(screen.getByRole('status')).toHaveTextContent('Before 1 of 2 on page');
+    next.click();
+    toolbarHeight = 64;
+    resize();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    expect(screen.getByRole('status')).toHaveTextContent('Between 1 and 2 of 2 on page');
+    next.click();
+    getRowById('op2').classList.add('coll');
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(screen.getByRole('status')).toHaveTextContent('After 1 of 1 on page');
+  });
+
+  it('keeps reader intent through mark replacement, clearing, and both live switches', async () => {
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{ height: 20 }] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 100, height: 32 } as DOMRect);
+    await start();
+    const group = screen.getByRole('combobox');
+    dotIn('a1').click();
+    expect(group).toHaveValue('op');
+    fireEvent.change(group, { target: { value: 'marked' } });
+    group.focus();
+    expect(screen.getByRole('status')).toHaveTextContent('Before 1 of 2 on page');
+    dotIn('b1').click();
+    expect(group).toHaveValue('marked');
+    expect(group).toHaveFocus();
+    expect(screen.getByRole('status')).toHaveTextContent('Before 1 of 1 on page');
+    dotIn('b1').click();
+    expect(group).toHaveValue('marked');
+    expect(screen.getByRole('status')).toHaveTextContent('Marked user unavailable');
+    expect(screen.getByRole('option', { name: 'Marked user' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    dotIn('a1').click();
+    await settingsStorage.set(MARK_USER_HIGHLIGHT, false);
+    await flush();
+    expect(group).toHaveValue('marked');
+    expect(screen.getByRole('status')).toHaveTextContent('Marked user unavailable');
+    await settingsStorage.set(MARK_USER_HIGHLIGHT, true);
+    await flush();
+    expect(screen.getByRole('status')).toHaveTextContent('Before 1 of 2 on page');
+    fireEvent.change(group, { target: { value: 'op' } });
+    await settingsStorage.set(OP_HIGHLIGHT, false);
+    await flush();
+    expect(group).toHaveValue('op');
+    expect(screen.getByRole('status')).toHaveTextContent('OP unavailable');
+    expect(screen.getByRole('option', { name: 'OP' })).toBeDisabled();
+  });
+
+  it('tracks native collapse transitions and hidden descendants without retargeting', async () => {
+    getRowById('op2').classList.remove('coll');
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockImplementation(function (this: HTMLElement) {
+      return (this.closest('[hidden], [style="display: none;"]') ? [] : [{ height: 20 }]) as unknown as DOMRectList;
+    });
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 100, height: 32 } as DOMRect);
+    await start();
+    const group = screen.getByRole('combobox');
+    expect(screen.getByRole('status')).toHaveTextContent('Before 1 of 2 on page');
+    getRowById('op1').classList.add('coll');
+    getRowById('op2').style.display = 'none';
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(group).toHaveValue('op');
+    expect(screen.getByRole('status')).toHaveTextContent('No visible matches');
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    getRowById('op1').classList.remove('coll');
+    getRowById('op2').style.display = '';
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(screen.getByRole('status')).toHaveTextContent('Before 1 of 2 on page');
+    document.querySelector('table.comment-tree')!.setAttribute('hidden', '');
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(screen.getByRole('status')).toHaveTextContent('No visible matches');
+  });
+
+  it('initializes to Marked user when OP has no visible matches and never chooses an empty role', async () => {
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{ height: 20 }] as unknown as DOMRectList);
+    setupCommentThread({ comments: [{ id: 'a1', author: 'alice' }] });
+    sessionStorage.setItem(`${MARK_STORAGE_PREFIX}1`, 'alice');
+    await start();
+    expect(screen.getByRole('combobox')).toHaveValue('marked');
+    dispose();
+    sessionStorage.clear();
+    await start();
+    expect(screen.getByRole('combobox')).toHaveValue('');
+    expect(screen.getByRole('status')).toHaveTextContent('No visible matches');
+    expect(screen.getByRole('option', { name: 'OP' })).toBeEnabled();
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'op' } });
+    dotIn('a1').click();
+    expect(screen.getByRole('combobox')).toHaveValue('op');
+    expect(screen.getByRole('status')).toHaveTextContent('No visible matches');
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+  });
+
+  it('recomputes geometry, validates stale destinations, and stops scheduled work on disposal', async () => {
+    let top = 100;
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{ height: 20 }] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() => ({ top, height: 32 }) as DOMRect);
+    await start();
+    const next = screen.getByRole('button', { name: 'Next' });
+    expect(next).toBeEnabled();
+    top = -100;
+    resize();
+    fireEvent.resize(window);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    expect(screen.getByRole('status')).toHaveTextContent('After 1 of 1 on page');
+    top = 100;
+    fireEvent.scroll(window);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    getRowById('op1').classList.add('coll');
+    const scroll = vi.spyOn(window, 'scrollTo');
+    next.click();
+    expect(scroll).not.toHaveBeenCalled();
+    expect(next).toBeDisabled();
+    resize();
+    dispose();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    expect(screen.queryByRole('navigation')).toBeNull();
+    next.click();
+    expect(scroll).not.toHaveBeenCalled();
+  });
+
+  it('cancels pending navigator work on disposal', async () => {
+    vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'cancelAnimationFrame'] });
+    await start();
+    vi.advanceTimersToNextFrame();
+    const measure = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect');
+    resize();
+    vi.advanceTimersToNextFrame();
+    expect(measure).toHaveBeenCalled();
+    measure.mockClear();
+
+    resize();
+    dispose();
+    await Promise.resolve();
+    vi.advanceTimersToNextFrame();
+    expect(measure).not.toHaveBeenCalled();
+    expect(screen.queryByRole('navigation')).toBeNull();
+  });
+
+  it.each([
+    ['collapse', () => getRowById('op1').classList.toggle('coll')],
+    ['resize', () => resize()],
+  ] as const)('stops navigator work from later %s events after disposal', async (_event, trigger) => {
+    vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'cancelAnimationFrame'] });
+    await start();
+    vi.advanceTimersToNextFrame();
+    const measure = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect');
+    trigger();
+    await Promise.resolve();
+    vi.advanceTimersToNextFrame();
+    expect(measure).toHaveBeenCalled();
+
+    dispose();
+    await Promise.resolve();
+    vi.advanceTimersToNextFrame();
+    measure.mockClear();
+    trigger();
+    await Promise.resolve();
+    vi.advanceTimersToNextFrame();
+    expect(measure).not.toHaveBeenCalled();
+    expect(screen.queryByRole('navigation')).toBeNull();
+  });
+
   it('uses only the account on each page load, preserving old self-marks without applying them', async () => {
     document.body.insertAdjacentHTML(
       'afterbegin',

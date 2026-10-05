@@ -71,3 +71,50 @@
   outline-offset: 1px;
   border-radius: 3px;
 }
+
+/* Page-local navigation stays in the discussion cell, below HN's unchanged header. */
+.hns-comment-navigation {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: 6px 0;
+  border-bottom: 1px solid #d9d9d0;
+  background: #f6f6ef;
+  color: #828282;
+  font:
+    9pt Verdana,
+    Geneva,
+    sans-serif;
+}
+
+.hns-comment-navigation select,
+.hns-comment-navigation button {
+  box-sizing: border-box;
+  min-height: 28px;
+  max-width: 100%;
+  padding: 3px 6px;
+  border: 1px solid #b9b9b0;
+  border-radius: 3px;
+  background: #f6f6ef;
+  color: #000;
+  font: inherit;
+}
+
+.hns-comment-navigation button:disabled {
+  color: #828282;
+}
+
+.hns-comment-navigation :focus-visible {
+  outline: 2px solid #ff6600;
+  outline-offset: 1px;
+}
+
+.hns-comment-navigation [role='status'] {
+  overflow-wrap: anywhere;
+}

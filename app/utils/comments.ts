@@ -120,6 +120,144 @@ const nextMark = (current: string | null, clicked: string): string | null => (cu
 
 // --- Orchestrator ---
 
+type NavigationGroup = 'op' | 'marked';
+
+const createNavigator = (signal: AbortSignal) => {
+  const tree = document.querySelector<HTMLElement>(HN_SELECTORS.COMMENT_TREE);
+  if (!tree) return null;
+  const toolbar = document.createElement('nav');
+  toolbar.className = CSS_CLASSES.COMMENT_NAVIGATION;
+  toolbar.setAttribute('aria-label', 'Comment navigation');
+  const group = document.createElement('select');
+  group.setAttribute('aria-label', 'Comment group');
+  const empty = new Option('Choose group', '');
+  empty.disabled = true;
+  const opOption = new Option('OP', 'op');
+  const markedOption = new Option('Marked user', 'marked');
+  group.append(empty, opOption, markedOption);
+  const previous = document.createElement('button');
+  previous.type = 'button';
+  previous.textContent = 'Previous';
+  const next = document.createElement('button');
+  next.type = 'button';
+  next.textContent = 'Next';
+  const status = document.createElement('span');
+  status.setAttribute('role', 'status');
+  toolbar.append(group, previous, next, status);
+  tree.before(toolbar);
+  let selected: NavigationGroup | null = null;
+  let initialized = false;
+  let authors: Record<NavigationGroup, string | null> = { op: null, marked: null };
+  let landed: { row: HTMLElement; scroll: number; top: number; anchor: number } | null = null;
+  let before: HTMLElement | undefined;
+  let after: HTMLElement | undefined;
+  let frame = 0;
+  const matches = (role: NavigationGroup): HTMLElement[] =>
+    getCommentRows().filter(
+      (row) =>
+        !!authors[role] &&
+        getCommentAuthor(row) === authors[role] &&
+        !row.classList.contains('coll') &&
+        row.getClientRects().length > 0,
+    );
+  const update = (): void => {
+    opOption.disabled = !authors.op;
+    markedOption.disabled = !authors.marked;
+    if (!initialized) {
+      selected = (['op', 'marked'] as const).find((role) => authors[role] && matches(role).length > 0) ?? null;
+      initialized = true;
+    }
+    group.value = selected ?? '';
+    const rows = selected ? matches(selected) : [];
+    const anchor = toolbar.getBoundingClientRect().height + 8;
+    if (
+      landed &&
+      (landed.scroll !== window.scrollY ||
+        !rows.includes(landed.row) ||
+        landed.top !== landed.row.getBoundingClientRect().top ||
+        landed.anchor !== anchor)
+    )
+      landed = null;
+    const current = rows.findIndex((row) =>
+      landed ? row === landed.row : Math.abs(row.getBoundingClientRect().top - anchor) <= 1,
+    );
+    if (current >= 0) {
+      before = rows[current - 1];
+      after = rows[current + 1];
+      status.textContent = `${current + 1} of ${rows.length} on page`;
+    } else {
+      before = rows.filter((row) => row.getBoundingClientRect().top < anchor).at(-1);
+      after = rows.find((row) => row.getBoundingClientRect().top > anchor);
+      const index = before ? rows.indexOf(before) + 1 : 0;
+      status.textContent =
+        selected && !authors[selected]
+          ? `${selected === 'op' ? 'OP' : 'Marked user'} unavailable`
+          : !rows.length
+            ? 'No visible matches on page'
+            : index === 0
+              ? `Before 1 of ${rows.length} on page`
+              : index === rows.length
+                ? `After ${index} of ${rows.length} on page`
+                : `Between ${index} and ${index + 1} of ${rows.length} on page`;
+    }
+    previous.disabled = !before;
+    next.disabled = !after;
+  };
+  const schedule = (): void => {
+    if (frame) return;
+    frame = requestAnimationFrame(() => {
+      frame = 0;
+      update();
+    });
+  };
+  window.addEventListener('scroll', schedule, { signal, passive: true });
+  window.addEventListener('resize', schedule, { signal });
+  const observer = new MutationObserver(schedule);
+  observer.observe(tree, { attributes: true, attributeFilter: ['class', 'style', 'hidden'], subtree: true });
+  const resizeObserver = new ResizeObserver(schedule);
+  resizeObserver.observe(tree);
+  resizeObserver.observe(toolbar);
+  const jump = (direction: 'previous' | 'next'): void => {
+    update();
+    const row = direction === 'previous' ? before : after;
+    if (!row) return;
+    window.scrollTo({
+      top: window.scrollY + row.getBoundingClientRect().top - toolbar.getBoundingClientRect().height - 8,
+      behavior: 'instant',
+    });
+    landed = {
+      row,
+      scroll: window.scrollY,
+      top: row.getBoundingClientRect().top,
+      anchor: toolbar.getBoundingClientRect().height + 8,
+    };
+    update();
+  };
+  previous.addEventListener('click', () => jump('previous'), { signal });
+  next.addEventListener('click', () => jump('next'), { signal });
+  group.addEventListener(
+    'change',
+    () => {
+      selected = group.value as NavigationGroup;
+      landed = null;
+      update();
+    },
+    { signal },
+  );
+  return {
+    reconcile: (op: string | null, marked: string | null): void => {
+      authors = { op, marked };
+      update();
+    },
+    dispose: (): void => {
+      observer.disconnect();
+      resizeObserver.disconnect();
+      cancelAnimationFrame(frame);
+      toolbar.remove();
+    },
+  };
+};
+
 type EnhancementOptions = {
   opEnabled: boolean;
   markEnabled: boolean;
@@ -153,19 +291,25 @@ const applyCommentEnhancements = ({ opEnabled, markEnabled, onMark, signal }: En
 // Owns settings, mark actions, and all DOM enhancements until content-script invalidation.
 export const startCommentEnhancements = (): (() => void) => {
   const controller = new AbortController();
+  let navigator: ReturnType<typeof createNavigator>;
   let apply: () => void;
   const onMark = (username: string): void => {
     setMarkedUser(nextMark(getMarkedUser(), username));
     apply();
   };
   const unwatch = watchSettings([SETTINGS_KEYS.OP_HIGHLIGHT, SETTINGS_KEYS.MARK_USER_HIGHLIGHT], (values) => {
-    apply = () =>
+    navigator ??= createNavigator(controller.signal);
+    apply = () => {
       applyCommentEnhancements({
         opEnabled: values[SETTINGS_KEYS.OP_HIGHLIGHT],
         markEnabled: values[SETTINGS_KEYS.MARK_USER_HIGHLIGHT],
         onMark,
         signal: controller.signal,
       });
+      const op = values[SETTINGS_KEYS.OP_HIGHLIGHT] && isStoryPage() ? getStoryAuthor() : null;
+      const marked = values[SETTINGS_KEYS.MARK_USER_HIGHLIGHT] ? getMarkedUser() : null;
+      navigator?.reconcile(op, marked === getLoggedInUser() ? null : marked);
+    };
     apply();
   });
 
@@ -173,6 +317,7 @@ export const startCommentEnhancements = (): (() => void) => {
     if (controller.signal.aborted) return;
     controller.abort();
     unwatch();
+    navigator?.dispose();
     clearHighlights();
     removeMarkDots();
   };
