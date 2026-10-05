@@ -67,6 +67,56 @@ afterEach(() => {
 });
 
 describe('comment enhancement lifecycle', () => {
+  it('keeps an identified You eligible with no visible replies instead of guessing a position', async () => {
+    document.body.insertAdjacentHTML(
+      'afterbegin',
+      '<span class="pagetop"><a id="me" href="user?id=alice">alice</a></span>',
+    );
+    await start();
+    const group = screen.getByRole('combobox');
+    expect(group).toHaveValue('');
+    expect(screen.getByRole('option', { name: 'You' })).toBeEnabled();
+    fireEvent.change(group, { target: { value: 'own' } });
+    expect(screen.getByRole('status')).toHaveTextContent('No visible matches on page');
+    expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    await settingsStorage.set(OP_HIGHLIGHT, false);
+    await flush();
+    expect(group).toHaveValue('own');
+    dispose();
+    expect(screen.queryByRole('navigation')).toBeNull();
+    expect(document.querySelectorAll(`.${CSS_CLASSES.OWN_BADGE}`)).toHaveLength(0);
+  });
+
+  it('falls back to You after OP and Marked user, keeping You selected through other marks and switches', async () => {
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{ height: 20 }] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 100, height: 32 } as DOMRect);
+    document.body.insertAdjacentHTML(
+      'afterbegin',
+      '<span class="pagetop"><a id="me" href="user?id=alice">alice</a></span>',
+    );
+    await store(OP_HIGHLIGHT, false);
+    sessionStorage.setItem(`${MARK_STORAGE_PREFIX}1`, 'bob');
+    await start();
+    expect(screen.getByRole('combobox')).toHaveValue('marked');
+    dispose();
+    sessionStorage.setItem(`${MARK_STORAGE_PREFIX}1`, 'alice');
+    await start();
+    const group = screen.getByRole('combobox');
+    expect(group).toHaveValue('own');
+    expect(screen.getByRole('option', { name: 'Marked user' })).toBeDisabled();
+    expect(screen.getByRole('status')).toHaveTextContent('Before 1 of 2 on page');
+    dotIn('b1').click();
+    expect(group).toHaveValue('own');
+    expect(mark()).toBe('bob');
+    await settingsStorage.set(MARK_USER_HIGHLIGHT, false);
+    await flush();
+    expect(group).toHaveValue('own');
+    expect(screen.getByRole('option', { name: 'You' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled();
+    expect(getRowById('a1')).toHaveTextContent('You');
+  });
+
   it('leaves pages without a comment surface alone', async () => {
     document.querySelector('table.comment-tree')!.remove();
     await start();
@@ -94,56 +144,64 @@ describe('comment enhancement lifecycle', () => {
     expect(screen.queryByRole('navigation')).toBeNull();
   });
 
-  it('navigates from the reading position without wrapping, including clamped bottom jumps', async () => {
-    getRowById('op2').classList.remove('coll');
-    let scroll = 0;
-    let firstTop = 100;
-    let toolbarHeight = 32;
-    vi.spyOn(window, 'scrollY', 'get').mockImplementation(() => scroll);
-    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{ height: 20 }] as unknown as DOMRectList);
-    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
-      return { top: (this.id === 'op1' ? firstTop : 500) - scroll, height: toolbarHeight } as DOMRect;
-    });
-    vi.spyOn(window, 'scrollTo').mockImplementation((options) => {
-      scroll = Math.min((options as ScrollToOptions).top!, 300);
-      window.dispatchEvent(new Event('scroll'));
-    });
-    await start();
-    const next = screen.getByRole('button', { name: 'Next' });
-    const previous = screen.getByRole('button', { name: 'Previous' });
-    expect(screen.getByRole('status')).toHaveTextContent('Before 1 of 2 on page');
-    next.click();
-    expect(scroll).toBe(60);
-    expect(screen.getByRole('status')).toHaveTextContent('1 of 2 on page');
-    next.click();
-    expect(scroll).toBe(300);
-    expect(screen.getByRole('status')).toHaveTextContent('2 of 2 on page');
-    expect(next).toBeDisabled();
-    previous.click();
-    expect(scroll).toBe(60);
-    expect(previous).toBeDisabled();
-    scroll = 200;
-    fireEvent.scroll(window);
-    await new Promise((resolve) => requestAnimationFrame(resolve));
-    expect(screen.getByRole('status')).toHaveTextContent('Between 1 and 2 of 2 on page');
-    expect(previous).toBeEnabled();
-    expect(next).toBeEnabled();
-    previous.click();
-    expect(scroll).toBe(60);
-    firstTop = 200;
-    resize();
-    await new Promise((resolve) => requestAnimationFrame(resolve));
-    expect(screen.getByRole('status')).toHaveTextContent('Before 1 of 2 on page');
-    next.click();
-    toolbarHeight = 64;
-    resize();
-    await new Promise((resolve) => requestAnimationFrame(resolve));
-    expect(screen.getByRole('status')).toHaveTextContent('Between 1 and 2 of 2 on page');
-    next.click();
-    getRowById('op2').classList.add('coll');
-    await new Promise((resolve) => setTimeout(resolve, 30));
-    expect(screen.getByRole('status')).toHaveTextContent('After 1 of 1 on page');
-  });
+  it.each(['op', 'own'])(
+    'navigates %s from the reading position without wrapping, including clamped bottom jumps',
+    async (role) => {
+      document.body.insertAdjacentHTML(
+        'afterbegin',
+        `<span class="pagetop"><a id="me" href="user?id=${OP}">${OP}</a></span>`,
+      );
+      getRowById('op2').classList.remove('coll');
+      let scroll = 0;
+      let firstTop = 100;
+      let toolbarHeight = 32;
+      vi.spyOn(window, 'scrollY', 'get').mockImplementation(() => scroll);
+      vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{ height: 20 }] as unknown as DOMRectList);
+      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+        return { top: (this.id === 'op1' ? firstTop : 500) - scroll, height: toolbarHeight } as DOMRect;
+      });
+      vi.spyOn(window, 'scrollTo').mockImplementation((options) => {
+        scroll = Math.min((options as ScrollToOptions).top!, 300);
+        window.dispatchEvent(new Event('scroll'));
+      });
+      await start();
+      fireEvent.change(screen.getByRole('combobox'), { target: { value: role } });
+      const next = screen.getByRole('button', { name: 'Next' });
+      const previous = screen.getByRole('button', { name: 'Previous' });
+      expect(screen.getByRole('status')).toHaveTextContent('Before 1 of 2 on page');
+      next.click();
+      expect(scroll).toBe(60);
+      expect(screen.getByRole('status')).toHaveTextContent('1 of 2 on page');
+      next.click();
+      expect(scroll).toBe(300);
+      expect(screen.getByRole('status')).toHaveTextContent('2 of 2 on page');
+      expect(next).toBeDisabled();
+      previous.click();
+      expect(scroll).toBe(60);
+      expect(previous).toBeDisabled();
+      scroll = 200;
+      fireEvent.scroll(window);
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      expect(screen.getByRole('status')).toHaveTextContent('Between 1 and 2 of 2 on page');
+      expect(previous).toBeEnabled();
+      expect(next).toBeEnabled();
+      previous.click();
+      expect(scroll).toBe(60);
+      firstTop = 200;
+      resize();
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      expect(screen.getByRole('status')).toHaveTextContent('Before 1 of 2 on page');
+      next.click();
+      toolbarHeight = 64;
+      resize();
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      expect(screen.getByRole('status')).toHaveTextContent('Between 1 and 2 of 2 on page');
+      next.click();
+      getRowById('op2').classList.add('coll');
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      expect(screen.getByRole('status')).toHaveTextContent('After 1 of 1 on page');
+    },
+  );
 
   it('keeps reader intent through mark replacement, clearing, and both live switches', async () => {
     vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{ height: 20 }] as unknown as DOMRectList);
@@ -180,29 +238,37 @@ describe('comment enhancement lifecycle', () => {
     expect(screen.getByRole('option', { name: 'OP' })).toBeDisabled();
   });
 
-  it('tracks native collapse transitions and hidden descendants without retargeting', async () => {
-    getRowById('op2').classList.remove('coll');
-    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockImplementation(function (this: HTMLElement) {
-      return (this.closest('[hidden], [style="display: none;"]') ? [] : [{ height: 20 }]) as unknown as DOMRectList;
-    });
-    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 100, height: 32 } as DOMRect);
-    await start();
-    const group = screen.getByRole('combobox');
-    expect(screen.getByRole('status')).toHaveTextContent('Before 1 of 2 on page');
-    getRowById('op1').classList.add('coll');
-    getRowById('op2').style.display = 'none';
-    await new Promise((resolve) => setTimeout(resolve, 30));
-    expect(group).toHaveValue('op');
-    expect(screen.getByRole('status')).toHaveTextContent('No visible matches');
-    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
-    getRowById('op1').classList.remove('coll');
-    getRowById('op2').style.display = '';
-    await new Promise((resolve) => setTimeout(resolve, 30));
-    expect(screen.getByRole('status')).toHaveTextContent('Before 1 of 2 on page');
-    document.querySelector('table.comment-tree')!.setAttribute('hidden', '');
-    await new Promise((resolve) => setTimeout(resolve, 30));
-    expect(screen.getByRole('status')).toHaveTextContent('No visible matches');
-  });
+  it.each(['op', 'own'])(
+    'tracks %s native collapse transitions and hidden descendants without retargeting',
+    async (role) => {
+      document.body.insertAdjacentHTML(
+        'afterbegin',
+        `<span class="pagetop"><a id="me" href="user?id=${OP}">${OP}</a></span>`,
+      );
+      getRowById('op2').classList.remove('coll');
+      vi.spyOn(HTMLElement.prototype, 'getClientRects').mockImplementation(function (this: HTMLElement) {
+        return (this.closest('[hidden], [style="display: none;"]') ? [] : [{ height: 20 }]) as unknown as DOMRectList;
+      });
+      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 100, height: 32 } as DOMRect);
+      await start();
+      const group = screen.getByRole('combobox');
+      fireEvent.change(group, { target: { value: role } });
+      expect(screen.getByRole('status')).toHaveTextContent('Before 1 of 2 on page');
+      getRowById('op1').classList.add('coll');
+      getRowById('op2').style.display = 'none';
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      expect(group).toHaveValue(role);
+      expect(screen.getByRole('status')).toHaveTextContent('No visible matches');
+      expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+      getRowById('op1').classList.remove('coll');
+      getRowById('op2').style.display = '';
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      expect(screen.getByRole('status')).toHaveTextContent('Before 1 of 2 on page');
+      document.querySelector('table.comment-tree')!.setAttribute('hidden', '');
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      expect(screen.getByRole('status')).toHaveTextContent('No visible matches');
+    },
+  );
 
   it('initializes to Marked user when OP has no visible matches and never chooses an empty role', async () => {
     vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{ height: 20 }] as unknown as DOMRectList);
@@ -294,6 +360,8 @@ describe('comment enhancement lifecycle', () => {
   });
 
   it('uses only the account on each page load, preserving old self-marks without applying them', async () => {
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{ height: 20 }] as unknown as DOMRectList);
+    await store(OP_HIGHLIGHT, false);
     document.body.insertAdjacentHTML(
       'afterbegin',
       '<span class="pagetop"><a id="me" href="user?id=alice">alice</a></span>',
@@ -303,6 +371,8 @@ describe('comment enhancement lifecycle', () => {
     expect(getRowById('a1')).toHaveTextContent('You');
     expect(getRowById('a1').querySelector(`.${CSS_CLASSES.MARK_DOT}`)).toBeNull();
     expect(mark()).toBe('alice');
+    expect(screen.getByRole('combobox')).toHaveValue('own');
+    expect(screen.getByRole('option', { name: 'Marked user' })).toBeDisabled();
     dispose();
     const account = document.querySelector<HTMLAnchorElement>('#me')!;
     account.textContent = 'bob';
@@ -312,14 +382,19 @@ describe('comment enhancement lifecycle', () => {
     expect(isMarked('a1')).toBe(true);
     expect(dotPressed('a1')).toBe(true);
     expect(getRowById('b1')).toHaveTextContent('You');
+    expect(screen.getByRole('combobox')).toHaveValue('marked');
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'own' } });
+    expect(screen.getByRole('status')).toHaveTextContent('1 on page');
     dispose();
     account.remove();
     await start();
     expect(document.querySelectorAll(`.${CSS_CLASSES.OWN_BADGE}`)).toHaveLength(0);
     expect(dotIn('b1')).toHaveAccessibleName('Highlight comments by bob');
+    expect(screen.getByRole('option', { name: 'You' })).toBeDisabled();
   });
 
   it('keeps own highlighting on permalink replies without enhancing the top item', async () => {
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{ height: 20 }] as unknown as DOMRectList);
     setupCommentThread({ isStory: false, storyAuthor: 'alice', comments: [{ id: 'a1', author: 'alice' }] });
     document.body.insertAdjacentHTML(
       'afterbegin',
@@ -329,6 +404,8 @@ describe('comment enhancement lifecycle', () => {
     expect(isOp('a1')).toBe(false);
     expect(getRowById('a1')).toHaveTextContent('You');
     expect(document.querySelectorAll(`.${CSS_CLASSES.OWN_BADGE}`)).toHaveLength(1);
+    expect(screen.getByRole('combobox')).toHaveValue('own');
+    expect(screen.getByRole('option', { name: 'OP' })).toBeDisabled();
   });
 
   it.each([
@@ -341,6 +418,7 @@ describe('comment enhancement lifecycle', () => {
     await start();
     expect(document.querySelectorAll(`.${CSS_CLASSES.OWN_BADGE}`)).toHaveLength(0);
     expect(dotIn('a1')).toHaveAccessibleName('Highlight comments by alice');
+    expect(screen.getByRole('option', { name: 'You' })).toBeDisabled();
   });
 
   it('does not identify an account from an unrecognized profile link', async () => {
@@ -355,6 +433,7 @@ describe('comment enhancement lifecycle', () => {
   });
 
   it('gives OP appearance precedence over own appearance and an old self-mark', async () => {
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{ height: 20 }] as unknown as DOMRectList);
     document.body.insertAdjacentHTML(
       'afterbegin',
       `<span class="pagetop"><a id="me" href="user?id=${OP}">${OP}</a></span>`,
@@ -365,6 +444,9 @@ describe('comment enhancement lifecycle', () => {
     expect(isMarked('op1')).toBe(false);
     expect(getRowById('op1')).not.toHaveTextContent('You');
     expect(badgesIn('op1')).toBe(1);
+    expect(screen.getByRole('combobox')).toHaveValue('op');
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'own' } });
+    expect(screen.getByRole('status')).toHaveTextContent('1 on page');
     await settingsStorage.set(OP_HIGHLIGHT, false);
     await flush();
     expect(isOp('op1')).toBe(false);
@@ -372,6 +454,9 @@ describe('comment enhancement lifecycle', () => {
     expect(getRowById('op1')).toHaveTextContent('You');
     expect(getRowById('op2')).toHaveClass('coll');
     expect(getRowById('op1').querySelector(`.${CSS_CLASSES.MARK_DOT}`)).toBeNull();
+    expect(screen.getByRole('combobox')).toHaveValue('own');
+    expect(screen.getByRole('option', { name: 'OP' })).toBeDisabled();
+    expect(screen.getByRole('option', { name: 'You' })).toBeEnabled();
     await settingsStorage.set(OP_HIGHLIGHT, true);
     await flush();
     expect(getRowById('op1')).not.toHaveTextContent('You');

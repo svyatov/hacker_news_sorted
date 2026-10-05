@@ -120,7 +120,7 @@ const nextMark = (current: string | null, clicked: string): string | null => (cu
 
 // --- Orchestrator ---
 
-type NavigationGroup = 'op' | 'marked';
+type NavigationGroup = 'op' | 'marked' | 'own';
 
 const createNavigator = (signal: AbortSignal) => {
   const tree = document.querySelector<HTMLElement>(HN_SELECTORS.COMMENT_TREE);
@@ -134,7 +134,8 @@ const createNavigator = (signal: AbortSignal) => {
   empty.disabled = true;
   const opOption = new Option('OP', 'op');
   const markedOption = new Option('Marked user', 'marked');
-  group.append(empty, opOption, markedOption);
+  const ownOption = new Option('You', 'own');
+  group.append(empty, opOption, markedOption, ownOption);
   const previous = document.createElement('button');
   previous.type = 'button';
   previous.textContent = 'Previous';
@@ -147,7 +148,7 @@ const createNavigator = (signal: AbortSignal) => {
   tree.before(toolbar);
   let selected: NavigationGroup | null = null;
   let initialized = false;
-  let authors: Record<NavigationGroup, string | null> = { op: null, marked: null };
+  let authors: Record<NavigationGroup, string | null> = { op: null, marked: null, own: null };
   let landed: { row: HTMLElement; scroll: number; top: number; anchor: number } | null = null;
   let before: HTMLElement | undefined;
   let after: HTMLElement | undefined;
@@ -163,8 +164,9 @@ const createNavigator = (signal: AbortSignal) => {
   const update = (): void => {
     opOption.disabled = !authors.op;
     markedOption.disabled = !authors.marked;
+    ownOption.disabled = !authors.own;
     if (!initialized) {
-      selected = (['op', 'marked'] as const).find((role) => authors[role] && matches(role).length > 0) ?? null;
+      selected = (['op', 'marked', 'own'] as const).find((role) => authors[role] && matches(role).length > 0) ?? null;
       initialized = true;
     }
     group.value = selected ?? '';
@@ -191,7 +193,7 @@ const createNavigator = (signal: AbortSignal) => {
       const index = before ? rows.indexOf(before) + 1 : 0;
       status.textContent =
         selected && !authors[selected]
-          ? `${selected === 'op' ? 'OP' : 'Marked user'} unavailable`
+          ? `${group.selectedOptions[0]!.textContent} unavailable`
           : !rows.length
             ? 'No visible matches on page'
             : index === 0
@@ -245,8 +247,8 @@ const createNavigator = (signal: AbortSignal) => {
     { signal },
   );
   return {
-    reconcile: (op: string | null, marked: string | null): void => {
-      authors = { op, marked };
+    reconcile: (op: string | null, marked: string | null, own: string | null): void => {
+      authors = { op, marked, own };
       update();
     },
     dispose: (): void => {
@@ -308,7 +310,8 @@ export const startCommentEnhancements = (): (() => void) => {
       });
       const op = values[SETTINGS_KEYS.OP_HIGHLIGHT] && isStoryPage() ? getStoryAuthor() : null;
       const marked = values[SETTINGS_KEYS.MARK_USER_HIGHLIGHT] ? getMarkedUser() : null;
-      navigator?.reconcile(op, marked === getLoggedInUser() ? null : marked);
+      const own = getLoggedInUser();
+      navigator?.reconcile(op, marked === own ? null : marked, own);
     };
     apply();
   });
