@@ -1,4 +1,5 @@
 import { CSS_CLASSES, DOT_USER_ATTR, HN_SELECTORS, MARK_STORAGE_PREFIX, SETTINGS_KEYS } from '~app/constants';
+import type { CommentNavigationOrder } from '~app/types';
 import { getItemId, isStoryPage } from '~app/utils/pages';
 import { parseAgeTitle } from '~app/utils/parsers';
 import { watchSettings } from '~app/utils/settings';
@@ -123,13 +124,14 @@ const nextMark = (current: string | null, clicked: string): string | null => (cu
 
 type NavigationGroup = 'op' | 'marked' | 'own';
 
-const createNavigator = (signal: AbortSignal) => {
+const createNavigator = () => {
   const tree = document.querySelector<HTMLElement>(HN_SELECTORS.COMMENT_TREE);
   if (!tree) return null;
+  const controller = new AbortController();
+  const { signal } = controller;
   const toolbar = document.createElement('nav');
   toolbar.className = CSS_CLASSES.COMMENT_NAVIGATION;
   toolbar.setAttribute('aria-label', 'Comment navigation');
-  toolbar.setAttribute('aria-description', 'Comments ordered from oldest to newest.');
   const group = document.createElement('select');
   group.setAttribute('aria-label', 'Comment group');
   const empty = new Option('Choose group', '');
@@ -142,17 +144,16 @@ const createNavigator = (signal: AbortSignal) => {
   previous.type = 'button';
   previous.textContent = '[ Prev';
   previous.setAttribute('aria-label', 'Previous');
-  previous.title = 'Older comment ([). Shortcut conflict detection is best-effort.';
   const next = document.createElement('button');
   next.type = 'button';
   next.textContent = 'Next ]';
   next.setAttribute('aria-label', 'Next');
-  next.title = 'Newer comment (]). Shortcut conflict detection is best-effort.';
   const status = document.createElement('span');
   status.setAttribute('role', 'status');
   toolbar.append(status, previous, next, group);
   tree.before(toolbar);
   let selected: NavigationGroup | null = null;
+  let order: CommentNavigationOrder = 'chronological';
   let initialized = false;
   let authors: Record<NavigationGroup, string | null> = { op: null, marked: null, own: null };
   let landed: { row: HTMLElement; scroll: number; top: number; anchor: number } | null = null;
@@ -182,6 +183,12 @@ const createNavigator = (signal: AbortSignal) => {
   // A 6px gap keeps the preceding reply link fully under the sticky toolbar.
   const getAnchor = (): number => toolbar.getBoundingClientRect().height + 6;
   const update = (): void => {
+    toolbar.setAttribute(
+      'aria-description',
+      order === 'thread' ? 'Comments ordered as they appear in the thread.' : 'Comments ordered from oldest to newest.',
+    );
+    previous.title = `${order === 'thread' ? 'Previous' : 'Older'} comment ([). Shortcut conflict detection is best-effort.`;
+    next.title = `${order === 'thread' ? 'Next' : 'Newer'} comment (]). Shortcut conflict detection is best-effort.`;
     opOption.disabled = !authors.op;
     markedOption.disabled = !authors.marked;
     ownOption.disabled = !authors.own;
@@ -191,15 +198,18 @@ const createNavigator = (signal: AbortSignal) => {
     }
     group.value = selected ?? '';
     const visibleRows = selected ? matches(selected) : [];
-    const rows = visibleRows
-      .map((row) => ({
-        row,
-        time:
-          parseAgeTitle(row.querySelector(HN_SELECTORS.COMMENT_TIME)?.getAttribute('title') ?? '') ||
-          Number.POSITIVE_INFINITY,
-      }))
-      .sort((a, b) => a.time - b.time)
-      .map(({ row }) => row);
+    const rows =
+      order === 'thread'
+        ? visibleRows
+        : visibleRows
+            .map((row) => ({
+              row,
+              time:
+                parseAgeTitle(row.querySelector(HN_SELECTORS.COMMENT_TIME)?.getAttribute('title') ?? '') ||
+                Number.POSITIVE_INFINITY,
+            }))
+            .sort((a, b) => a.time - b.time)
+            .map(({ row }) => row);
     const anchor = getAnchor();
     if (
       landed &&
@@ -341,12 +351,19 @@ const createNavigator = (signal: AbortSignal) => {
     { signal },
   );
   return {
-    reconcile: (op: string | null, marked: string | null, own: string | null): void => {
+    reconcile: (
+      op: string | null,
+      marked: string | null,
+      own: string | null,
+      navigationOrder: CommentNavigationOrder,
+    ): void => {
       stopMotion();
+      order = navigationOrder;
       authors = { op, marked, own };
       update();
     },
     dispose: (): void => {
+      controller.abort();
       stopMotion();
       observer.disconnect();
       resizeObserver.disconnect();
@@ -395,22 +412,39 @@ export const startCommentEnhancements = (): (() => void) => {
     setMarkedUser(nextMark(getMarkedUser(), username));
     apply();
   };
-  const unwatch = watchSettings([SETTINGS_KEYS.OP_HIGHLIGHT, SETTINGS_KEYS.MARK_USER_HIGHLIGHT], (values) => {
-    navigator ??= createNavigator(controller.signal);
-    apply = () => {
-      applyCommentEnhancements({
-        opEnabled: values[SETTINGS_KEYS.OP_HIGHLIGHT],
-        markEnabled: values[SETTINGS_KEYS.MARK_USER_HIGHLIGHT],
-        onMark,
-        signal: controller.signal,
-      });
-      const op = values[SETTINGS_KEYS.OP_HIGHLIGHT] && isStoryPage() ? getStoryAuthor() : null;
-      const marked = values[SETTINGS_KEYS.MARK_USER_HIGHLIGHT] ? getMarkedUser() : null;
-      const own = getLoggedInUser();
-      navigator?.reconcile(op, marked === own ? null : marked, own);
-    };
-    apply();
-  });
+  const unwatch = watchSettings(
+    [
+      SETTINGS_KEYS.OP_HIGHLIGHT,
+      SETTINGS_KEYS.MARK_USER_HIGHLIGHT,
+      SETTINGS_KEYS.COMMENT_NAVIGATION,
+      SETTINGS_KEYS.COMMENT_NAVIGATION_ORDER,
+    ],
+    (values) => {
+      if (values[SETTINGS_KEYS.COMMENT_NAVIGATION]) navigator ??= createNavigator();
+      else {
+        navigator?.dispose();
+        navigator = null;
+      }
+      apply = () => {
+        applyCommentEnhancements({
+          opEnabled: values[SETTINGS_KEYS.OP_HIGHLIGHT],
+          markEnabled: values[SETTINGS_KEYS.MARK_USER_HIGHLIGHT],
+          onMark,
+          signal: controller.signal,
+        });
+        const op = values[SETTINGS_KEYS.OP_HIGHLIGHT] && isStoryPage() ? getStoryAuthor() : null;
+        const marked = values[SETTINGS_KEYS.MARK_USER_HIGHLIGHT] ? getMarkedUser() : null;
+        const own = getLoggedInUser();
+        navigator?.reconcile(
+          op,
+          marked === own ? null : marked,
+          own,
+          values[SETTINGS_KEYS.COMMENT_NAVIGATION_ORDER] === 'thread' ? 'thread' : 'chronological',
+        );
+      };
+      apply();
+    },
+  );
 
   return () => {
     if (controller.signal.aborted) return;

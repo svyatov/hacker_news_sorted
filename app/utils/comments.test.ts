@@ -71,6 +71,67 @@ afterEach(() => {
 });
 
 describe('comment enhancement lifecycle', () => {
+  it('disables the bar and shortcuts independently of highlighting and can enable them again', async () => {
+    await store(SETTINGS_KEYS.COMMENT_NAVIGATION, false);
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 100, height: 32 } as DOMRect);
+    const move = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    await start();
+    expect(screen.queryByRole('navigation')).toBeNull();
+    expect(isOp('op1')).toBe(true);
+    dotIn('a1').click();
+    expect(isMarked('a1')).toBe(true);
+    expect(fireEvent.keyDown(document, { key: ']' })).toBe(true);
+    expect(move).not.toHaveBeenCalled();
+    await settingsStorage.set(SETTINGS_KEYS.COMMENT_NAVIGATION, true);
+    await flush();
+    const oldNext = screen.getByRole('button', { name: 'Next' });
+    expect(screen.getAllByRole('navigation')).toHaveLength(1);
+    await settingsStorage.set(SETTINGS_KEYS.COMMENT_NAVIGATION, false);
+    await flush();
+    oldNext.click();
+    expect(fireEvent.keyDown(document, { key: ']' })).toBe(true);
+    expect(move).not.toHaveBeenCalled();
+    expect(screen.queryByRole('navigation')).toBeNull();
+    expect(isOp('op1')).toBe(true);
+    expect(isMarked('a1')).toBe(true);
+    await settingsStorage.set(SETTINGS_KEYS.COMMENT_NAVIGATION, true);
+    await flush();
+    expect(screen.getAllByRole('navigation')).toHaveLength(1);
+    fireEvent.keyDown(document, { key: ']' });
+    expect(move).toHaveBeenCalledTimes(1);
+  });
+
+  it('switches between thread and chronological order live and defaults invalid orders to chronological', async () => {
+    await store(SETTINGS_KEYS.COMMENT_NAVIGATION_ORDER, 'thread');
+    getRowById('op2').classList.remove('coll');
+    getRowById('op2').querySelector('.age')!.setAttribute('title', '2026-07-06T17:00:00Z');
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return { top: this.id === 'op1' ? 100 : 500, height: 32 } as DOMRect;
+    });
+    const move = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    await start();
+    screen.getByRole('button', { name: 'Next' }).click();
+    expect(move).toHaveBeenLastCalledWith({ top: 62, behavior: 'instant' });
+    expect(screen.getByRole('navigation')).toHaveAttribute(
+      'aria-description',
+      'Comments ordered as they appear in the thread.',
+    );
+    await settingsStorage.set(SETTINGS_KEYS.COMMENT_NAVIGATION_ORDER, 'chronological');
+    await flush();
+    screen.getByRole('button', { name: 'Next' }).click();
+    expect(move).toHaveBeenLastCalledWith({ top: 462, behavior: 'instant' });
+    expect(screen.getByRole('navigation')).toHaveAttribute(
+      'aria-description',
+      'Comments ordered from oldest to newest.',
+    );
+    await settingsStorage.set(SETTINGS_KEYS.COMMENT_NAVIGATION_ORDER, 'unknown');
+    await flush();
+    screen.getByRole('button', { name: 'Next' }).click();
+    expect(move).toHaveBeenLastCalledWith({ top: 462, behavior: 'instant' });
+  });
+
   it.each(['missing element', 'missing title', 'invalid title'])(
     'keeps a comment with %s reachable after dated comments',
     async (missing) => {

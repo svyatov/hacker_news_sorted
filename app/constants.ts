@@ -1,4 +1,4 @@
-import type { SortOption, SortVariant } from '~app/types';
+import type { CommentNavigationOrder, SortOption, SortVariant } from '~app/types';
 
 // Extension constants
 export const CONTROL_PANEL_ROOT_ID = 'hns-control-panel';
@@ -25,6 +25,8 @@ export const SETTINGS_KEYS = {
   HEAT_ENABLED: 'hns-heat-enabled',
   OP_HIGHLIGHT: 'hns-op-highlight',
   MARK_USER_HIGHLIGHT: 'hns-mark-user-highlight',
+  COMMENT_NAVIGATION: 'hns-comment-navigation',
+  COMMENT_NAVIGATION_ORDER: 'hns-comment-navigation-order',
 } as const;
 
 // The layout flag is a raw boolean read and written with WXT `storage` directly, bypassing the
@@ -44,6 +46,8 @@ export const SETTINGS_DEFAULTS = {
   [SETTINGS_KEYS.HEAT_ENABLED]: true as boolean,
   [SETTINGS_KEYS.OP_HIGHLIGHT]: true as boolean,
   [SETTINGS_KEYS.MARK_USER_HIGHLIGHT]: true as boolean,
+  [SETTINGS_KEYS.COMMENT_NAVIGATION]: true as boolean,
+  [SETTINGS_KEYS.COMMENT_NAVIGATION_ORDER]: 'chronological' as CommentNavigationOrder,
 } as const;
 
 // Time conversions
