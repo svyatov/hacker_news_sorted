@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Comment navigation shortcuts: `[` for Previous and `]` for Next in the selected OP, Marked user or You group, with visible key hints. Typing, native controls, composition and modified presses are left alone. Detected shortcut interception disables both keys for the page with an explanation while toolbar controls remain usable; conflict detection is best-effort
+
 - A sticky comment navigator for OP and Marked user, with Previous/Next and page-local visible counts. It follows the current reading position, skips collapsed branches, stops at both ends, and preserves the selected role through live marks and settings
 - You joins the comment navigator for signed-in readers, with initial selection in OP, Marked user, You order among groups with visible comments. Own navigation stays available when highlighting switches are off, and shares OP destinations when you are the submitter
 - Signed-in readers' loaded thread replies automatically receive a lighter tint and a "You" badge, independently of popup toggles. OP appearance takes precedence while enabled; own comments have no mark button

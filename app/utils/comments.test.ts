@@ -67,6 +67,195 @@ afterEach(() => {
 });
 
 describe('comment enhancement lifecycle', () => {
+  it('keeps You shortcuts, empty states, unrelated keys and remount disposal consistent', async () => {
+    document.body.insertAdjacentHTML(
+      'afterbegin',
+      '<span class="pagetop"><a id="me" href="user?id=alice">alice</a></span>',
+    );
+    let scroll = 0;
+    vi.spyOn(window, 'scrollY', 'get').mockImplementation(() => scroll);
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockImplementation(function (this: HTMLElement) {
+      return (this.hidden ? [] : [{ height: 20 }]) as unknown as DOMRectList;
+    });
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return { top: (this.id === 'a1' ? 100 : 500) - scroll, height: 32 } as DOMRect;
+    });
+    const move = vi.spyOn(window, 'scrollTo').mockImplementation((options) => {
+      scroll = (options as ScrollToOptions).top!;
+    });
+    await start();
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'own' } });
+    expect(fireEvent.keyDown(document, { key: ']' })).toBe(false);
+    expect(scroll).toBe(60);
+    expect(screen.getByRole('status')).toHaveTextContent('1 of 2 on page');
+    dispose();
+    move.mockClear();
+    fireEvent.keyDown(document, { key: ']' });
+    expect(move).not.toHaveBeenCalled();
+    await start();
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'own' } });
+    fireEvent.keyDown(document, { key: ']' });
+    expect(move).toHaveBeenCalledTimes(1);
+    expect(scroll).toBe(460);
+    move.mockClear();
+    expect(fireEvent.keyDown(document.body, { key: 'Tab' })).toBe(true);
+    expect(fireEvent.keyDown(document.body, { key: 'p' })).toBe(true);
+    expect(move).not.toHaveBeenCalled();
+    getRowById('a1').hidden = true;
+    getRowById('a2').hidden = true;
+    expect(fireEvent.keyDown(document.body, { key: '[' })).toBe(true);
+    expect(screen.getByRole('status')).toHaveTextContent('No visible matches');
+    expect(move).not.toHaveBeenCalled();
+  });
+
+  it('detects a later intercepted press after successful navigation, but ignores interception during typing', async () => {
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{ height: 20 }] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 100, height: 32 } as DOMRect);
+    await start();
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    const editor = document.createElement('textarea');
+    document.body.append(editor);
+    const typing = new KeyboardEvent('keydown', { key: ']', bubbles: true, cancelable: true });
+    typing.preventDefault();
+    editor.dispatchEvent(typing);
+    expect(screen.queryByText(/Navigation shortcuts disabled/)).toBeNull();
+    expect(fireEvent.keyDown(document.body, { key: ']' })).toBe(false);
+    const intercepted = new KeyboardEvent('keydown', { key: ']', bubbles: true, cancelable: true });
+    intercepted.preventDefault();
+    document.body.dispatchEvent(intercepted);
+    document.body.dispatchEvent(intercepted);
+    expect(screen.getAllByText(/Navigation shortcuts disabled/)).toHaveLength(1);
+    expect(fireEvent.keyDown(document.body, { key: '[' })).toBe(true);
+  });
+
+  it('disables both shortcuts on interception while controls and group changes remain usable', async () => {
+    let scroll = 0;
+    vi.spyOn(window, 'scrollY', 'get').mockImplementation(() => scroll);
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{ height: 20 }] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return { top: (this.id === 'op1' ? 100 : 500) - scroll, height: 32 } as DOMRect;
+    });
+    vi.spyOn(window, 'scrollTo').mockImplementation((options) => {
+      scroll = (options as ScrollToOptions).top!;
+    });
+    await start();
+    const intercepted = new KeyboardEvent('keydown', { key: ']', bubbles: true, cancelable: true });
+    intercepted.preventDefault();
+    document.body.dispatchEvent(intercepted);
+    expect(scroll).toBe(0);
+    expect(screen.getByRole('navigation')).toHaveTextContent('Navigation shortcuts disabled');
+    expect(screen.getByRole('navigation')).toHaveTextContent(']');
+    expect(fireEvent.keyDown(document.body, { key: ']' })).toBe(true);
+    screen.getByRole('button', { name: 'Next' }).click();
+    expect(scroll).toBe(60);
+    dotIn('b1').click();
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'marked' } });
+    expect(fireEvent.keyDown(document.body, { key: ']' })).toBe(true);
+    expect(fireEvent.keyDown(document.body, { key: '[' })).toBe(true);
+    expect(scroll).toBe(60);
+    screen.getByRole('button', { name: 'Next' }).click();
+    expect(scroll).toBe(460);
+    dispose();
+    expect(screen.queryByText(/Navigation shortcuts disabled/)).toBeNull();
+    expect(fireEvent.keyDown(document.body, { key: '[' })).toBe(true);
+    await start();
+    fireEvent.keyDown(document.body, { key: '[' });
+    expect(scroll).toBe(60);
+  });
+
+  it.each(['input', 'button', 'summary'])('does not consume bracket interaction with a native %s', async (tag) => {
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{ height: 20 }] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 100, height: 32 } as DOMRect);
+    await start();
+    const control = document.createElement(tag);
+    document.body.append(control);
+    const scroll = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    expect(fireEvent.keyDown(control, { key: ']' })).toBe(true);
+    expect(scroll).not.toHaveBeenCalled();
+  });
+
+  it.each(['ctrlKey', 'altKey', 'metaKey', 'shiftKey', 'isComposing'])(
+    'leaves %s bracket presses untouched',
+    async (guard) => {
+      vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{ height: 20 }] as unknown as DOMRectList);
+      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 100, height: 32 } as DOMRect);
+      await start();
+      const scroll = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+      expect(fireEvent.keyDown(document.body, { key: ']', [guard]: true })).toBe(true);
+      expect(scroll).not.toHaveBeenCalled();
+    },
+  );
+
+  it('leaves nested editable typing untouched', async () => {
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{ height: 20 }] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 100, height: 32 } as DOMRect);
+    await start();
+    document.body.insertAdjacentHTML('beforeend', '<div contenteditable=""><span id="typing">reply</span></div>');
+    const scroll = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    expect(fireEvent.keyDown(document.getElementById('typing')!, { key: ']' })).toBe(true);
+    expect(scroll).not.toHaveBeenCalled();
+  });
+
+  it('leaves native group selection untouched', async () => {
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{ height: 20 }] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 100, height: 32 } as DOMRect);
+    await start();
+    const group = screen.getByRole('combobox');
+    group.focus();
+    const scroll = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    expect(fireEvent.keyDown(group, { key: ']' })).toBe(true);
+    expect(group).toHaveFocus();
+    expect(group).toHaveValue('op');
+    expect(scroll).not.toHaveBeenCalled();
+  });
+
+  it('leaves reply typing untouched', async () => {
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{ height: 20 }] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ top: 100, height: 32 } as DOMRect);
+    await start();
+    const scroll = vi.spyOn(window, 'scrollTo');
+    const editor = document.createElement('textarea');
+    document.body.append(editor);
+    editor.focus();
+    expect(fireEvent.keyDown(editor, { key: ']' })).toBe(true);
+    expect(editor).toHaveFocus();
+    expect(scroll).not.toHaveBeenCalled();
+  });
+
+  it('uses bracket keys for the selected group with toolbar boundaries and current reading position', async () => {
+    let scroll = 0;
+    vi.spyOn(window, 'scrollY', 'get').mockImplementation(() => scroll);
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{ height: 20 }] as unknown as DOMRectList);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return { top: (this.id === 'op1' ? 100 : 500) - scroll, height: 32 } as DOMRect;
+    });
+    vi.spyOn(window, 'scrollTo').mockImplementation((options) => {
+      scroll = (options as ScrollToOptions).top!;
+    });
+    await start();
+    expect(screen.getByRole('button', { name: 'Previous' })).toHaveTextContent('[');
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveTextContent(']');
+    expect(fireEvent.keyDown(document.body, { key: '[' })).toBe(true);
+    expect(scroll).toBe(0);
+    expect(fireEvent.keyDown(document.body, { key: ']' })).toBe(false);
+    expect(scroll).toBe(60);
+    expect(screen.getByRole('status')).toHaveTextContent('1 of 1 on page');
+    expect(fireEvent.keyDown(document.body, { key: ']' })).toBe(true);
+    expect(scroll).toBe(60);
+    dotIn('b1').click();
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'marked' } });
+    fireEvent.keyDown(document.body, { key: ']' });
+    expect(scroll).toBe(460);
+    expect(screen.getByRole('status')).toHaveTextContent('1 of 1 on page');
+    scroll = 600;
+    fireEvent.keyDown(document.body, { key: '[' });
+    expect(scroll).toBe(460);
+    dotIn('b1').click();
+    expect(fireEvent.keyDown(document.body, { key: '[' })).toBe(true);
+    expect(scroll).toBe(460);
+    expect(screen.getByRole('status')).toHaveTextContent('Marked user unavailable');
+  });
+
   it('keeps an identified You eligible with no visible replies instead of guessing a position', async () => {
     document.body.insertAdjacentHTML(
       'afterbegin',
