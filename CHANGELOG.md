@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A sticky comment navigator for OP and Marked user, with Previous/Next and page-local visible counts. It follows the current reading position, skips collapsed branches, stops at both ends, and preserves the selected role through live marks and settings
 - Signed-in readers' loaded thread replies automatically receive a lighter tint and a "You" badge, independently of popup toggles. OP appearance takes precedence while enabled; own comments have no mark button
 
 ### Changed
