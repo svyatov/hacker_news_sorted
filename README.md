@@ -27,7 +27,7 @@ Instantly sort [Hacker News](https://news.ycombinator.com) by points, time, comm
 - **Restore Default**: Return to HN's original ranking
 - **New Post Indicators**: Orange dot marks posts that appeared since your last visit, fading out over a configurable period
 - **True Time Ago**: Corrects misleading ages on resurfaced "second chance" posts
-- **Comment Author Highlighting**: On thread pages, the story author's comments get a subtle tint and an "OP" badge; click the marker next to any other commenter's name to highlight that user's comments for the thread (persists across reloads). Two independent toggles in the popup
+- **Comment Author Highlighting**: On thread pages, the story author's comments get a subtle tint and an "OP" badge; click the marker next to another commenter's name to highlight that user's comments for the thread (persists across reloads). Two independent toggles in the popup. When signed in, your loaded replies automatically get the lighter tint and a "You" badge, with no setting or self-mark button. If you are OP, the OP appearance wins while its toggle is on. Identity comes only from the current page
 - **Keyboard Shortcuts**: Press `P`, `T`, `C`, `V`, `H`, or `D` to sort instantly
 - **Responsive Menu**: Full sort names on wide screens, single-letter labels on medium screens, and a compact dropdown on narrow screens, always collapsing before it would crowd Hacker News's own header links
 - **Persistent Preference**: Your last sort choice is remembered across sessions

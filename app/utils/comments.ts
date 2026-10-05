@@ -2,7 +2,7 @@ import { CSS_CLASSES, DOT_USER_ATTR, HN_SELECTORS, MARK_STORAGE_PREFIX, SETTINGS
 import { getItemId, isStoryPage } from '~app/utils/pages';
 import { watchSettings } from '~app/utils/settings';
 
-type HighlightKind = 'op' | 'marked';
+type HighlightKind = 'op' | 'marked' | 'own';
 
 export const getStoryAuthor = (): string | null =>
   document.querySelector(HN_SELECTORS.STORY_AUTHOR)?.textContent?.trim() ?? null;
@@ -12,6 +12,12 @@ export const getCommentRows = (): HTMLElement[] =>
 
 export const getCommentAuthor = (row: HTMLElement): string | null =>
   row.querySelector(`${HN_SELECTORS.COMMENT_HEAD} ${HN_SELECTORS.COMMENT_AUTHOR}`)?.textContent?.trim() ?? null;
+
+const getLoggedInUser = (): string | null => {
+  const account = document.querySelector(HN_SELECTORS.ACCOUNT);
+  const username = account?.textContent?.trim();
+  return username && account?.getAttribute('href') === `user?id=${username}` ? username : null;
+};
 
 // --- Mark dots ---
 
@@ -33,22 +39,25 @@ const buildDot = (username: string, onActivate: (username: string) => void, sign
   return dot;
 };
 
-// One dot per comment header (KTD-3), except the story author's — OP is already badged and isn't a
-// "regular" user to mark (skipUser). Idempotent: skips a comhead that already has one.
-const injectMarkDots = (onActivate: (username: string) => void, skipUser: string | null, signal: AbortSignal): void => {
+// One dot per comment header, except own comments and the currently badged OP. Idempotent.
+const injectMarkDots = (
+  onActivate: (username: string) => void,
+  skipUsers: Array<string | null>,
+  signal: AbortSignal,
+): void => {
   for (const row of getCommentRows()) {
     const comhead = row.querySelector(HN_SELECTORS.COMMENT_HEAD);
     if (!comhead) continue;
 
     const hnuser = comhead.querySelector(HN_SELECTORS.COMMENT_AUTHOR);
     const username = hnuser?.textContent?.trim();
-    if (username === skipUser) {
+    if (skipUsers.includes(username ?? null)) {
       comhead.querySelector(`.${CSS_CLASSES.MARK_DOT}`)?.remove();
       continue;
     }
     if (!hnuser || !username || comhead.querySelector(`.${CSS_CLASSES.MARK_DOT}`)) continue;
 
-    // Right after the name (CSS adds the gap). OP comments are skipped, so a badge is never here.
+    // Right after the name (CSS adds the gap). Badged authors are skipped.
     hnuser.insertAdjacentElement('afterend', buildDot(username, onActivate, signal));
   }
 };
@@ -65,11 +74,11 @@ const applyUserHighlight = (username: string, kind: HighlightKind): void => {
     // The author matched, so the comhead exists; clearHighlights ran first, so no badge is there yet.
     const comhead = row.querySelector(HN_SELECTORS.COMMENT_HEAD)!;
 
-    if (kind === 'op') {
-      row.classList.add(CSS_CLASSES.OP_COMMENT);
+    if (kind !== 'marked') {
+      row.classList.add(kind === 'op' ? CSS_CLASSES.OP_COMMENT : CSS_CLASSES.MARKED_COMMENT);
       const badge = document.createElement('span');
-      badge.className = CSS_CLASSES.OP_BADGE;
-      badge.textContent = 'OP';
+      badge.className = kind === 'op' ? CSS_CLASSES.OP_BADGE : CSS_CLASSES.OWN_BADGE;
+      badge.textContent = kind === 'op' ? 'OP' : 'You';
       comhead.querySelector(HN_SELECTORS.COMMENT_AUTHOR)!.insertAdjacentElement('afterend', badge);
     } else {
       row.classList.add(CSS_CLASSES.MARKED_COMMENT);
@@ -83,7 +92,7 @@ const clearHighlights = (): void => {
   for (const row of getCommentRows()) {
     row.classList.remove(CSS_CLASSES.OP_COMMENT, CSS_CLASSES.MARKED_COMMENT);
   }
-  for (const badge of document.querySelectorAll(`.${CSS_CLASSES.OP_BADGE}`)) badge.remove();
+  for (const badge of document.querySelectorAll(`.${CSS_CLASSES.OP_BADGE}, .${CSS_CLASSES.OWN_BADGE}`)) badge.remove();
   for (const dot of document.querySelectorAll<HTMLElement>(`.${CSS_CLASSES.MARK_DOT}`)) setDotState(dot, false);
 };
 
@@ -125,15 +134,17 @@ const applyCommentEnhancements = ({ opEnabled, markEnabled, onMark, signal }: En
 
   // The story author, when identifiable (null on comment-permalink pages — KTD-8).
   const op = isStoryPage() ? getStoryAuthor() : null;
+  const own = getLoggedInUser();
 
   if (opEnabled && op) applyUserHighlight(op, 'op');
+  if (own && !(opEnabled && own === op)) applyUserHighlight(own, 'own');
 
   if (markEnabled) {
     // Skip the mark dot on the OP's comments only while they're badged; with OP highlighting off the
     // author is just a regular, markable user.
-    injectMarkDots(onMark, opEnabled ? op : null, signal);
+    injectMarkDots(onMark, [own, opEnabled ? op : null], signal);
     const marked = getMarkedUser();
-    if (marked) applyUserHighlight(marked, 'marked');
+    if (marked && marked !== own) applyUserHighlight(marked, 'marked');
   } else {
     removeMarkDots();
   }
