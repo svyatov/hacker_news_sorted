@@ -1,5 +1,6 @@
-import { CSS_CLASSES, DOT_USER_ATTR, HN_SELECTORS, MARK_STORAGE_PREFIX } from '~app/constants';
+import { CSS_CLASSES, DOT_USER_ATTR, HN_SELECTORS, MARK_STORAGE_PREFIX, SETTINGS_KEYS } from '~app/constants';
 import { getItemId, isStoryPage } from '~app/utils/pages';
+import { watchSettings } from '~app/utils/settings';
 
 type HighlightKind = 'op' | 'marked';
 
@@ -21,30 +22,34 @@ const setDotState = (dot: HTMLElement, on: boolean): void => {
   dot.setAttribute('aria-label', on ? `Unhighlight ${user}` : `Highlight comments by ${user}`);
 };
 
-const buildDot = (username: string, onActivate: (username: string) => void): HTMLButtonElement => {
+const buildDot = (username: string, onActivate: (username: string) => void, signal: AbortSignal): HTMLButtonElement => {
   const dot = document.createElement('button');
   dot.type = 'button';
   dot.className = CSS_CLASSES.MARK_DOT;
   dot.setAttribute(DOT_USER_ATTR, username);
   setDotState(dot, false);
   // Native <button>, so Enter/Space activate for free.
-  dot.addEventListener('click', () => onActivate(username));
+  dot.addEventListener('click', () => onActivate(username), { signal });
   return dot;
 };
 
 // One dot per comment header (KTD-3), except the story author's — OP is already badged and isn't a
 // "regular" user to mark (skipUser). Idempotent: skips a comhead that already has one.
-export const injectMarkDots = (onActivate: (username: string) => void, skipUser: string | null = null): void => {
+const injectMarkDots = (onActivate: (username: string) => void, skipUser: string | null, signal: AbortSignal): void => {
   for (const row of getCommentRows()) {
     const comhead = row.querySelector(HN_SELECTORS.COMMENT_HEAD);
-    if (!comhead || comhead.querySelector(`.${CSS_CLASSES.MARK_DOT}`)) continue;
+    if (!comhead) continue;
 
     const hnuser = comhead.querySelector(HN_SELECTORS.COMMENT_AUTHOR);
     const username = hnuser?.textContent?.trim();
-    if (!hnuser || !username || username === skipUser) continue;
+    if (username === skipUser) {
+      comhead.querySelector(`.${CSS_CLASSES.MARK_DOT}`)?.remove();
+      continue;
+    }
+    if (!hnuser || !username || comhead.querySelector(`.${CSS_CLASSES.MARK_DOT}`)) continue;
 
     // Right after the name (CSS adds the gap). OP comments are skipped, so a badge is never here.
-    hnuser.insertAdjacentElement('afterend', buildDot(username, onActivate));
+    hnuser.insertAdjacentElement('afterend', buildDot(username, onActivate, signal));
   }
 };
 
@@ -74,7 +79,7 @@ const applyUserHighlight = (username: string, kind: HighlightKind): void => {
   }
 };
 
-export const clearHighlights = (): void => {
+const clearHighlights = (): void => {
   for (const row of getCommentRows()) {
     row.classList.remove(CSS_CLASSES.OP_COMMENT, CSS_CLASSES.MARKED_COMMENT);
   }
@@ -89,12 +94,12 @@ const markKey = (): string | null => {
   return id ? `${MARK_STORAGE_PREFIX}${id}` : null;
 };
 
-export const getMarkedUser = (): string | null => {
+const getMarkedUser = (): string | null => {
   const key = markKey();
   return key ? sessionStorage.getItem(key) : null;
 };
 
-export const setMarkedUser = (username: string | null): void => {
+const setMarkedUser = (username: string | null): void => {
   const key = markKey();
   if (!key) return;
   if (username === null) sessionStorage.removeItem(key);
@@ -102,8 +107,7 @@ export const setMarkedUser = (username: string | null): void => {
 };
 
 // Single-mark toggle: clicking the marked user's own dot clears it; any other user replaces it (KTD-6).
-export const nextMark = (current: string | null, clicked: string): string | null =>
-  current === clicked ? null : clicked;
+const nextMark = (current: string | null, clicked: string): string | null => (current === clicked ? null : clicked);
 
 // --- Orchestrator ---
 
@@ -111,11 +115,12 @@ type EnhancementOptions = {
   opEnabled: boolean;
   markEnabled: boolean;
   onMark: (username: string) => void;
+  signal: AbortSignal;
 };
 
 // Idempotent: clears every extension-added class/badge/dot-state, then re-applies from the current
 // settings + stored mark. Toggle watchers and dot activations both route through this (KTD-6, KTD-8).
-export const applyCommentEnhancements = ({ opEnabled, markEnabled, onMark }: EnhancementOptions): void => {
+const applyCommentEnhancements = ({ opEnabled, markEnabled, onMark, signal }: EnhancementOptions): void => {
   clearHighlights();
 
   // The story author, when identifiable (null on comment-permalink pages — KTD-8).
@@ -126,10 +131,38 @@ export const applyCommentEnhancements = ({ opEnabled, markEnabled, onMark }: Enh
   if (markEnabled) {
     // Skip the mark dot on the OP's comments only while they're badged; with OP highlighting off the
     // author is just a regular, markable user.
-    injectMarkDots(onMark, opEnabled ? op : null);
+    injectMarkDots(onMark, opEnabled ? op : null, signal);
     const marked = getMarkedUser();
     if (marked) applyUserHighlight(marked, 'marked');
   } else {
     removeMarkDots();
   }
+};
+
+// Owns settings, mark actions, and all DOM enhancements until content-script invalidation.
+export const startCommentEnhancements = (): (() => void) => {
+  const controller = new AbortController();
+  let apply: () => void;
+  const onMark = (username: string): void => {
+    setMarkedUser(nextMark(getMarkedUser(), username));
+    apply();
+  };
+  const unwatch = watchSettings([SETTINGS_KEYS.OP_HIGHLIGHT, SETTINGS_KEYS.MARK_USER_HIGHLIGHT], (values) => {
+    apply = () =>
+      applyCommentEnhancements({
+        opEnabled: values[SETTINGS_KEYS.OP_HIGHLIGHT],
+        markEnabled: values[SETTINGS_KEYS.MARK_USER_HIGHLIGHT],
+        onMark,
+        signal: controller.signal,
+      });
+    apply();
+  });
+
+  return () => {
+    if (controller.signal.aborted) return;
+    controller.abort();
+    unwatch();
+    clearHighlights();
+    removeMarkDots();
+  };
 };
