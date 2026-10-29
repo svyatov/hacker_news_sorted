@@ -63,6 +63,8 @@ describe('selectors (integration with live HN HTML)', () => {
     const rows = getInfoRows().filter((row) => getTimeElement(row));
 
     let agreeing = 0;
+    let hourRows = 0;
+    const diagnostics = [];
     for (const row of rows) {
       const ageEl = getTimeElement(row)!;
       const text = ageEl.textContent?.trim() ?? '';
@@ -71,12 +73,28 @@ describe('selectors (integration with live HN HTML)', () => {
       const time = getTime(row);
       expect(time, `age title should parse: "${ageEl.getAttribute('title')}"`).not.toBe(0);
       const unit = UNIT_SECONDS[match![2] as keyof typeof UNIT_SECONDS];
-      if (match![2] === 'hour' && Math.abs(fetchedAt - time - Number(match![1]) * unit) <= unit) agreeing++;
+      const ageSeconds = fetchedAt - time;
+      const differenceSeconds = ageSeconds - Number(match![1]) * unit;
+      if (match![2] === 'hour') {
+        hourRows++;
+        if (Math.abs(differenceSeconds) <= unit) agreeing++;
+      }
+      diagnostics.push({
+        postId: row.previousElementSibling!.id,
+        text,
+        title: ageEl.getAttribute('title'),
+        parsedTimestamp: time,
+        ageSeconds,
+        differenceSeconds,
+      });
     }
     // Second-chance posts show a younger text than their title timestamp (over half the front page on some days),
     // "N minutes ago" rows miss by the 1-2 minutes HN's anonymous page cache lags the fetch stamp, and "N days ago"
     // is too coarse to notice a shift, so only count hour rows and require a few, not a share of the page. A
     // local-time bug shifts every row by the runner's UTC offset (5.5h under the pinned TZ), so no hour row agrees.
-    expect(agreeing, `${agreeing} hour rows agree with their age text`).toBeGreaterThanOrEqual(3);
+    expect(
+      agreeing,
+      `${agreeing}/${hourRows} hour rows agree with their age text\n${JSON.stringify({ fetchedAt, rows: diagnostics }, null, 2)}`,
+    ).toBeGreaterThanOrEqual(3);
   });
 });
