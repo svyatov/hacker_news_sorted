@@ -16,4 +16,15 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun run fixture:update
+        id: fixtures
       - run: bun run test:integration
+      - name: Upload fetched HN fixtures on failure
+        if: failure() && steps.fixtures.outcome == 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: hn-monitor-fixtures
+          path: |
+            app/__fixtures__/hn-homepage.html
+            app/__fixtures__/hn-item.html
+          if-no-files-found: error
+          retention-days: 14
