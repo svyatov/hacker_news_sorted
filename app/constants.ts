@@ -149,10 +149,10 @@ export const HN_SELECTORS = {
   ACCOUNT: '.pagetop > a#me[href^="user?id="]',
   ITEM_TABLE: 'table.fatitem',
   COMMENT_TREE: 'table.comment-tree',
-  STORY_AUTHOR: '.fatitem .hnuser',
+  STORY_AUTHOR: '.fatitem :is(.subtext, .comhead) :is(.hnuser, a[href^="user?id="])',
   STORY_LINK: '.fatitem .titleline',
   COMMENT_ROWS: 'tr.athing.comtr[id]',
-  COMMENT_AUTHOR: '.hnuser', // relative to COMMENT_HEAD
+  COMMENT_AUTHOR: ':is(.hnuser, a[href^="user?id="])', // relative to COMMENT_HEAD
   COMMENT_HEAD: '.comhead',
   COMMENT_TIME: '.comhead .age',
 } as const;
