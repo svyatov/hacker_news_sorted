@@ -71,6 +71,43 @@ afterEach(() => {
 });
 
 describe('comment enhancement lifecycle', () => {
+  it('recognizes OP, marked and own authors whose profile links have no hnuser class', async () => {
+    for (const link of document.querySelectorAll('.hnuser')) link.removeAttribute('class');
+    document.body.insertAdjacentHTML(
+      'afterbegin',
+      '<span class="pagetop"><a id="me" href="user?id=bob">bob</a></span>',
+    );
+    await start();
+    expect(getStoryAuthor()).toBe(OP);
+    expect(getCommentAuthor(getRowById('case'))).toBe('Alice');
+    expect(isOp('op1')).toBe(true);
+    expect(badgesIn('op1')).toBe(1);
+    expect(getRowById('b1')).toHaveTextContent('You');
+    dotIn('a1').click();
+    expect(isMarked('a1')).toBe(true);
+    expect(isMarked('a2')).toBe(true);
+    expect(screen.getByRole('option', { name: 'OP' })).toBeEnabled();
+    expect(screen.getByRole('option', { name: 'Marked user' })).toBeEnabled();
+    expect(screen.getByRole('option', { name: 'You' })).toBeEnabled();
+  });
+
+  it('does not mistake profile links in a story title or comment body for missing authors', () => {
+    setupCommentThread({ storyAuthor: null, comments: [{ id: 'deleted', author: '' }] });
+    document.querySelector('.titleline a')!.setAttribute('href', 'user?id=unrelated');
+    getRowById('deleted').querySelector('.commtext')!.innerHTML = '<a href="user?id=unrelated">unrelated</a>';
+    expect(getStoryAuthor()).toBeNull();
+    expect(getCommentAuthor(getRowById('deleted'))).toBeNull();
+  });
+
+  it('resolves a comment-permalink author without the hnuser class', async () => {
+    setupCommentThread({ isStory: false, storyAuthor: 'alice', comments: [{ id: 'a1', author: 'alice' }] });
+    for (const link of document.querySelectorAll('.hnuser')) link.removeAttribute('class');
+    await start();
+    expect(getStoryAuthor()).toBe('alice');
+    expect(isOp('a1')).toBe(false);
+    expect(dotIn('a1')).toHaveAccessibleName('Highlight comments by alice');
+  });
+
   it('disables the bar and shortcuts independently of highlighting and can enable them again', async () => {
     await store(SETTINGS_KEYS.COMMENT_NAVIGATION, false);
     vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
