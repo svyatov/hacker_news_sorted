@@ -7,9 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.1] - 2026-11-08
+
 ### Changed
 
 - Refresh browser compatibility data and Chrome type definitions, including the matching Bun lockfile.
+- Retain fetched pages and timestamp diagnostics when the daily layout monitor fails.
+
+### Fixed
+
+- Restore comment author highlighting, marking, and navigation after Hacker News removed the username CSS class. Profile links identify authors when that class is absent.
 
 ## [2.7.0] - 2026-10-05
 
